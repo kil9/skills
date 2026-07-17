@@ -1,12 +1,15 @@
 #!/bin/bash
 # /sync 스킬용 정적 스크립트: pull 후 현재 브랜치를 모든 리모트에 push.
-#   인자 없음(=rebase) — git pull --rebase --autostash (기본, rebase 우선)
+#   인자 없음(=rebase) — git pull --rebase=merges --autostash (기본, rebase 우선)
 #   merge             — git pull --no-rebase --autostash (rebase 가 손이 많이 갈 때 폴백)
 set -euo pipefail
 
 strategy="${1:-rebase}"
 case "$strategy" in
-  rebase) pull_opt="--rebase" ;;
+  # plain --rebase 가 아니라 =merges 인 이유: 다중 리모트 발산을 merge 로 해소한 직후
+  # upstream rebase pull 이 그 머지 커밋을 flatten 해 해소를 되돌린다(스모크에서 실측).
+  # =merges 는 로컬 머지 커밋을 보존하고, 머지가 없을 땐 plain rebase 와 동일하다.
+  rebase) pull_opt="--rebase=merges" ;;
   merge)  pull_opt="--no-rebase" ;;
   *) echo "usage: sync-repo.sh [rebase|merge]" >&2; exit 1 ;;
 esac
@@ -29,10 +32,40 @@ else
   echo "notice: upstream 미설정 — pull 생략" >&2
 fi
 
+# 리모트 도달성 프로브. 사외 머신에서 사내 GHE 처럼 아예 안 닿는 리모트는
+# 실패가 아니라 skip 이다 — ssh 기본 타임아웃이 길어 timeout 이 있으면 감싼다.
+probe_remote() {
+  if command -v timeout >/dev/null 2>&1; then
+    timeout 7 git ls-remote "$1" >/dev/null 2>&1
+  else
+    git ls-remote "$1" >/dev/null 2>&1
+  fi
+}
+
 failed=()
 for remote in $remotes; do
+  if ! probe_remote "$remote"; then
+    echo "skip: $remote — 도달 불가(사외망 등). 닿는 머신에서의 /sync 가 회수한다" >&2
+    continue
+  fi
+
+  # 발산 감지: 리모트에 로컬에 없는 커밋이 있으면 push 가 어차피 거부된다 — 원인을 먼저 밝힌다.
+  # (upstream 은 위 pull 이 이미 흡수했으므로 주로 upstream 아닌 리모트에서 걸린다.)
+  if git fetch -q "$remote" "$branch" 2>/dev/null; then
+    diverged=$(git rev-list --count "$branch..FETCH_HEAD" 2>/dev/null || echo 0)
+    if [ "$diverged" -gt 0 ]; then
+      echo "warn: $remote/$branch 에 로컬에 없는 커밋 ${diverged}개 — 발산 상태다." >&2
+      echo "      그 커밋을 살리려면: 'git pull --no-rebase $remote $branch' 로 병합 후 다시 /sync." >&2
+      echo "      (rebase 로 풀지 말 것 — 다른 리모트에 이미 push 된 커밋이 재작성돼 발산이 리모트 간에 핑퐁친다)" >&2
+      echo "      버려도 되는 커밋이면(오염된 미러 등): 'git push --force-with-lease $remote $branch'." >&2
+      failed+=("$remote(diverged)")
+      continue
+    fi
+  fi
+
   if git push "$remote" "$branch"; then
     echo "pushed: $remote/$branch"
+    pushed_remotes="${pushed_remotes:+$pushed_remotes }$remote"
   else
     failed+=("$remote")
   fi
@@ -82,4 +115,4 @@ if [ -f "$extra_conf" ]; then
   done 3< "$extra_conf"
 fi
 
-echo "sync 완료($strategy): $branch → $(echo "$remotes" | tr '\n' ' ')"
+echo "sync 완료($strategy): $branch → ${pushed_remotes:-'(push 된 리모트 없음)'}"

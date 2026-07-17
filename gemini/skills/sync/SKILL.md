@@ -11,6 +11,10 @@ description: 현재 브랜치를 리모트와 동기화한다(pull rebase 우선
    - **rebase→merge 폴백**: rebase 충돌 해결이 여러 커밋을 거슬러야 해 손이 많이 가면
      `git rebase --abort` 후 `sync-repo.sh merge`(=`pull --no-rebase`)로 전환한다. 가벼운
      충돌은 rebase 로 해결하는 편을 선호. 그 밖의 실패(push 거부 등)만 직접 개입.
+   - **다중 리모트**: 도달 불가 리모트(사외망에서 사내 GHE 등)는 실패가 아니라 skip 이다 —
+     닿는 머신의 /sync 가 회수하므로 그대로 진행한다. 발산 리모트는 스크립트가 경고와 해소
+     명령을 출력한다. **발산 해소를 rebase 로 대신하지 말 것** — 다른 리모트에 이미 push 된
+     커밋이 재작성돼 발산이 리모트 간에 핑퐁친다(그래서 기본 pull 도 `--rebase=merges` 다).
    - **추가 워킹카피**: `~/.claude/sync-extra-repos.conf` 가 있으면 스크립트가 거기 적힌
      체크아웃도 함께 pull 한다(머신 로컬 설정, 없으면 생략). 다른 체크아웃이 라이브 설정을
      물고 있을 때(예: WT junction) 그쪽이 stale 하면 repo 의 수정이 라이브에 도달하지 못하기
