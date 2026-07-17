@@ -1,0 +1,4 @@
+interface:
+  display_name: "Scan Bugs"
+  short_description: "Scan a codebase for bugs and write BUG_REPORT.html"
+  default_prompt: "Use $scan-bugs to scan a codebase for bugs and write BUG_REPORT.html."

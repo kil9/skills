@@ -1,0 +1,4 @@
+interface:
+  display_name: "Zip It"
+  short_description: "Compress agent docs: drop what's derivable, keep hard-won knowledge"
+  default_prompt: "Use $zip-it to compress an agent-facing doc (AGENTS.md or a skill): delete content derivable at execution time, keep and strengthen failure-derived knowledge."

@@ -1,0 +1,4 @@
+interface:
+  display_name: "Handoff"
+  short_description: "현재 대화를 인계 문서로 압축한다"
+  default_prompt: "$handoff 로 현재 대화를 요약한 인계 문서를 작성해 새 에이전트가 작업을 이어갈 수 있게 한다."

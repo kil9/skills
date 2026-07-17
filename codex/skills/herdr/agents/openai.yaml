@@ -1,0 +1,4 @@
+interface:
+  display_name: "Herdr"
+  short_description: "Control herdr panes, tabs, and agents from inside it"
+  default_prompt: "Use $herdr to control herdr panes, tabs, and agents from inside it."

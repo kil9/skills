@@ -1,0 +1,1 @@
+../../../../claude/skills/parallel-tasks/references/herdr-pane-mode.md

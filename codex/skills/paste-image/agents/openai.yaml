@@ -1,0 +1,4 @@
+interface:
+  display_name: "Paste Image"
+  short_description: "Receive a browser-pasted image and load it for Codex"
+  default_prompt: "Use $paste-image to receive a browser-pasted image and load it for Codex."

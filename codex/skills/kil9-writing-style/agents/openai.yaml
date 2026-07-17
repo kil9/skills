@@ -1,0 +1,4 @@
+interface:
+  display_name: "kil9 Writing Style"
+  short_description: "Draft or polish issues/PRs/comments in kil9's writing style"
+  default_prompt: "Use $kil9-writing-style to draft or polish text in kil9's writing style."

@@ -1,0 +1,4 @@
+interface:
+  display_name: "Backlog Add Task"
+  short_description: "Interview, then add one task to the backlog (or legacy PLAN.md)"
+  default_prompt: "Use $add-task to interview me and add this as a new backlog task with acceptance criteria and dependencies, without starting the work."

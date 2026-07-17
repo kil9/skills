@@ -1,0 +1,4 @@
+interface:
+  display_name: "Init Project"
+  short_description: "Create README, AGENTS, and PLAN for a repository"
+  default_prompt: "Use $init-project to create README, AGENTS, and PLAN for a repository."

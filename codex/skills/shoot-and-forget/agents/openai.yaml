@@ -1,0 +1,4 @@
+interface:
+  display_name: "Shoot and Forget"
+  short_description: "Do the task, then self-close this herdr pane if the finish is clean"
+  default_prompt: "Use $shoot-and-forget to carry out the task, then close this herdr pane only if it finished with no failure, nothing left to monitor, and nothing the user must be told."

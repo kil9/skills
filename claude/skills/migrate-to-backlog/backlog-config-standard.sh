@@ -1,0 +1,1 @@
+../init-backlog/backlog-config-standard.sh

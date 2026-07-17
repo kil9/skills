@@ -1,0 +1,4 @@
+interface:
+  display_name: "Commit"
+  short_description: "Commit intended files after repo/doc checks"
+  default_prompt: "Use $commit to commit intended files after repo/doc checks."

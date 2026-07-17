@@ -1,0 +1,4 @@
+interface:
+  display_name: "Backlog Parallel Tasks"
+  short_description: "Fan independent backlog tasks out to worker agents in worktrees, then ff-merge"
+  default_prompt: "Use $parallel-tasks to implement the independent backlog tasks in parallel worktrees and fast-forward merge the verified branches into main."

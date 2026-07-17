@@ -1,0 +1,4 @@
+interface:
+  display_name: "Publish TIL"
+  short_description: "Publish static content to the public kil9/til GitHub Pages site"
+  default_prompt: "Use $publish-til to publish static content to the public kil9/til GitHub Pages site."

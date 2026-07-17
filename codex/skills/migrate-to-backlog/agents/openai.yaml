@@ -1,0 +1,4 @@
+interface:
+  display_name: "Migrate To Backlog"
+  short_description: "Convert a legacy PLAN.md repo to the backlog backend: tasks, drafts, docs, archive"
+  default_prompt: "Use $migrate-to-backlog to move this repo's legacy PLAN.md into the backlog backend: incomplete tasks to backlog tasks, ideas to drafts, prose to docs, and archive the PLAN file without starting implementation."

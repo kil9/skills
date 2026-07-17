@@ -1,0 +1,4 @@
+interface:
+  display_name: "Go Version To Go Mod"
+  short_description: "Replace GOVERSION usage with go.mod version parsing"
+  default_prompt: "Use $goversion-to-gomod to replace GOVERSION usage with go.mod version parsing."

@@ -1,0 +1,4 @@
+interface:
+  display_name: "Sync"
+  short_description: "Sync current branch with remotes (prefer rebase); commit & push working changes if the tree is dirty"
+  default_prompt: "Use $sync to sync the current branch with its remotes (prefer rebase, fall back to merge if rebasing is a lot of work). If the working tree is dirty, also commit the changes and push them."

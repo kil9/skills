@@ -1,0 +1,4 @@
+interface:
+  display_name: "Backlog Init"
+  short_description: "Interview, then initialize the repo's backlog backend with docs and tasks"
+  default_prompt: "Use $init-backlog to interview me about the work, initialize backlog.md in this repo, and create the plan docs and tasks without starting implementation."

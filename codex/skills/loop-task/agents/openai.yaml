@@ -1,0 +1,4 @@
+interface:
+  display_name: "Backlog Loop Task"
+  short_description: "Autonomously drain backlog tasks round by round until none are self-actionable"
+  default_prompt: "Use $loop-task to autonomously drain the backlog: implement-verify-commit each ready task, auto-add discovered follow-up work, prefer solo (parallel only when the $parallel-tasks gate clearly justifies it), and stop only after two consecutive empty re-reads."

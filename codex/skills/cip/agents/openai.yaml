@@ -1,0 +1,4 @@
+interface:
+  display_name: "CIP"
+  short_description: "Commit intended changes and push according to repo policy"
+  default_prompt: "Use $cip to review changes, commit the intended files, push to remotes, and handle worktree cleanup when applicable."

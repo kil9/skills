@@ -1,0 +1,4 @@
+interface:
+  display_name: "CIPD"
+  short_description: "Commit, push, then deploy using the repo's own deploy procedure"
+  default_prompt: "Use $cipd to run the full $cip flow (review, commit, push, worktree cleanup) and, only on success, deploy using whatever deploy procedure this repo defines."

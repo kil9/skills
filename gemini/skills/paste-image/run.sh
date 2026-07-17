@@ -1,0 +1,1 @@
+../../../claude/skills/paste-image/run.sh

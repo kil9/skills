@@ -1,0 +1,4 @@
+interface:
+  display_name: "Backlog Add Draft"
+  short_description: "Record an idea as a backlog draft (or PLAN.md I-N) without starting it"
+  default_prompt: "Use $add-draft to record this idea as a draft for later, without interviews or implementation."

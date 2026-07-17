@@ -1,0 +1,6 @@
+# paste-image 런타임 산출물 (머신 로컬)
+*/skills/paste-image/host.local
+*/skills/paste-image/host.cache
+*/skills/paste-image/tmp/
+__pycache__/
+*.pyc

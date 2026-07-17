@@ -1,0 +1,4 @@
+interface:
+  display_name: "Make A Plan"
+  short_description: "Create a detailed PLAN file after investigation and interview"
+  default_prompt: "Use $make-a-plan to investigate this request, interview me on decisions, create a PLAN file, then ask before starting tasks."

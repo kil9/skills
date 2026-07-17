@@ -1,0 +1,4 @@
+interface:
+  display_name: "Kill Agents"
+  short_description: "Clean orphan Claude Code teammate processes and roster entries"
+  default_prompt: "Use $kill-agents to clean orphan Claude Code teammate processes and roster entries."

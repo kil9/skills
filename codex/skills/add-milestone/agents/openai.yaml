@@ -1,0 +1,4 @@
+interface:
+  display_name: "Backlog Add Milestone"
+  short_description: "Interview, then add one milestone with its subtasks to the backlog (or legacy PLAN.md)"
+  default_prompt: "Use $add-milestone to interview me and add this as a new milestone with decomposed subtasks, each with acceptance criteria and dependencies, without starting the work."
