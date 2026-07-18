@@ -36,10 +36,12 @@ if [ -n "$slug" ]; then
     echo "error: 슬러그 형식 불일치(kebab-case 아님): $slug — 인터뷰로 재수집" >&2
     exit 1
   }
-  if [ -e "$slug" ]; then
-    echo "conflict: $slug/ 이미 존재 — 덮어쓰기 여부는 사용자에게 물을 것" >&2
+  # 날짜 아티클은 <현재연도>/<slug>/ 에 놓인다(TASK-40 재편, t/ 래퍼 제거). 충돌은 그 경로로 검사.
+  reldir="$(date +%Y)/$slug"
+  if [ -e "$reldir" ] || [ -e "$slug" ] || [ -e "p/$slug" ]; then
+    echo "conflict: $slug 경로가 이미 존재(<연도>/·p/·루트 중) — 덮어쓰기 여부는 사용자에게 물을 것" >&2
     exit 3
   fi
 fi
 
-echo "preflight ok: $repo (origin=$(git remote get-url origin), main, clean${slug:+, slug=$slug})"
+echo "preflight ok: $repo (origin=$(git remote get-url origin), main, clean${slug:+, slug=$slug → $(date +%Y)/$slug/})"
