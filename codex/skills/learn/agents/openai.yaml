@@ -1,0 +1,4 @@
+interface:
+  display_name: "Learn"
+  short_description: "Persist this session's hard-won lessons where future sessions will read them"
+  default_prompt: "Use $learn to persist what this session learned into the right place (a skill, machine-local AGENTS.local.md, or a repo/global AGENTS.md) so future sessions don't repeat the mistake or re-pay the search cost."

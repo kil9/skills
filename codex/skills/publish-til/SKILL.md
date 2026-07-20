@@ -1,11 +1,11 @@
 ---
 name: publish-til
-description: (사외용) 사용자가 준비한 정적 콘텐츠를 공개 GitHub `kil9/til` 저장소에 새 페이지로 추가하고, 루트 index.html 갤러리·README 표를 갱신해 main 으로 commit/push 한다. GitHub Pages 가 push 만으로 자동 배포하며 `https://kil9.github.io/til/{slug}/` URL 을 돌려준다.
+description: (사외용) 사용자가 준비한 정적 콘텐츠를 공개 GitHub `kil9/til` 저장소에 새 페이지로 추가하고, 루트 index.html 갤러리·README 표를 갱신해 main 으로 commit/push 한다. GitHub Pages 가 push 만으로 자동 배포하며 `https://kil9.github.io/til/{YYYY}/{slug}/` URL 을 돌려준다.
 ---
 
 호출: `$publish-til [<slug>]`
 
-인자가 있으면 그 슬러그를 새 페이지 디렉터리명으로 사용한다. 없으면 §1 의 인터뷰로 받는다.
+인자가 있으면 그 슬러그를 새 페이지명으로 사용한다. 없으면 §1 의 인터뷰로 받는다. 페이지는 날짜 아티클이면 `<현재연도>/<slug>/`, 리브 소개·아카이브 같은 비-날짜 상설 페이지면 `p/<slug>/` 에 놓인다(TASK-40 재편, t/ 래퍼 제거). 이 스킬의 기본 대상은 날짜 아티클이다.
 
 ---
 
@@ -14,8 +14,9 @@ description: (사외용) 사용자가 준비한 정적 콘텐츠를 공개 GitHu
 - 저장소 경로: `~/work/kil9/til`. origin = github.com 의 `kil9/til` — **PUBLIC 저장소**다. push 하는 순간 전부 공개되며, 되돌려도 히스토리에 남는다.
 - 기본 브랜치: `main`. 단일 브랜치.
 - 호스팅: GitHub Pages 가 `main` 브랜치 루트를 그대로 서빙한다(별도 빌드 없음). **push 만으로 몇십 초 뒤 자동 반영** — 명시적 deploy 단계가 없다.
-- URL: `https://kil9.github.io/til/<slug>/` (루트 갤러리: `https://kil9.github.io/til/`).
-- 디렉터리 명명: 고정 규칙 없음 — 매번 자유 슬러그(kebab-case: 소문자·숫자·하이픈). 시간순 정렬이 필요한 주제면 `2026-` 처럼 연도 접두사를 권장. 슬러그는 URL 에 영구히 박힌다.
+- URL: 아티클 `https://kil9.github.io/til/<YYYY>/<slug>/`, 지원 페이지 `https://kil9.github.io/til/p/<slug>/` (루트 갤러리: `https://kil9.github.io/til/`). 구 평면 URL(`/til/<slug>/`)은 `404.html` 리다이렉트 맵이 새 경로로 넘긴다.
+- 배치: 날짜 아티클은 `<현재연도>/<slug>/`, 비-날짜 상설 페이지는 `p/<slug>/`. 루트에는 `<연도>/`·`p/`·`backlog/` 와 루트 파일만 둔다(TASK-40).
+- 슬러그 명명: 자유 슬러그(kebab-case: 소문자·숫자·하이픈). `<연도>/` 로 이미 시간 분리되므로 슬러그에 `2026-` 연도 접두사를 새로 붙이지 않는다. 슬러그·경로는 URL 에 영구히 박힌다.
 - **상세 런북은 저장소의 `AGENTS.md`(퍼블리시 런북 섹션)가 정본이다.** 콘텐츠 재조립(claude.ai artifact 의 프레임 런타임 제거, standalone 골격)·갤러리 카드 형식(`data-date`/`data-topic`, `Published · N` 카운트)·README 표 형식은 그쪽을 따른다. 이 스킬과 런북이 어긋나면 저장소 AGENTS.md 가 우선.
 
 ---
@@ -31,7 +32,7 @@ bash ~/.codex/skills/publish-til/til-preflight.sh [<slug>]
 ```
 
 - exit 1: 전제 불충족 — 출력을 근거로 중단한다(경로 없음이면 사용자에게 클론 위치를 묻는다).
-- exit 3: `<slug>/` 이미 존재 — 덮어쓰기 금지 원칙대로 사용자에게 물은 뒤에만 진행한다.
+- exit 3: 슬러그 경로(`<연도>/<slug>/`·`p/<slug>/`·구 루트 중 하나) 이미 존재 — 덮어쓰기 금지 원칙대로 사용자에게 물은 뒤에만 진행한다.
 - 통과 후 `cd ~/work/kil9/til`, 저장소의 `AGENTS.md` 퍼블리시 런북을 읽어 둔다 (이후 단계의 정본).
 
 ---
@@ -65,9 +66,37 @@ bash ~/.codex/skills/publish-til/til-preflight.sh [<slug>]
 
 ---
 
+## 2-2. 시각 자료 보강
+
+**무엇을 어떻게 그릴지는 저장소 `AGENTS.md` §2-1(시각 자료)이 정본이다.** 표/차트/인포그래픽 우선,
+인라인 SVG + CSS 변수로 다크모드 대응, 외부 차트 라이브러리 금지, 삽화는 페이지당 1-2장,
+WebP(1440px·q75) base64 `data:` URI 임베드, `figure.illust`+`alt`+`figcaption` 마크업 등.
+여기 옮겨 적지 않는다 — §0 에서 읽어 둔 그 문서를 따른다(중복하면 드리프트가 난다).
+
+이 스킬이 정본인 것은 아래 둘뿐이다.
+
+- 차트를 그리기 전에 `dataviz` 스킬을 읽는다.
+- 삽화는 **네이티브 이미지 생성 도구(image generation)로 직접 생성한다**(`codex features list` 로 `image_generation` stable 확인 가능). 생성 사양이 아래이며, 저장소 `AGENTS.md` §2-1 도 사양은 이 절을 가리킨다(서로 반대 방향을 가리키지 않도록 주의).
+
+### 삽화 생성 사양
+
+```
+<주제> 에디토리얼 삽화 1장.
+구도: <가로형(1536x1024) 등 + 장면 묘사>.
+스타일: 주제에 어울리게 자유롭게 고른다(플랫 벡터, 수채, 리소그래프, 애니메이션 풍 등).
+팔레트: 자유. 사이트가 극한 미니멀(무채색+블루)이므로 삽화까지 같은 톤이면 지루하다 —
+  색·그라데이션·질감을 써도 좋다. 단 다크모드 filter 와 어울리도록 라이트 톤 배경을 기본으로.
+절대 금지: 이미지 안 글자·숫자·텍스트(생성 텍스트는 깨진다), 사람 얼굴 클로즈업.
+```
+
+- **이미지 내 텍스트 금지**를 반드시 지키고 생성물을 목표 **절대경로**(`.png`)에 둔다. 생성물은 `~/.codex/generated_images/` 아래에 떨어지므로 지정 경로로 복사한다. 1회 1-5분 소요, 결과는 파일 읽기 도구로 눈검사한다(텍스트 유무·구도·톤).
+- 생성된 PNG 를 페이지에 넣는 방법(리사이즈·WebP 압축·base64 임베드·마크업)은 저장소 `AGENTS.md` §2-1 을 따른다.
+
+---
+
 ## 3. 배치
 
-`<slug>/index.html` 로 저장한다. 결과 파일이 `<!doctype html>` 로 시작하고, 외부 의존 없이 단일 파일로 열리며, `prefers-color-scheme` 다크 폴백이 있는지 확인한다(부족하면 런북 §2 골격으로 보강).
+날짜 아티클은 `<현재연도>/<slug>/index.html`, 비-날짜 지원 페이지는 `p/<slug>/index.html` 로 저장한다(연도 dir 이 없으면 만든다). 결과 파일이 `<!doctype html>` 로 시작하고, 외부 의존 없이 단일 파일로 열리며, `prefers-color-scheme` 다크 폴백이 있는지 확인한다. 스타일 없는 콘텐츠는 런북 §2 의 **공통 셸**(미니멀 무채색+블루 액센트)로 감싼다. 자체 스타일 artifact 페이지라도 **favicon·OG 메타 블록·Cloudflare beacon**(전부 런북 §2 템플릿에 포함)은 반드시 넣는다 — beacon 은 외부 리소스 금지 원칙의 유일한 예외.
 
 ---
 
@@ -75,19 +104,21 @@ bash ~/.codex/skills/publish-til/til-preflight.sh [<slug>]
 
 한 줄 제목을 `request_user_input` 으로 짧게 받는다(기본값: 슬러그를 케이스 정리해 제시).
 
-- 루트 `index.html`: 갤러리 카드를 **최신이 위로** 추가하고 `Published · N` 카운트를 증가시킨다. 카드에 `data-date="YYYY-MM-DD"`·`data-topic="<주제키>"` 를 반드시 넣는다(주제키는 기존 카드 값 재사용, 새 주제면 새 kebab-case 키).
-- `README.md`: "퍼블리시된 페이지" 표에 행을 추가한다 (날짜 · 제목 · `[/<slug>/](https://kil9.github.io/til/<slug>/)`).
+- 루트 `index.html`: 갤러리 카드를 **최신이 위로** 추가하고 `Published · N` 카운트를 증가시킨다. 카드에 `data-date="YYYY-MM-DDTHH:MM"`(퍼블리시 시각까지 포함 — `.date` 표시 텍스트는 JS 가 이 값으로 덮어쓴다)·`data-topic="<주제키>"`(영문 kebab-case) 를 반드시 넣는다. `.tag` 는 한국어 `<칩 라벨> · <세부 주제>` 형식이고, **칩 라벨은 한 단어여야 한다** — 칩은 `.tag` 를 `·` 로 split 한 첫 세그먼트라 칩 이름에 `·` 를 넣으면 잘린다. **주제 분류에 하위 호환은 없다**: 균형이 깨지면 기존 카드의 분류도 확인 없이 재조정하고 결과만 보고한다(기준값·분할 트리거는 저장소 AGENTS.md §4-1 이 정본).
+- `README.md`: "퍼블리시된 페이지" 표 **맨 위**에 행을 추가한다 (날짜 · 제목 · `[/<YYYY>/<slug>/](https://kil9.github.io/til/<YYYY>/<slug>/)`; 지원 페이지면 `p/<slug>/`). 갤러리와 동일한 **최신이 위** 정렬 — 갤러리는 JS 가 `data-date` 로 알아서 정렬하지만 README 는 정적이라 손으로 지켜야 한다.
+- 루트 `index.html` 갤러리 카드의 `href` 도 새 경로(`./<YYYY>/<slug>/` 또는 `./p/<slug>/`)로 넣는다.
+- `404.html` 의 리다이렉트 맵(`map` 객체)에 `"<slug>":"<새 경로>"` 항목을 추가해 둔다(구 슬러그 진실원본).
 
 ---
 
 ## 5. 검증 (셸 명령 1회)
 
 이 SKILL.md 와 같은 디렉터리의 `til-verify.sh` 로 doctype·favicon(`rel="icon"`)·`og:title`·Cloudflare
-beacon·갤러리 카드/README 행의 `<slug>/` 참조 일관성을 일괄 확인한다. FAIL 항목이 있으면 보정
-후 재실행한다.
+beacon·갤러리 카드/README 행의 새 경로 참조 일관성을 일괄 확인한다. FAIL 항목이 있으면 보정
+후 재실행한다. 인자는 슬러그가 아니라 **새 상대경로**다.
 
 ```
-bash ~/.codex/skills/publish-til/til-verify.sh <slug>
+bash ~/.codex/skills/publish-til/til-verify.sh <YYYY>/<slug>   # 지원 페이지면 p/<slug>
 ```
 
 - 빌드·테스트 없음(정적 파일). 로컬 미리보기(`python3 -m http.server`)는 사용자가 요청할 때만.
@@ -99,7 +130,7 @@ bash ~/.codex/skills/publish-til/til-verify.sh <slug>
 `request_user_input` 없이 즉시 진행한다. 저장소의 PLAN.md 진행 상황 갱신이 필요하면 같은 커밋에 포함한다(저장소 커밋 규칙).
 
 ```bash
-git add <slug> index.html README.md
+git add <YYYY>/<slug> index.html README.md 404.html   # 지원 페이지면 p/<slug>
 git commit -m "[publish] <slug> 페이지 추가 — <한 줄 제목>"
 git push origin main
 ```
@@ -112,7 +143,7 @@ git push origin main
 ## 7. 최종 보고
 
 - 신규 디렉터리 경로와 커밋 SHA
-- **URL: `https://kil9.github.io/til/<slug>/`**
+- **URL: `https://kil9.github.io/til/<YYYY>/<slug>/`** (지원 페이지면 `https://kil9.github.io/til/p/<slug>/`)
 - GitHub Pages 는 push 후 몇십 초 뒤 자동 반영된다는 안내(첫 빌드는 조금 더 걸릴 수 있음). 필요하면 `gh api repos/kil9/til/pages --jq '.status'` 로 상태 확인.
 
 ---

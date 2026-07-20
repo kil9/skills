@@ -1,0 +1,4 @@
+interface:
+  display_name: "Skill Creator"
+  short_description: "Reference vocabulary and principles for writing predictable skills"
+  default_prompt: "Use $skill-creator as reference when writing or revising a skill: invocation mode, description writing, information hierarchy, when to split, pruning, leading words, and failure modes."
