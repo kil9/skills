@@ -1,1 +1,1 @@
-../next-task/plan-context.sh
+../../../claude/skills/next-backlog/plan-context.sh

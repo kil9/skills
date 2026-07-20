@@ -60,4 +60,4 @@ backlog task create "<제목>" --ac "<완료 조건>" --dep task-N --priority hi
 
 생성한 태스크 목록과 doc 경로를 보고하고 **멈춘다. 구현은 시작하지 않는다**(생산자 원칙: 이 스킬은 계획 수립까지만 담당한다). 소비는 `/start-task`(순차)·`/parallel-tasks`(병렬) 몫임을 안내한다. 사용자가 이 세션에서 바로 진행하라고 명시적으로 지시할 때만 `/start-task` 절차로 이어간다.
 
-계획에 태스크를 더 얹거나 보류 아이디어를 관리하려면 `/add-task`·`/add-draft`, 다음 착수 후보 조회는 `/next-task` 를 쓴다.
+계획에 태스크를 더 얹거나 보류 아이디어를 관리하려면 `/add-task`·`/add-draft`, 다음 착수 후보 조회는 `/next-backlog` 를 쓴다.

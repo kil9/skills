@@ -1,5 +1,5 @@
 ---
-description: 저장소의 backlog 태스크(없으면 최근 PLAN_*.md 계획)를 우선순위·의존 순서대로 끝까지 구현·검증·커밋한다. "태스크 시작 / 다음 태스크 해줘 / 이거 구현해줘 / start task / 백로그 진행해줘" 라고 할 때 사용한다. 인자 없으면 backlog 에서 고르고, 태스크 번호를 지정하면 그 태스크만, 새 작업을 서술하면 태스크로 등록 후 바로 진행한다. 후보만 추리는 것은 /next-task, 남은 것을 자율 드레인하는 것은 /loop-task 다.
+description: 저장소의 backlog 태스크(없으면 최근 PLAN_*.md 계획)를 우선순위·의존 순서대로 끝까지 구현·검증·커밋한다. "태스크 시작 / 다음 태스크 해줘 / 이거 구현해줘 / start task / 백로그 진행해줘" 라고 할 때 사용한다. 인자 없으면 backlog 에서 고르고, 태스크 번호를 지정하면 그 태스크만, 새 작업을 서술하면 태스크로 등록 후 바로 진행한다. 후보만 추리는 것은 /next-backlog, 남은 것을 자율 드레인하는 것은 /loop-task 다.
 allowed_tools: [Bash, Read, Edit, Write, Glob, Grep, AskUserQuestion, Skill]
 ---
 

@@ -119,7 +119,7 @@ PLAN 이관: <오늘 날짜>. 착수 전 상세 인터뷰 필요."
 
 ```markdown
 > **아카이브 (YYYY-MM-DD)**: 이 파일은 backlog 백엔드로 전환되어 더 이상 갱신하지 않는다.
-> 미완료 태스크는 backlog(`backlog/`)로 이관됨 — 조회는 `/next-task`. 아이디어는 draft 로 이관.
+> 미완료 태스크는 backlog(`backlog/`)로 이관됨 — 조회는 `/next-backlog`. 아이디어는 draft 로 이관.
 > 완료 이력·전환 시 옮기지 않은 서술의 아카이브로만 유지한다.
 ```
 
@@ -131,4 +131,4 @@ PLAN 이관: <오늘 날짜>. 착수 전 상세 인터뷰 필요."
 옮긴 것을 요약한다: 생성한 태스크(구 T-N → 새 task-N, 상태), draft(구 I-N), doc/decision, 아카이브한
 PLAN 파일. 옮기지 않은 것(완료 `[x]` 이력)이 아카이브 원문에 남아 있음을 밝힌다. **여기서 멈춘다 —
 구현은 시작하지 않는다.** 이관된 태스크의 소비는 `/start-task`(순차)·`/parallel-tasks`(병렬) 몫이고,
-다음 착수 후보 조회는 `/next-task`, 태스크·아이디어 추가는 `/add-task`·`/add-draft` 임을 안내한다.
+다음 착수 후보 조회는 `/next-backlog`, 태스크·아이디어 추가는 `/add-task`·`/add-draft` 임을 안내한다.

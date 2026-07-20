@@ -1,4 +1,0 @@
-interface:
-  display_name: "Backlog Next Milestone"
-  short_description: "Show milestone progress dashboard, recommend next milestone"
-  default_prompt: "Use $next-milestone to show the whole milestone progress dashboard and tell me which milestone to push next."

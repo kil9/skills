@@ -1,4 +1,0 @@
-interface:
-  display_name: "Backlog Next Task"
-  short_description: "Survey the backlog, suggest next task candidates"
-  default_prompt: "Use $next-task to skim the backlog and tell me which task to tackle next, without any extra investigation."

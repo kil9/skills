@@ -1,0 +1,4 @@
+interface:
+  display_name: "Backlog Next"
+  short_description: "List remaining tasks grouped by milestone, recommend what to tackle next"
+  default_prompt: "Use $next-backlog to show milestone progress with the remaining tasks under each, and tell me what to tackle next, without any extra investigation."
