@@ -1,0 +1,4 @@
+interface:
+  display_name: "Manage Gmail Inbox"
+  short_description: "Brief unread personal Gmail by topic group and clear the obvious ones after approval"
+  default_prompt: "Use $manage-gmail-inbox to brief my unread Gmail and clear the obvious ones."

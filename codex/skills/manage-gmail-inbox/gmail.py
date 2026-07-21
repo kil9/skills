@@ -1,0 +1,1 @@
+../../../claude/skills/manage-gmail-inbox/gmail.py
