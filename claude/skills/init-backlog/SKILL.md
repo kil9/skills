@@ -1,5 +1,5 @@
 ---
-description: 작업 계획을 수립하고 현재 저장소를 backlog 백엔드로 초기화한다. 산문은 backlog/docs/, 태스크는 `backlog task create` 로 만든다. 구현은 시작하지 않는다(소비는 /start-task·/parallel-tasks 몫). 사용자가 명시적으로 지시할 때만 이어서 진행한다.
+description: 작업 계획을 수립하고 현재 저장소를 backlog 백엔드로 초기화한다. 산문은 backlog/docs/, 태스크는 `backlog task create` 로 만든다. 구현은 시작하지 않는다(소비는 /start-backlog·/parallel-tasks 몫). 사용자가 명시적으로 지시할 때만 이어서 진행한다.
 allowed_tools: [Bash, Read, Edit, Glob, Grep, AskUserQuestion]
 ---
 
@@ -58,6 +58,6 @@ backlog task create "<제목>" --ac "<완료 조건>" --dep task-N --priority hi
 
 ## 마무리
 
-생성한 태스크 목록과 doc 경로를 보고하고 **멈춘다. 구현은 시작하지 않는다**(생산자 원칙: 이 스킬은 계획 수립까지만 담당한다). 소비는 `/start-task`(순차)·`/parallel-tasks`(병렬) 몫임을 안내한다. 사용자가 이 세션에서 바로 진행하라고 명시적으로 지시할 때만 `/start-task` 절차로 이어간다.
+생성한 태스크 목록과 doc 경로를 보고하고 **멈춘다. 구현은 시작하지 않는다**(생산자 원칙: 이 스킬은 계획 수립까지만 담당한다). 소비는 `/start-backlog`(순차)·`/parallel-tasks`(병렬) 몫임을 안내한다. 사용자가 이 세션에서 바로 진행하라고 명시적으로 지시할 때만 `/start-backlog` 절차로 이어간다.
 
 계획에 태스크를 더 얹거나 보류 아이디어를 관리하려면 `/add-task`·`/add-draft`, 다음 착수 후보 조회는 `/next-backlog` 를 쓴다.

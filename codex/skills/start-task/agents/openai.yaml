@@ -1,4 +1,0 @@
-interface:
-  display_name: "Backlog Start Task"
-  short_description: "Work through backlog tasks in dependency order: implement, verify, commit"
-  default_prompt: "Use $start-task to work through the backlog in priority and dependency order, completing implement-verify-commit for each task."

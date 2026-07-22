@@ -1,5 +1,5 @@
 ---
-description: 작업 계획을 수립하고 단일 PLAN_XXX.md 마스터 문서(backlog 미사용 레거시 포맷)를 만든다. 구현은 시작하지 않는다(소비는 /start-task·/parallel-tasks 의 레거시 모드 몫). 사용자가 명시적으로 지시할 때만 이어서 진행한다.
+description: 작업 계획을 수립하고 단일 PLAN_XXX.md 마스터 문서(backlog 미사용 레거시 포맷)를 만든다. 구현은 시작하지 않는다(소비는 /start-backlog·/parallel-tasks 의 레거시 모드 몫). 사용자가 명시적으로 지시할 때만 이어서 진행한다.
 allowed_tools: [Bash, Read, Edit, Write, Glob, Grep, AskUserQuestion]
 ---
 
@@ -23,7 +23,7 @@ allowed_tools: [Bash, Read, Edit, Write, Glob, Grep, AskUserQuestion]
 - `[x]` DONE: 검증·커밋까지 완료.
 - `[!]` BLOCKED: 사람의 개입·외부 요인 해소(사용자 결정 대기, 외부 시스템·권한 등) 없이는 진행 불가. 상태 라인에 사유 한 줄을 반드시 병기한다. 재실행으로 풀릴 수 있는 단순 자동 실행 실패는 BLOCKED 가 아니라 TODO 유지 + 실패 로그 append 다.
 
-**태스크 표준 필드.** 각 `T-N` 태스크 본문에는 다음 필드를 반드시 적는다. 소비자 스킬(`/start-task`·`/parallel-tasks` 의 레거시 모드)이 이 필드로 검증 기준과 병렬 안전성을 판단한다.
+**태스크 표준 필드.** 각 `T-N` 태스크 본문에는 다음 필드를 반드시 적는다. 소비자 스킬(`/start-backlog`·`/parallel-tasks` 의 레거시 모드)이 이 필드로 검증 기준과 병렬 안전성을 판단한다.
 
 ```markdown
 ### T-N. <제목>
@@ -34,6 +34,6 @@ allowed_tools: [Bash, Read, Edit, Write, Glob, Grep, AskUserQuestion]
 - 접수: YYYY-MM-DD
 ```
 
-아직 착수하지 않을 후보 아이디어가 있으면 태스크(`T-N`)로 넣지 말고 별도 `## 아이디어 (보류)` 섹션에 `I-N` 으로 적는다(start-task 진행 대상 아님, 착수 지시 시 상세 인터뷰 후 태스크로 편입). 아이디어 추가·관리는 `/add-draft` 스킬을 쓴다.
+아직 착수하지 않을 후보 아이디어가 있으면 태스크(`T-N`)로 넣지 말고 별도 `## 아이디어 (보류)` 섹션에 `I-N` 으로 적는다(start-backlog 진행 대상 아님, 착수 지시 시 상세 인터뷰 후 태스크로 편입). 아이디어 추가·관리는 `/add-draft` 스킬을 쓴다.
 
-PLAN 경로와 태스크 목록을 보고하고 **멈춘다. 구현은 시작하지 않는다**(생산자 원칙: 이 스킬은 계획 수립까지만 담당한다). 소비는 별도 세션의 `/start-task`(순차)·`/parallel-tasks`(worktree 병렬) 레거시 모드 몫임을 안내한다. 사용자가 이 세션에서 바로 진행하라고 명시적으로 지시할 때만 `/start-task` 절차(구현 → 검증 → 커밋을 태스크 단위로 완결)로 이어간다.
+PLAN 경로와 태스크 목록을 보고하고 **멈춘다. 구현은 시작하지 않는다**(생산자 원칙: 이 스킬은 계획 수립까지만 담당한다). 소비는 별도 세션의 `/start-backlog`(순차)·`/parallel-tasks`(worktree 병렬) 레거시 모드 몫임을 안내한다. 사용자가 이 세션에서 바로 진행하라고 명시적으로 지시할 때만 `/start-backlog` 절차(구현 → 검증 → 커밋을 태스크 단위로 완결)로 이어간다.
