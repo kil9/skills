@@ -1,6 +1,6 @@
 # kil9/skills
 
-개인용 에이전트 스킬 모음. Claude Code 를 원본으로 하고 Codex·Gemini(Antigravity) 미러를 함께 관리한다.
+개인용 에이전트 스킬 모음. Claude Code 를 원본으로 하고 Codex 미러를 함께 관리한다.
 
 ## 구조
 
@@ -8,14 +8,12 @@
 claude/skills/<skill>/   # 원본 (SKILL.md + 부속 스크립트 실체)
 claude/agents/<name>.md  # Claude Code 서브에이전트 정의 (claude 전용, 미러 없음)
 codex/skills/<skill>/    # 미러 (SKILL.md + agents/openai.yaml, 스크립트는 상대 심링크)
-gemini/skills/<skill>/   # 미러 (SKILL.md 만, 스크립트는 상대 심링크)
-.agents/skills           # → gemini/skills (Antigravity 소비용)
 ```
 
 - 미러는 claude 본문에 **도구명 치환만** 얹은 사본이다. 독자 재작성·확장은 금지 — 드리프트가 보이면 claude 원본 기준으로 재생성한다. 새 범용 스킬은 claude·codex 를 함께 맞춘다.
   - codex: `AskUserQuestion`→`request_user_input`, `` `/스킬` ``→`` `$스킬` ``, 서브에이전트→worker agent(+`tool_search` 노출).
-  - **gemini(Antigravity) 미러는 의도적으로 갱신하지 않는다**(2026-07-20 결정). Antigravity 를 거의 안 써서 미러 유지 비용(스킬마다 세 번째 사본을 다시 쓰는 토큰)이 값을 못 한다. 기존 `gemini/skills/` 는 지우지 않고 그대로 두되 **stale 로 간주**한다 — 다시 쓰기로 하면 그 시점에 claude 원본 기준으로 재생성한다. 치환 규칙은 참고용으로 남긴다: →`ask_question`, `invoke_subagent`, `view_file` 등.
-  - backlog 스킬군(init-backlog, add-task, add-milestone, add-draft, next-backlog, start-task, parallel-tasks, migrate-to-backlog, cleanup-tasks, loop-backlog 등)은 CLI(backlog) 기반이라 backlog CLI 명령 블록은 세 에이전트 공통 무치환이고, 치환은 인터뷰 도구명·스킬 참조 표기·워커 오케스트레이션 문단 정도다.
+  - **gemini(Antigravity) 미러는 두지 않는다.** 2026-07-20 에 갱신을 멈췄고(Antigravity 를 거의 안 써서 스킬마다 세 번째 사본을 다시 쓰는 토큰이 값을 못 했다), 2026-07-23 에 실물 `gemini/skills/`(+ 소비용 `.agents/skills` 심링크)를 지웠다. 남겨 둔 stale 사본이 스킬 이름을 바꾸거나 본문을 고칠 때마다 "이것도 같이 고쳐야 하나" 를 되묻게 만드는 값이 유지 비용의 전부였기 때문이다. 다시 쓰기로 하면 **claude 원본에서 새로 굽는다** — 옛 사본을 되살리지 말 것(지운 시점에 이미 loop-task·next-task 시절 이름이었다). 원문은 git history 에 있고, 치환 규칙은 참고용으로 남긴다: →`ask_question`, `invoke_subagent`, `view_file` 등.
+  - backlog 스킬군(init-backlog, add-task, add-milestone, add-draft, next-backlog, start-task, parallel-tasks, migrate-to-backlog, cleanup-tasks, loop-backlog 등)은 CLI(backlog) 기반이라 backlog CLI 명령 블록은 두 에이전트 공통 무치환이고, 치환은 인터뷰 도구명·스킬 참조 표기·워커 오케스트레이션 문단 정도다.
 - 부속 스크립트(`.sh` 뿐 아니라 `GLOSSARY.md` 같은 부속 문서도)는 claude 원본에만 실체를 두고 미러에는 상대 심링크를 둔다(드리프트 원천 차단).
 - **에이전트에 대응물이 없어 보이는 개념**은 치환이 아니라 판단이 필요하다. 3단으로 가른다.
   1. **기계적 치환**(항상): 도구명·호출 표기·frontmatter 축소.
@@ -33,7 +31,7 @@ for s in ~/work/skills/claude/skills/*/; do
 done
 ```
 
-Codex 는 `~/.codex/skills/`, Antigravity 는 repo 의 `.agents/skills` 를 그대로 읽는다.
+Codex 는 `~/.codex/skills/` 를 읽는다.
 
 ## 스킬 개요
 

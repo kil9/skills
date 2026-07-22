@@ -1,1 +1,0 @@
-../../../claude/skills/next-backlog/plan-context.sh
