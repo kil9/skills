@@ -1,29 +1,31 @@
 ---
 name: explain-diff
-description: Use when the user asks for a rich explanation of a code change, diff, branch, or PR. Produces HTML output.
+description: 코드 변경·diff·브랜치·PR 에 대한 풍부한 설명을 요청할 때 사용한다. HTML 파일로 출력한다.
 ---
 
 # Explain Diff
 
-Please make me a rich, interactive explanation of the specified code change.
+지정한 코드 변경에 대해 풍부하고 인터랙티브한 설명을 만들어라.
 
-It should have these sections:
+다음 섹션들을 포함해야 한다:
 
-- Background: Explain the existing system relevant to this change. (You should broadly explore surrounding code for this.) We don't know how much the reader already knows, so include a deep background for beginners (note that it can be skipped if the reader is already familiar), and then a more narrow background directly relevant to the change.
-- Intuition: Explain the core intuition for the code change. The focus here is to explain the essence, not the full details. Use concrete examples with toy data. Use figures and diagrams liberally.
-- Code: Do a high-level walkthrough of the changes to the code. Group/order the changes in an understandable way.
-- Quiz: Come up with five questions that test the reader's knowledge of this PR. This should be medium difficulty, difficult enough that you actually need to understand the substance of the PR to answer them, but not gotchas. The goal is to help the reader make sure that they've actually understood. These should be presented as interactive multiple-choice questions, and when the user clicks, it tells them whether they were correct and gives feedback.
+- **Background(배경)**: 이 변경과 관련된 기존 시스템을 설명한다. (이를 위해 주변 코드를 폭넓게 탐색해야 한다.) 독자가 얼마나 알고 있는지 모르므로, 초심자를 위한 깊은 배경 설명을 먼저 넣되(이미 익숙한 독자는 건너뛸 수 있다고 표시한다), 이어서 이 변경에 직접 관련된 좁은 배경을 설명한다.
+- **Intuition(직관)**: 코드 변경의 핵심 직관을 설명한다. 여기서는 세부 전체가 아니라 본질을 설명하는 데 집중한다. 장난감 데이터(toy data)를 쓴 구체적 예시를 든다. 그림과 다이어그램을 아낌없이 사용한다.
+- **Code(코드)**: 코드 변경을 고수준으로 훑는다. 이해하기 쉬운 방식으로 변경을 묶고 순서를 정한다.
+- **Quiz(퀴즈)**: 이 PR 에 대한 독자의 이해를 테스트하는 질문 다섯 개를 만든다. 난이도는 중간 — PR 의 실질을 실제로 이해해야 풀 수 있을 만큼 어렵되, 함정 문제(gotcha)는 아니어야 한다. 목표는 독자가 정말로 이해했는지 스스로 확인하도록 돕는 것이다. 인터랙티브 객관식 문항으로 제시하고, 사용자가 선택지를 클릭하면 정답 여부와 피드백을 알려준다.
+  - **정답 위치를 무작위로 한다.** 렌더링 시점에 JavaScript 로 각 문항의 선택지 순서를 독립적으로 섞어(shuffle), 페이지를 열 때마다 정답 위치가 매번 달라지게 한다. 정답은 인덱스가 아니라 안정적인 식별자(정답 텍스트나 `isCorrect` 같은 플래그)로 추적해, 셔플 뒤에도 채점이 어긋나지 않게 한다. 특정 위치(특히 두 번째)에 정답이 몰리는 것을 막는 것이 목적이다.
+  - **선택지 길이·구체성을 고르게 맞춘다.** 정답이 항상 가장 길거나 가장 자세한 문항이 되지 않도록, 모든 선택지(정답·오답)의 길이·문법 형태·구체성 수준을 서로 비슷하게 맞춘다. 오답도 정답만큼 그럴듯하고 구체적으로 쓴다 — 문항 길이나 단정 회피 표현(hedging)만 보고 정답을 추측할 수 없어야 한다.
 
-Format:
+형식:
 
-- Output a single self-contained HTML file which includes CSS and JavaScript. Make the whole thing one long page with section headers and a table of contents. Don't use tabs for the top-level structure. Basic responsive styling so you can view it on a phone is nice too. Put the file in a global place on my computer outside of the code repo, and make sure the filename always starts with today's date in `YYYY-MM-DD-` format, because it helps keep the files time-sorted and out of version control. For example: /tmp/2026-01-12-explanation-<slug>.html
-- Please write with the clarity and flow of Martin Kleppmann, making it engaging and written in classic style. Transitions between sections should be smooth.
-- Some tips on diagrams. Ideally, you should pick a small number of diagram families that can be reused throughout the explanation to explain various cases. Some useful kinds of diagrams:
-  - A very simplified version of the UI that the user sees in the app, to explain UI changes.
-  - A system diagram showing data flow or communication between components. Make sure to include example data here!
-- Don't use ASCII diagrams. Always use simple HTML designs for your diagrams, HTML lists for lists of things, etc.
-  - For code blocks, always use `<pre>` tags. If you use a custom styled div instead, it **must** have
-    `white-space: pre-wrap` in its CSS, or the browser will collapse all newlines into a single line.
-    Before saving the file, scan each code block in the HTML source and confirm its CSS includes
-    `white-space: pre` or `pre-wrap`.
-- Use callouts for key concepts or definitions, important edge cases, etc.
+- CSS·JavaScript 를 모두 포함한 자기완결적(self-contained) HTML 파일 하나로 출력한다. 전체를 섹션 헤더와 목차(table of contents)가 있는 하나의 긴 페이지로 만든다. 최상위 구조에 탭(tab)을 쓰지 말라. 휴대폰에서도 볼 수 있도록 기본적인 반응형 스타일도 넣으면 좋다. 파일은 코드 저장소 바깥, 내 컴퓨터의 전역 위치에 두고, 파일명은 항상 오늘 날짜를 `YYYY-MM-DD-` 형식으로 시작하게 한다 — 파일을 시간순으로 정렬하고 버전 관리에서 빼두는 데 도움이 된다. 예: /tmp/2026-01-12-explanation-<slug>.html
+- Martin Kleppmann 의 명료함과 흐름으로 쓰되, 흥미롭고 고전적 문체(classic style)로 작성한다. 섹션 간 전환이 매끄러워야 한다.
+- 다이어그램 팁. 이상적으로는 재사용 가능한 소수의 다이어그램 계열(family)을 골라 여러 경우를 설명하는 데 반복해서 쓴다. 유용한 다이어그램 종류:
+  - 앱에서 사용자가 보는 UI 를 매우 단순화한 버전 — UI 변경을 설명할 때.
+  - 컴포넌트 간 데이터 흐름·통신을 보여주는 시스템 다이어그램. 여기에는 예시 데이터를 꼭 포함한다!
+- ASCII 다이어그램을 쓰지 말라. 다이어그램은 항상 단순한 HTML 디자인으로, 목록은 HTML 리스트로 그린다.
+  - 코드 블록에는 항상 `<pre>` 태그를 쓴다. 커스텀 스타일 div 를 대신 쓴다면 그 CSS 에 반드시
+    `white-space: pre-wrap` 이 있어야 한다 — 없으면 브라우저가 모든 개행을 한 줄로 합쳐버린다.
+    파일을 저장하기 전에 HTML 소스의 각 코드 블록을 훑어 CSS 에 `white-space: pre` 또는
+    `pre-wrap` 이 들어 있는지 확인한다.
+- 핵심 개념·정의, 중요한 엣지 케이스 등에는 콜아웃(callout)을 사용한다.
