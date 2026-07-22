@@ -40,7 +40,7 @@ ready set = 지금 스스로 착수 가능한 태스크:
 기존 태스크 완료에 **실제로 필요한** 선행·후속 작업(누락된 마이그레이션, 선행 리팩터, AC 를 막는 버그 등)을 발견하면 즉시 태스크로 만들어 다음 라운드가 집게 한다:
 
 ```
-backlog task create "<제목>" -d "loop-task 자동 추가: <발견 맥락·왜 필요>" --ac "<완료 조건>" [--dep task-N] [--priority high|medium|low]
+backlog task create "<제목>" -d "loop-backlog 자동 추가: <발견 맥락·왜 필요>" --ac "<완료 조건>" [--dep task-N] [--priority high|medium|low]
 ```
 
 인터뷰(`/add-task`)는 하지 않고 완료 조건을 스스로 도출한다.

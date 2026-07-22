@@ -1,5 +1,5 @@
 ---
-name: loop-task
+name: loop-backlog
 description: backlog 태스크를 스스로 진행 가능한 것이 남지 않을 때까지 라운드 단위로 자율 드레인한다. 라운드마다 fresh 재조회로 외부·사용자 추가분을 흡수하고, 진행 중 필요한 선행·후속 작업은 자동으로 태스크로 추가하며, 기본은 순차(솔로)이고 병렬은 $parallel-tasks 의 함정을 인지하고도 이득이 분명할 때만 쓴다. 빈 조회를 연속 2회 확인해야 종료한다.
 ---
 
@@ -40,7 +40,7 @@ ready set = 지금 스스로 착수 가능한 태스크:
 기존 태스크 완료에 **실제로 필요한** 선행·후속 작업(누락된 마이그레이션, 선행 리팩터, AC 를 막는 버그 등)을 발견하면 즉시 태스크로 만들어 다음 라운드가 집게 한다:
 
 ```
-backlog task create "<제목>" -d "loop-task 자동 추가: <발견 맥락·왜 필요>" --ac "<완료 조건>" [--dep task-N] [--priority high|medium|low]
+backlog task create "<제목>" -d "loop-backlog 자동 추가: <발견 맥락·왜 필요>" --ac "<완료 조건>" [--dep task-N] [--priority high|medium|low]
 ```
 
 인터뷰(`$add-task`)는 하지 않고 완료 조건을 스스로 도출한다.
