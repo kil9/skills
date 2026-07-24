@@ -1,6 +1,7 @@
 ---
 description: 코드 변경·diff·브랜치·PR 에 대한 풍부한 설명을 요청할 때 사용한다. HTML 파일로 출력한다.
 allowed_tools: [Bash, Read, Glob, Grep, Write]
+disable-model-invocation: true
 ---
 
 # Explain Diff
@@ -18,7 +19,8 @@ allowed_tools: [Bash, Read, Glob, Grep, Write]
 
 형식:
 
-- CSS·JavaScript 를 모두 포함한 자기완결적(self-contained) HTML 파일 하나로 출력한다. 전체를 섹션 헤더와 목차(table of contents)가 있는 하나의 긴 페이지로 만든다. 최상위 구조에 탭(tab)을 쓰지 말라. 휴대폰에서도 볼 수 있도록 기본적인 반응형 스타일도 넣으면 좋다. 파일은 코드 저장소 바깥, 내 컴퓨터의 전역 위치에 두고, 파일명은 항상 오늘 날짜를 `YYYY-MM-DD-` 형식으로 시작하게 한다 — 파일을 시간순으로 정렬하고 버전 관리에서 빼두는 데 도움이 된다. 예: /tmp/2026-01-12-explanation-<slug>.html
+- CSS·JavaScript 를 모두 포함한 자기완결적(self-contained) HTML 파일 하나로 출력한다. 전체를 섹션 헤더와 목차(table of contents)가 있는 하나의 긴 페이지로 만든다. 최상위 구조에 탭(tab)을 쓰지 말라. 휴대폰에서도 볼 수 있도록 기본적인 반응형 스타일도 넣으면 좋다. 파일은 코드 저장소 바깥, 내 컴퓨터의 전역 위치에 두고, 파일명은 항상 오늘 날짜를 `YYYY-MM-DD-` 형식으로 시작하게 한다 — 파일을 시간순으로 정렬하고 버전 관리에서 빼두는 데 도움이 된다. 사용자가 별도로 출력 경로를 지정하지 않으면 `/tmp/<레포지토리이름>/` 디렉터리 아래에 만든다(없으면 먼저 생성한다). 레포지토리 이름은 `git rev-parse --show-toplevel` 의 basename 을 쓴다. 예: 레포지토리가 `scopic-api` 라면 /tmp/scopic-api/2026-01-12-explanation-<slug>.html
+- **디자인 시스템**: CSS 를 작성하기 전에 이 스킬 디렉터리의 `design-system.md` 를 반드시 읽고, 거기 정의된 색상·타이포그래피·간격·컴포넌트 토큰을 따른다. cream 캔버스 + coral 액센트 + serif 디스플레이가 기본 룩이며, 목차·콜아웃·코드 블록·퀴즈 카드 등 모든 UI 요소를 이 토큰으로 스타일링해 매번 일관된 결과가 나오게 한다.
 - Martin Kleppmann 의 명료함과 흐름으로 쓰되, 흥미롭고 고전적 문체(classic style)로 작성한다. 섹션 간 전환이 매끄러워야 한다.
 - 다이어그램 팁. 이상적으로는 재사용 가능한 소수의 다이어그램 계열(family)을 골라 여러 경우를 설명하는 데 반복해서 쓴다. 유용한 다이어그램 종류:
   - 앱에서 사용자가 보는 UI 를 매우 단순화한 버전 — UI 변경을 설명할 때.
