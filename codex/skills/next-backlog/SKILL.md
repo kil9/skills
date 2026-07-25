@@ -17,9 +17,9 @@ description: backlog(또는 PLAN.md)를 훑어 남은 태스크를 마일스톤�
 
 ## 1. 모드 감지
 
-repo 루트에 `backlog/` 디렉터리(또는 `backlog/config.yml`)가 있으면 **backlog 모드**(§2-5), 없으면 **레거시 모드**(§6)로 동작한다. backlog 모드가 기본이다.
+backlog 모드면 §2-5, 레거시 모드면 §6 으로 간다. 공통 전제(설치 명령·`--plain` 규칙·모드 판별·상태 4종)는 [`../references/backlog-basics.md`](../references/backlog-basics.md).
 
-**CLI 없으면 중단.** backlog 모드면 `command -v backlog` 로 확인한다. 없으면 태스크 파일을 직접 읽어 폴백하지 말고(상태·의존·마일스톤을 잘못 읽는다) `bash "${K9HOME:-$HOME/kil9conf}/bootstrap/install-backlog-md.sh"` 설치를 안내한 뒤 멈춘다.
+**CLI 없으면 중단.** `command -v backlog` 로 확인하고, 없으면 파일 손편집으로 폴백하지 말고 설치를 안내한 뒤 멈춘다.
 
 ## 2. 수집 (backlog 모드)
 

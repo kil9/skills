@@ -8,10 +8,7 @@ description: 아직 착수하지 않을 아이디어를 보류 항목으로 기�
 아직 착수하지 않을, 나중에 정식 태스크로 편입할 후보를 보류 항목으로 기록한다. 승격(draft/아이디어 →
 태스크)은 이 스킬이 아니라 `$add-task` 의 몫이다.
 
-**모드 판별.** repo 루트에 `backlog/` 디렉터리(`backlog/config.yml`)가 있으면 **backlog 모드**,
-없으면 **레거시(PLAN.md) 모드**로 동작한다.
-
-플랜 파일도 `backlog/` 도 없는 새 저장소면 `$init-backlog` 으로 먼저 초기화하도록 안내한다.
+공통 전제(설치 명령·`--plain` 규칙·모드 판별·상태 4종)는 [`../references/backlog-basics.md`](../references/backlog-basics.md). 둘 다 없는 새 저장소면 `$init-backlog` 으로 먼저 초기화하도록 안내한다.
 
 ## 하지 않는 것 (양 모드 공통)
 
@@ -23,7 +20,7 @@ description: 아직 착수하지 않을 아이디어를 보류 항목으로 기�
 
 ## backlog 모드
 
-**CLI 없으면 중단.** 시작 전 `command -v backlog` 로 확인한다. 없으면 draft 파일 손편집으로 폴백하지 말고(`SECTION:` 마커·ordinal·AC 포맷이 조용히 어긋난다) `bash "${K9HOME:-$HOME/kil9conf}/bootstrap/install-backlog-md.sh"` 설치를 안내한 뒤 멈춘다.
+**CLI 없으면 중단.** `command -v backlog` 로 확인하고, 없으면 파일 손편집으로 폴백하지 말고 설치를 안내한 뒤 멈춘다.
 
 사용자 구상을 **손실 없이** 담아 draft 로 기록한다(승격 시 인터뷰·구현의 출발점이 되도록).
 

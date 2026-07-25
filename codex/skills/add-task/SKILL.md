@@ -5,16 +5,14 @@ description: 새 태스크를 하나 추가한다(인터뷰로 완료 조건·�
 
 추가할 태스크: `$ARGUMENTS`
 
-**모드 판별.** repo 루트에 `backlog/` 디렉터리(`backlog/config.yml`)가 있으면 **backlog 모드**,
-없으면 **레거시(PLAN.md) 모드**로 동작한다. 어느 모드든 구현·커밋은 하지 않는다 — 태스크만 만든다.
-
-플랜 파일도 `backlog/` 도 없는 새 저장소면 `$init-backlog` 으로 먼저 초기화하도록 안내한다.
+공통 전제(설치 명령·`--plain` 규칙·모드 판별·상태 4종)는 [`../references/backlog-basics.md`](../references/backlog-basics.md). 어느 모드든 구현·커밋은 하지 않는다 — 태스크만 만든다. 둘 다 없는 새 저장소면
+`$init-backlog` 으로 먼저 초기화하도록 안내한다.
 
 ---
 
 ## backlog 모드
 
-**CLI 없으면 중단.** 시작 전 `command -v backlog` 로 확인한다. 없으면 태스크 파일 손편집으로 폴백하지 말고(`SECTION:` 마커·ordinal·AC 포맷이 조용히 어긋난다) `bash "${K9HOME:-$HOME/kil9conf}/bootstrap/install-backlog-md.sh"` 설치를 안내한 뒤 멈춘다.
+**CLI 없으면 중단.** `command -v backlog` 로 확인하고, 없으면 파일 손편집으로 폴백하지 말고 설치를 안내한 뒤 멈춘다.
 
 먼저 위임·승격 여부부터 가른다.
 

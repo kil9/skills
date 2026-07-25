@@ -5,9 +5,9 @@ description: 상호 의존이 없는 태스크들을 에이전트 팀이 worktre
 
 미완료 태스크 중 상호 의존이 없는 것들을 named 백그라운드 worker agent(필요하면 먼저 `tool_search` 로 multi-agent 도구를 노출한다)에게 배분해 각자 worktree 에서 구현·검증·커밋시키고, 성공한 브랜치를 base(보통 main)에 순차 fast-forward 머지한다. **PR 은 만들지 않고**, 태스크 사이에 사용자 확인도 묻지 않는다. multi-agent 도구가 없으면 worker agent fire-and-collect 로 폴백한다. 사용자가 명시적으로 herdr pane 사용을 지시한 경우에만 "herdr pane 모드"로 워커를 돌린다. `HERDR_ENV=1` 이라는 이유만으로 자동 전환하지 않는다.
 
-**모드 감지**: repo 루트에 `backlog/`(또는 `backlog/config.yml`)가 있으면 **backlog 모드**(기본 서술), 없으면 **레거시 PLAN.md 모드**(맨 아래 절). backlog 조회는 전부 `--plain` 으로 하고 board/browser 는 실행하지 않는다.
+**모드 감지**: backlog 모드면 기본 서술, 레거시 PLAN.md 모드면 맨 아래 절. 공통 전제(설치 명령·`--plain` 규칙·모드 판별·상태 4종)는 [`../references/backlog-basics.md`](../references/backlog-basics.md).
 
-**CLI 없으면 중단**: backlog 모드면 `command -v backlog` 로 확인한다. 없으면 태스크 파일 손편집으로 폴백하지 말고(`SECTION:` 마커·ordinal·AC 포맷이 조용히 어긋나고, 팀원마다 제각각 깨진다) `bash "${K9HOME:-$HOME/kil9conf}/bootstrap/install-backlog-md.sh"` 설치를 안내한 뒤 멈춘다. 팀원 worktree 도 같은 PATH 를 쓰므로 리드에서 없으면 팀원에게도 없다.
+**CLI 없으면 중단.** `command -v backlog` 로 확인하고, 없으면 파일 손편집으로 폴백하지 말고 설치를 안내한 뒤 멈춘다. 손편집의 어긋남이 팀원마다 제각각 번진다. 팀원 worktree 도 같은 PATH 를 쓰므로 리드에서 없으면 팀원에게도 없다.
 
 ## 태스크 추출 (backlog 모드)
 

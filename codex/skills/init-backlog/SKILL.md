@@ -7,9 +7,7 @@ description: 작업 계획을 수립하고 저장소를 backlog 백엔드로 초
 
 이 스킬은 backlog 도입점이다. 저장소를 backlog 백엔드로 초기화하고 계획을 태스크로 심는다. 기존 PLAN.md 가 있어도 새 PLAN 파일을 만들지 않고 backlog 를 쓴다(기존 PLAN 파일은 건드리지 않는다). 레거시(PLAN.md) 분기는 없다.
 
-**backlog CLI 조회 명령엔 항상 `--plain` 을 붙인다. board·browser 등 인터랙티브 명령은 실행하지 않는다.** CLI 옵션이 낯설면 `backlog <command> --help` 로 확인한다.
-
-**CLI 없으면 중단.** 시작 전 `command -v backlog` 로 확인한다. 없으면 태스크 파일 손편집으로 폴백하지 말고(`SECTION:` 마커·ordinal·AC 포맷이 조용히 어긋난다) `bash "${K9HOME:-$HOME/kil9conf}/bootstrap/install-backlog-md.sh"` 설치를 안내한 뒤 멈춘다.
+**CLI 없으면 중단.** `command -v backlog` 로 확인하고, 없으면 파일 손편집으로 폴백하지 말고 설치를 안내한 뒤 멈춘다. 공통 전제(설치 명령·`--plain` 규칙·모드 판별·상태 4종)는 [`../references/backlog-basics.md`](../references/backlog-basics.md).
 
 ## 절차
 
@@ -52,7 +50,7 @@ backlog task create "<제목>" --ac "<완료 조건>" --dep task-N --priority hi
 - 다른 태스크와 병렬 실행이 안전하지 않으면 `-l solo`.
 - 규모가 커 태스크를 묶을 단위가 있으면 `backlog milestone add "<이름>"` 후 `-m "<이름>"` 로 배정한다.
 
-접수일(created_date)은 자동 기록되므로 따로 넣지 않는다. 태스크는 기본 `To Do` 로 생성된다. 상태 4종은 `[ ]` To Do / `[→]` In Progress / `[x]` Done / `[!]` Blocked 이고(Blocked 사유는 태스크 notes 첫 줄), 상태 전이는 소비자 스킬이 다룬다.
+접수일(created_date)은 자동 기록되므로 따로 넣지 않는다. 태스크는 기본 `To Do` 로 생성되고, 상태 전이는 소비자 스킬이 다룬다.
 
 아직 착수하지 않을 보류 아이디어는 태스크로 만들지 말고 `$add-draft` 로 draft 에 남기도록 안내한다.
 

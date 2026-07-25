@@ -7,9 +7,9 @@ backlog 를 **스스로 진행할 수 있는 태스크가 남지 않을 때까�
 
 ## 0. 전제
 
-`backlog/`(또는 `backlog/config.yml`) 필요. 없으면 "PLAN 파일 있으면 `/loop-plan`, 아니면 `/init-backlog`" 안내 후 중단. backlog 조회는 항상 `--plain`, board·browser 는 실행하지 않는다.
+`backlog/`(또는 `backlog/config.yml`) 필요. 없으면 "PLAN 파일 있으면 `/loop-plan`, 아니면 `/init-backlog`" 안내 후 중단. 공통 전제(설치 명령·`--plain` 규칙·모드 판별·상태 4종)는 [`../references/backlog-basics.md`](../references/backlog-basics.md).
 
-**CLI 없으면 중단.** `command -v backlog` 로 확인한다. 없으면 태스크 파일 손편집으로 폴백하지 말고(`SECTION:` 마커·ordinal·AC 포맷이 조용히 어긋나고, 무인 루프라 라운드마다 번진다) `bash "${K9HOME:-$HOME/kil9conf}/bootstrap/install-backlog-md.sh"` 설치를 안내한 뒤 멈춘다.
+**CLI 없으면 중단.** `command -v backlog` 로 확인하고, 없으면 파일 손편집으로 폴백하지 말고 설치를 안내한 뒤 멈춘다. 무인 루프라 손편집의 어긋남이 라운드마다 번진다.
 
 ## 1. 라운드 · ready set
 

@@ -5,9 +5,8 @@ description: 여러 태스크로 이뤄진 마일스톤을 인터뷰로 확정�
 
 추가할 마일스톤: `$ARGUMENTS`
 
-**모드 판별.** repo 루트에 `backlog/` 디렉터리(`backlog/config.yml`)가 있으면 **backlog 모드**,
-없으면 **레거시(PLAN.md) 모드**. 어느 모드든 구현·커밋은 하지 않는다 — 마일스톤과 태스크만 만든다.
-플랜 파일도 `backlog/` 도 없는 새 저장소면 `$init-backlog` 으로 먼저 초기화하도록 안내한다.
+공통 전제(설치 명령·`--plain` 규칙·모드 판별·상태 4종)는 [`../references/backlog-basics.md`](../references/backlog-basics.md). 어느 모드든 구현·커밋은 하지 않는다 — 마일스톤과 태스크만 만든다. 둘 다 없는 새
+저장소면 `$init-backlog` 으로 먼저 초기화하도록 안내한다.
 
 ## 규모 판별 (모드 공통 선행)
 
@@ -22,10 +21,10 @@ description: 여러 태스크로 이뤄진 마일스톤을 인터뷰로 확정�
 
 ## backlog 모드
 
-**CLI 없으면 중단.** 시작 전 `command -v backlog` 로 확인한다. 없으면 태스크 파일 손편집으로 폴백하지 말고(`SECTION:` 마커·ordinal·AC 포맷이 조용히 어긋난다) `bash "${K9HOME:-$HOME/kil9conf}/bootstrap/install-backlog-md.sh"` 설치를 안내한 뒤 멈춘다.
+**CLI 없으면 중단.** `command -v backlog` 로 확인하고, 없으면 파일 손편집으로 폴백하지 말고 설치를 안내한 뒤 멈춘다.
 
 1. 기존 마일스톤·선행 태스크를 `backlog milestone list --plain`·`backlog task list --plain` 으로
-   확인한다(이름 중복 방지, `--plain` 필수 — board·browser 등 인터랙티브 명령 금지).
+   확인한다(이름 중복 방지).
 2. 마일스톤의 목표·범위와 **태스크 분해안**(각 태스크의 완료 조건·의존·우선순위·단독실행)을
    정리하고, 애매한 점이 남으면 모두 해소될 때까지 `request_user_input` 으로 인터뷰한다. 분해안
    (태스크 수·경계)도 확정 전에 사용자 확인을 받는다. 줄글 자유 입력은 쓰지 않는다.

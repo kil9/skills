@@ -7,13 +7,9 @@ allowed_tools: [Bash, Read, Edit, Write, Glob, Grep, AskUserQuestion, Skill]
 
 ## 0. 모드 판별
 
-- repo 루트에 `backlog/`(또는 `backlog/config.yml`)가 있으면 **backlog 모드**(§1-§6, 기본 서술).
-- 없고 `PLAN.md`(또는 최근 `PLAN_*.md`)만 있으면 **레거시 모드**(§L).
-- 둘 다 없으면 "backlog 미초기화 + PLAN 파일 없음. `/init-backlog` 으로 먼저 만들어 주세요." 라고 알리고 중단한다.
+backlog 모드면 §1-§6(기본 서술), 레거시 모드면 §L. 둘 다 없으면 "backlog 미초기화 + PLAN 파일 없음. `/init-backlog` 으로 먼저 만들어 주세요." 라고 알리고 중단한다. 공통 전제(설치 명령·`--plain` 규칙·모드 판별·상태 4종)는 [`../references/backlog-basics.md`](../references/backlog-basics.md).
 
-backlog CLI 조회는 항상 `--plain` 을 붙인다. board·browser 는 실행하지 않는다.
-
-**CLI 없으면 중단.** backlog 모드면 `command -v backlog` 로 확인한다. 없으면 태스크 파일 손편집으로 폴백하지 말고(`SECTION:` 마커·ordinal·AC 포맷이 조용히 어긋난다) `bash "${K9HOME:-$HOME/kil9conf}/bootstrap/install-backlog-md.sh"` 설치를 안내한 뒤 멈춘다.
+**CLI 없으면 중단.** `command -v backlog` 로 확인하고, 없으면 파일 손편집으로 폴백하지 말고 설치를 안내한 뒤 멈춘다.
 
 ## 1. 대상 선정 (backlog 모드)
 

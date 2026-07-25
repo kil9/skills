@@ -12,8 +12,7 @@ allowed_tools: [Bash, Read, Edit, Write, Glob, Grep, AskUserQuestion, Skill]
 migrate 는 그 반대로, 기존 PLAN 의 내용을 backlog 로 **옮기는** 전용 스킬이다. 그래서 init-backlog 을
 돌려도 채워지지 않는 공백(레거시 PLAN 의 자동 이관)을 메운다.
 
-**backlog CLI 조회는 항상 `--plain`.** board·browser 등 인터랙티브 명령은 실행하지 않는다. CLI 옵션이
-낯설면 `backlog <command> --help` 로 확인한다.
+공통 전제(설치 명령·`--plain` 규칙·모드 판별·상태 4종)는 [`../references/backlog-basics.md`](../references/backlog-basics.md).
 
 ## 0. 전제·모드 판별
 
@@ -22,9 +21,7 @@ migrate 는 그 반대로, 기존 PLAN 의 내용을 backlog 로 **옮기는** �
 - **이미 `backlog/` 가 있으면** 부분 전환이거나 재실행이다. 초기화(§2)는 건너뛰고, 아직 backlog 에 없는
   미완료 항목만 골라 이관한다(중복 생성 금지 — `backlog task list --plain` 으로 기존 제목을 대조한다).
 - 둘 다 없는 새 저장소면 이관이 아니라 신규 계획이므로 `/init-backlog` 로 보낸다.
-- **CLI 없으면 중단.** `command -v backlog` 로 확인한다. 없으면 태스크 파일 손편집으로 폴백하지 말고
-  (`SECTION:` 마커·ordinal·AC 포맷이 조용히 어긋난다) `bash "${K9HOME:-$HOME/kil9conf}/bootstrap/install-backlog-md.sh"`
-  설치를 안내한 뒤 멈춘다.
+- **CLI 없으면 중단.** `command -v backlog` 로 확인하고, 없으면 파일 손편집으로 폴백하지 말고 설치를 안내한 뒤 멈춘다.
 
 ## 1. 대상 파악 (전문 덤프)
 
