@@ -44,6 +44,8 @@ backlog doc update <docId> --content "<본문 마크다운>"
 backlog task create "<제목>" --ac "<완료 조건>" --dep task-N --priority high -l solo -m "<마일스톤>" --plain
 ```
 
+생성 직후 ID 가드를 태스크마다 1회 돌린다(`../references/backlog-basics.md` 의 '태스크 ID 발급'). `moved=` 가 나오면 그 태스크의 ID 가 바뀐 것이니 이후 보고·의존·커밋 태그에 새 번호를 쓴다.
+
 - `--ac` 는 반드시 1개 이상(항목마다 `--ac` 반복). 완료 조건 = Acceptance Criteria.
 - 의존은 `--dep task-N`(쉼표 구분 다중 가능). 참조 유효성은 CLI 가 검증한다. 선행이 없으면 `--dep` 를 생략한다(빈 의존 = 의존 없음 확정).
 - 우선순위는 `--priority`(high / medium / low).

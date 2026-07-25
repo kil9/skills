@@ -37,6 +37,8 @@ description: 여러 태스크로 이뤄진 마일스톤을 인터뷰로 확정�
      [--dep task-N[,task-M]] [--priority high|medium|low] [-l solo]
    ```
 
+   생성 직후 ID 가드를 태스크마다 1회 돌린다(`../references/backlog-basics.md` 의 '태스크 ID 발급'). `moved=` 가 나오면 그 태스크의 ID 가 바뀐 것이니 이후 보고·의존·커밋 태그에 새 번호를 쓴다.
+
    태스크마다 `--ac` 1개 이상 필수, `-m` 누락 금지. 마일스톤 안팎의 순서 제약은 태스크 `--dep` 로
    표현한다(마일스톤 자체엔 의존 필드가 없다).
 

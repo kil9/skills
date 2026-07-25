@@ -17,6 +17,21 @@ bash "${K9HOME:-$HOME/kil9conf}/bootstrap/install-backlog-md.sh"
 그 어긋남이 태스크마다 번진다. 팀원 worktree 도 리드와 같은 PATH 를 쓰므로 리드에 없으면 팀원에게도
 없다.
 
+## 태스크 ID 발급
+
+**`backlog task create`·`draft promote` 로 태스크를 만든 직후 ID 가드를 1회 돌린다** — 여러 개를
+만들었으면 각각에 대해:
+
+```bash
+bash ~/.claude/skills/references/backlog-id-guard.sh fix TASK-N   # codex 는 ~/.codex/skills/…
+```
+
+`ok=TASK-N` 이면 그대로, `moved=TASK-N -> TASK-M` 이면 그 태스크의 ID 가 바뀐 것이니 **이후 명령·
+커밋 태그·의존 지정에 새 번호를 쓴다**. `skip=` 이면 대상 저장소가 아니니 그냥 넘어간다.
+가드는 CLI 가 안 보는 두 곳(`backlog/archive/`, 아직 안 당겨온 리모트 브랜치의 태스크)까지 훑는다 —
+그 구멍으로 다른 머신과 같은 번호를 잡으면 sync 때 rename/rename 충돌이 나고, 그때는 이미 커밋
+태그·문서가 그 번호를 참조하고 있어 수습이 비싸다. 만들기 전에 번호를 알아야 하면 `next`.
+
 ## 조회 규칙
 
 - 조회 명령에는 **항상 `--plain`** 을 붙인다.

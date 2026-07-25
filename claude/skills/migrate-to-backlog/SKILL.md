@@ -91,6 +91,8 @@ backlog doc update <docId> --content "<본문 마크다운>"
    backlog task create "<제목>" --ac "<완료 조건>" --priority <high|medium|low> -l solo --plain
    ```
 
+   생성 직후 ID 가드를 태스크마다 1회 돌린다(`../references/backlog-basics.md` 의 '태스크 ID 발급'). `moved=` 가 나오면 그 태스크의 ID 가 바뀐 것이니 이후 보고·의존·커밋 태그에 새 번호를 쓴다.
+
    - `--ac` 는 항목마다 반복. `-l solo` 는 원 항목에 "단독실행: 필요" 가 있을 때만.
    - 의존(`--dep`)은 대상 태스크가 아직 안 만들어졌을 수 있으므로 **1차 생성 때는 생략**한다.
 

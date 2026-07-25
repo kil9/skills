@@ -26,6 +26,8 @@ backlog 모드면 §1-§6(기본 서술), 레거시 모드면 §L. 둘 다 없�
   backlog task create "<제목>" -d "<배경·접근>" --ac "<완료 조건>" [--ac ...]
   ```
 
+  생성 직후 ID 가드를 태스크마다 1회 돌린다(`../references/backlog-basics.md` 의 '태스크 ID 발급'). `moved=` 가 나오면 그 태스크의 ID 가 바뀐 것이니 이후 보고·의존·커밋 태그에 새 번호를 쓴다.
+
 각 태스크 상세(Description·AC·의존·notes)는 `backlog task view <id> --plain` 으로 확인한다.
 
 ## 2. 항목별 루프
