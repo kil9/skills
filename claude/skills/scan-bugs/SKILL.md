@@ -44,6 +44,6 @@ diff·PR 딥리뷰 스킬과 공유하므로 여기 옮겨 적지 않는다.
 
 섹션 순서: ① severity 카운트 헤더(Critical/High/Medium/Low/제거) ② Critical 즉시 수정 목록(최대 5개) ③ 재검증 매트릭스 표(ID·1차·재검증·요약·사유, 격하·제거 포함) ④ severity 순 ToC ⑤ 항목 카드(코드 인용 5\~15줄, 영향/시나리오/수정안, 유지=초록·격하=노랑·제거=빨강 재검증 박스, 격하 시 `was Critical` 칩) ⑥ 제거 항목과 사유 ⑦ 직접 검증한 라이브러리 사실(파일:라인 인용) ⑧ 최종 우선순위.
 
-스타일: 시스템 폰트, 단일 컬럼 `max-width: 1080px`, severity 색 Critical `#d70015` / High `#ff6a00` / Medium `#b88600` / Low `#1f6feb` / 제거 `#007a33`, 코드 블록은 옅은 회색 배경.
+스타일 스펙(폰트·폭·severity 색상값)은 [`report-style.md`](report-style.md) 를 따른다.
 
 사용자 보고는 짧게: 보고서 경로, 재검증 후 severity 카운트, Critical 전부 한 줄씩(제목+파일:라인), 격하·제거 카운트. HTML 보고서 외 PR/이슈/코멘트는 만들지 않는다(명시 요청 시에만).

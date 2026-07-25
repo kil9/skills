@@ -68,47 +68,6 @@ look up: recipes that compose these commands, and traps learned by failing.
 
 ## recipes
 
-### run a server and wait until it is ready
-
-```bash
-NEW_PANE=$(herdr pane split 1-2 --direction right --no-focus | python3 -c 'import sys,json; print(json.load(sys.stdin)["result"]["pane"]["pane_id"])')
-herdr pane run "$NEW_PANE" "npm run dev"
-herdr pane wait-output "$NEW_PANE" --match "ready" --timeout 30000
-herdr pane read "$NEW_PANE" --source recent --lines 20
-```
-
-### run tests in a separate pane and inspect the result
-
-```bash
-herdr pane split 1-2 --direction down --no-focus
-herdr pane run 1-3 "cargo test"
-herdr pane wait-output 1-3 --match "test result" --timeout 60000
-herdr pane read 1-3 --source recent --lines 30
-```
-
-### check what another agent is working on
-
-```bash
-herdr pane list
-herdr pane read 1-1 --source recent --lines 80
-```
-
-### watch another pane robustly
-
-use this pattern when you need to coordinate with a sibling pane:
-
-```bash
-# inspect what is already there
-herdr pane read 1-3 --source recent --lines 40
-
-# wait only for the next output you expect
-herdr pane wait-output 1-3 --match "ready" --timeout 30000
-
-# if you need to inspect the same transcript the waiter matched,
-# read the unwrapped recent text directly
-herdr pane read 1-3 --source recent-unwrapped --lines 40
-```
-
 ### spawn a new agent and give it a task
 
 spawning takes **three** commands: make the pane, attach the agent with its task, wait. `agent start`
@@ -165,43 +124,9 @@ this path is also the only place you control **effort**: `--effort <level>` in t
 
 **a pane sometimes pays the prefix twice.** in one of those two samples the second turn came back with `cache_read=0` and regenerated the prefix, putting total `cache_write` at 134k against 68k for the healthy sample. the Agent-tool path never did this. it is probabilistic — one measurement will not show it — and when it hits, the pane costs double.
 
-### spawn an antigravity (agy) agent
+## further reading
 
-herdr natively detects `agy` as an agent (working spinner / blocked permission-prompt rules built in), so the same start/wait/read pattern works (kil9 note, verified 2026-07). **the syntax below was mechanically updated to 0.7.5 alongside the claude recipe but not re-run on agy** — expect the same traps and trust the claude recipe over this one where they disagree:
-
-```bash
-PID=$(herdr pane split --current --direction right --no-focus --cwd /path/to/repo \
-  | python3 -c 'import sys,json; print(json.load(sys.stdin)["result"]["pane"]["pane_id"])')
-herdr agent start helper --kind agy --pane "$PID" -- --dangerously-skip-permissions -i "summarize what script/foo.sh does"
-herdr agent wait helper --until working --timeout 30000
-herdr agent wait helper --timeout 600000
-herdr agent read helper --source visible --lines 60
-```
-
-two agy-specific caveats:
-
-- `-i` (`--prompt-interactive`) is required — unlike claude, agy does not treat a positional argument as the prompt; without `-i` the task never starts.
-- right after the idle transition, `agent read --source recent` can return an empty string. read with `--source visible` instead.
-
-for a one-shot task that needs no pane, run `agy -p "<prompt>"` headless from your own shell (`--print-timeout` defaults to 5m).
-
-### coordinate with another agent
-
-```bash
-herdr agent wait 1-1 --timeout 120000     # no --until: idle, done, or blocked
-herdr pane read 1-1 --source recent --lines 100
-```
-
-## notes
-
-- `workspace list`, `workspace create`, `tab list`, `tab create`, `tab get`, `tab focus`, `tab rename`, `tab close`, `pane list`, `pane get`, `pane split`, `pane wait-output`, and `agent wait` print json on success.
-- `pane read` prints text, not json.
-- `pane read --format ansi` or `pane read --ansi` returns a rendered ANSI snapshot for TUI feedback loops.
-- `pane read --source recent-unwrapped` is useful when you want to inspect the same unwrapped transcript that `pane wait-output --source recent` matches against.
-- `pane send-text`, `pane send-keys`, and `pane run` print nothing on success.
-- parse ids from `workspace create`, `tab create`, and `pane split` responses when you need new ids. `workspace create` returns `result.workspace`, `result.tab`, and `result.root_pane`. `tab create` returns `result.tab` and `result.root_pane`. for `pane split`, the new pane id is at `result.pane.pane_id`.
-- use `pane read` for current output that already exists. use `pane wait-output` for future output you expect next.
-- `--no-focus` on split, tab create, and workspace create keeps your current terminal context focused.
-- without `--label`, workspace create keeps cwd-based naming and tab create keeps numbered naming.
-- `--label` on tab create and workspace create applies the custom name immediately.
-- if you are running inside herdr, the `HERDR_ENV` environment variable is set to `1`.
+- recipes for the other branches — run a server, run tests, watch or coordinate with another pane: [`references/recipes.md`](references/recipes.md)
+- spawning an `agy` agent instead of claude: [`references/agy-spawn.md`](references/agy-spawn.md)
+- which commands print json vs text, and where ids live in the response: [`references/output-shapes.md`](references/output-shapes.md)
+- full command reference: [`references/commands.md`](references/commands.md)

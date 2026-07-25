@@ -9,29 +9,11 @@ description: 현재 repo에서 GOVERSION 파일 참조를 모두 go.mod 읽기 �
 
 ## 교체 패턴
 
-CI 워크플로·Dockerfile·Makefile·셸 스크립트 등 `GOVERSION` 파일을 읽는 모든 곳에 적용한다.
+`GOVERSION` 파일을 읽는 모든 곳 — CI 워크플로·Dockerfile·Makefile·셸 스크립트 — 에서 그 읽기를
+`go.mod` 의 `go` 디렉티브 읽기로 바꾼다. 값을 뽑는 표현은 `grep '^go ' go.mod | awk '{print $2}'`
+를 쓴다. `go mod edit -json` 계열은 toolchain 줄까지 딸려 와 버전 문자열이 달라지므로 쓰지 않는다.
 
-### 패턴 A — GITHUB_ENV에 쓰는 경우
-```yaml
-# Before
-- name: Read GOVERSION from repo
-  run: |
-    echo "GOVERSION=$( cat GOVERSION )" >> $GITHUB_ENV
-
-# After
-- name: Read Go version from go.mod
-  run: |
-    echo "GOVERSION=$(grep '^go ' go.mod | awk '{print $2}')" >> $GITHUB_ENV
-```
-
-### 패턴 B — 셸 변수에 할당하는 경우
-```bash
-# Before
-GOVERSION=$(cat GOVERSION)
-
-# After
-GOVERSION=$(grep '^go ' go.mod | awk '{print $2}')
-```
+주변 코드의 형태(GITHUB_ENV 에 쓰든 셸 변수에 담든)는 원래 코드를 따라간다.
 
 ## 완료 기준
 

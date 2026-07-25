@@ -78,22 +78,9 @@ WebP(1440px·q75) base64 `data:` URI 임베드, `figure.illust`+`alt`+`figcaptio
 - 차트를 그리기 전에 `dataviz` 스킬을 읽는다.
 - **Claude 는 래스터 이미지를 직접 생성하지 못하므로 삽화 생성은 반드시 codex 에 위임한다**(이 머신에 `codex` CLI 설치됨, `image_generation` feature stable — `codex features list` 로 확인 가능). 그 호출 레시피가 아래이며, 저장소 `AGENTS.md` §2-1 도 레시피는 이 절을 가리킨다(서로 반대 방향을 가리키지 않도록 주의).
 
-### 삽화 생성 레시피 (codex 위임)
+### 삽화 생성 레시피
 
-```bash
-codex exec --dangerously-bypass-hook-trust --dangerously-bypass-approvals-and-sandbox \
-  --cd <스크래치 디렉터리> \
-  "이미지 생성 도구(image generation)로 <주제> 에디토리얼 삽화 1장을 생성해줘.
-   구도: <가로형(1536x1024) 등 + 장면 묘사>.
-   스타일: 주제에 어울리게 자유롭게 고른다(플랫 벡터, 수채, 리소그래프, 애니메이션 풍 등).
-   팔레트: 자유. 사이트가 극한 미니멀(무채색+블루)이므로 삽화까지 같은 톤이면 지루하다 —
-     색·그라데이션·질감을 써도 좋다. 단 다크모드 filter 와 어울리도록 라이트 톤 배경을 기본으로.
-   절대 금지: 이미지 안 글자·숫자·텍스트(생성 텍스트는 깨진다), 사람 얼굴 클로즈업.
-   생성한 이미지를 <절대경로>.png 로 저장하고 최종 응답으로 경로와 픽셀 크기를 알려줘."
-```
-
-- 프롬프트에 **저장 절대경로**와 **이미지 내 텍스트 금지**를 반드시 명시한다. 생성물은 `~/.codex/generated_images/` 아래에 떨어지고 codex 가 지정 경로로 복사해 준다. 1회 1-5분 소요, 결과는 Read 로 눈검사한다(텍스트 유무·구도·톤).
-- 생성된 PNG 를 페이지에 넣는 방법(리사이즈·WebP 압축·base64 임베드·마크업)은 저장소 `AGENTS.md` §2-1 을 따른다.
+삽화를 넣기로 했으면 [`references/illustration.md`](references/illustration.md) 를 펴고 그 프롬프트로 codex 에 위임한다. 생성된 PNG 를 페이지에 넣는 방법(리사이즈·WebP 압축·base64 임베드·마크업)은 저장소 `AGENTS.md` §2-1 을 따른다.
 
 ---
 
