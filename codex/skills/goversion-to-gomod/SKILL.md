@@ -17,7 +17,12 @@ description: 현재 repo에서 GOVERSION 파일 참조를 모두 go.mod 읽기 �
 
 ## 완료 기준
 
-- `grep -r GOVERSION . --exclude-dir='.git'` 결과가 비어 있다 — 참조가 하나라도 남았으면 끝난 것이 아니다.
+- `grep -rn 'GOVERSION' . --exclude-dir='.git'` 를 돌려 **파일을 읽는 곳이 하나도 남지 않았다** —
+  `cat GOVERSION`, `$(<GOVERSION)`, `COPY GOVERSION`, `read < GOVERSION` 등. 하나라도 남았으면
+  끝난 것이 아니다.
+- **문자열 `GOVERSION` 자체는 남아도 된다.** 환경변수·셸 변수 이름(`GOVERSION=`, `env.GOVERSION`)과
+  스텝 이름은 파일 참조가 아니다 — 이 grep 이 비기를 기대하면 영원히 끝나지 않는다(2026-07-26
+  실측: 치환이 전부 옳게 끝난 상태에서도 변수명 때문에 5줄이 남는다).
 - `GOVERSION` 파일이 삭제되었다.
 
 변경된 파일과 교체 위치를 요약해 보고한다.
