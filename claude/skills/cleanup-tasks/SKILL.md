@@ -1,5 +1,5 @@
 ---
-description: backlog 의 완료(Done) 태스크를 backlog/completed/ 로 비대화형 정리한다. 대화형 전용 `backlog cleanup` 의 스크립트 대체판으로, 기본은 "오늘 완료분만 보드에 남기고 나머지 이동"이다. "완료 태스크 정리 / cleanup tasks / done 정리 / 보드 정리" 요청, 또는 태스크 작업 흐름에서 Done 이 임계치 이상 쌓였을 때 사용한다.
+description: backlog 의 완료(Done) 태스크를 backlog/completed/ 로 비대화형 정리한다. "완료 태스크 정리 / done 정리 / 보드 정리" 요청, 또는 태스크 작업 흐름에서 Done 이 임계치 이상 쌓였을 때.
 allowed_tools: [Bash, Read, Grep]
 ---
 

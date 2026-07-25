@@ -1,6 +1,6 @@
 ---
 name: fable-advisor
-description: 사용자가 요청 끝(또는 앞)에 `/fable-advisor` 를 직접 붙였을 때만, 그 요청·또는 내가 낸 답안/계획을 Fable 5 모델에 넘겨 자문(검토·비평·대안 제시·선조언)을 받아 반영한다. 사용자가 명시적으로 붙이지 않으면 자동 호출하지 않는다.
+description: 요청이나 내가 낸 답안·계획을 Fable 5 에 넘겨 자문(검토·비평·대안 제시)을 받아 반영한다. 사용자가 `/fable-advisor` 를 직접 적었을 때만 발동하고 자동 호출하지 않는다.
 ---
 
 # Fable Advisor

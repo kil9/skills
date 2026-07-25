@@ -1,6 +1,6 @@
 ---
 name: paste-image
-description: 원격 SSH 환경에서 브라우저 Ctrl+V / drag-and-drop 한 번으로 이미지를 Codex에게 전달한다. 일회용 HTTP 서버를 띄워 업로드 받은 뒤 view_image로 확인한다.
+description: 원격 SSH 환경에서 브라우저 Ctrl+V / drag-and-drop 한 번으로 이미지를 Claude 에게 전달한다. "이미지 붙여넣을게 / 스크린샷 보여줄게" 라고 할 때.
 ---
 
 # $paste-image

@@ -1,6 +1,6 @@
 ---
 name: init-backlog
-description: 작업 계획을 수립하고 현재 저장소를 backlog 백엔드로 초기화한다. 산문은 backlog/docs/, 태스크는 `backlog task create` 로 만든다. 구현은 시작하지 않는다(소비는 $start-backlog·$parallel-tasks 몫). 사용자가 명시적으로 지시할 때만 이어서 진행한다.
+description: 작업 계획을 수립하고 저장소를 backlog 백엔드로 초기화한다. "계획 세워줘 / backlog 만들어줘" 라고 할 때. 레거시 PLAN.md 포맷은 $make-a-plan, 기존 PLAN.md 전환은 $migrate-to-backlog 다. 구현은 시작하지 않는다.
 ---
 
 작업 설명: `$ARGUMENTS`

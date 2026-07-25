@@ -1,6 +1,6 @@
 ---
 name: init-project
-description: 현재 저장소를 분석해 README.md·AGENTS.md 를 신규 작성하고 CLAUDE.md 심링크를 건다. 작업 계획은 /init-backlog 에 위임한다. 사용자가 새 저장소를 문서화하려 할 때, "프로젝트 초기화 / init project / 문서 만들어줘" 라고 할 때 사용한다.
+description: 저장소를 분석해 README.md·AGENTS.md 를 쓰고 CLAUDE.md 심링크를 건다. "프로젝트 초기화 / init project / 문서 만들어줘" 라고 할 때. 작업 계획은 $init-backlog 몫이다.
 ---
 
 현재 저장소를 분석하여 README.md, AGENTS.md 를 신규 작성하고 CLAUDE.md 심링크를 만든다.

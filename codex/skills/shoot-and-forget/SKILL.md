@@ -1,6 +1,6 @@
 ---
 name: shoot-and-forget
-description: "요청한 작업을 수행한 뒤, 실패도 없고 계속 지켜볼 것도 없고 사용자에게 꼭 전달할 내용도 없으면 이 herdr pane 을 스스로 닫는다(shoot-and-forget). herdr 안에서만 pane 을 닫는다. 사용자가 `$shoot-and-forget` 또는 스킬 이름을 직접 적어 요청했을 때만 호출한다 — 그 외에는 자율 호출하지 않는다(pane 을 닫는 것은 되돌릴 수 없다)."
+description: 요청한 작업을 수행한 뒤 남길 것이 없으면 이 herdr pane 을 스스로 닫는다. 사용자가 `$shoot-and-forget` 을 직접 적었을 때만 발동하고 자율 호출하지 않는다(닫기는 되돌릴 수 없다).
 ---
 
 작업 하나를 쏘고(shoot) 잊는다(forget). 요청받은 일을 끝까지 해내고, **깨끗이 끝났을 때만** 이

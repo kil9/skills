@@ -1,5 +1,5 @@
 ---
-description: backlog(또는 PLAN.md)만 훑어 마일스톤별로 남은 태스크를 나열하고 다음에 착수할 것 하나를 추천한다. 추가 조사·구현은 하지 않는다. "다음 뭐 하지 / 남은 일 뭐 있지 / 어디까지 왔지 / 전체 진척 / 다음 마일스톤" 을 물을 때 사용한다.
+description: backlog(또는 PLAN.md)를 훑어 남은 태스크를 마일스톤별로 나열하고 다음 하나를 추천한다. "다음 뭐 하지 / 남은 일 뭐 있지 / 어디까지 왔지 / 전체 진척" 을 물을 때. 착수는 /start-backlog 다.
 allowed_tools: [Bash, Read, Glob, Grep]
 ---
 

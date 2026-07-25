@@ -1,5 +1,5 @@
 ---
-description: kil9 스타일로 이슈/PR/코멘트 초안을 작성하거나 기존 초안을 kil9 말투로 다듬는다. "kil9처럼 써줘", "내 스타일로 이슈/코멘트 써줘" 류 요청에 사용. 이슈 작성·코멘트 게시는 draft 파일→사용자 승인 후 `gh issue create` / `gh issue|pr comment` 로 업로드한다(예외 없음). PR 본문은 초안만 만들고 게시는 사용자가 직접 한다.
+description: kil9 스타일로 이슈/PR/코멘트 초안을 쓰거나 기존 초안을 그 말투로 다듬는다. "kil9처럼 써줘 / 내 스타일로 이슈·코멘트 써줘" 라고 할 때. 게시는 반드시 사용자 승인 후에 한다.
 allowed_tools: [Read, Grep, Glob, Bash, Write, Edit, AskUserQuestion]
 ---
 

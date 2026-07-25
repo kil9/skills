@@ -1,5 +1,5 @@
 ---
-description: 상호 의존이 없는 태스크를 에이전트 팀(팀원)으로 worktree에서 구현·커밋하고, 검증을 통과한 브랜치를 순차 ff-merge해 main에 직접 반영한다. backlog/ 가 있으면 backlog CLI 백엔드, 없으면 레거시 PLAN.md 로 동작한다. 병렬 이득이 작으면(독립·substantial 태스크 부족) 팀을 띄우지 않고 솔로로 폴백한다. 사용자가 명시적으로 herdr pane 을 지시한 경우에만(opt-in) 팀 대신 herdr pane 워커로 돌린다.
+description: 상호 의존이 없는 태스크들을 에이전트 팀이 worktree 에서 병렬 구현하고 순차 ff-merge 로 main 에 반영한다. "병렬로 해줘 / 팀으로 돌려줘" 라고 할 때. 순차 진행은 /start-backlog 다.
 allowed_tools: [Bash, Read, Edit, Write, Glob, Grep, Agent, SendMessage, TaskCreate, TaskList, TaskGet, TaskOutput, TaskStop, TaskUpdate, Skill]
 ---
 

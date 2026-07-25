@@ -1,5 +1,5 @@
 ---
-description: backlog 태스크를 스스로 진행 가능한 것이 남지 않을 때까지 라운드 단위로 자율 드레인한다. 라운드마다 fresh 재조회로 외부·사용자 추가분을 흡수하고, 진행 중 필요한 선행·후속 작업은 자동으로 태스크로 추가하며, 기본은 순차(솔로)이고 병렬은 /parallel-tasks 의 함정을 인지하고도 이득이 분명할 때만 쓴다. 빈 조회를 연속 2회 확인해야 종료한다.
+description: backlog 태스크를 스스로 진행 가능한 것이 남지 않을 때까지 라운드 단위로 자율 드레인한다. "백로그 다 해줘 / 남은 태스크 전부 진행" 이라고 할 때. 한 태스크만은 /start-backlog, 추천만은 /next-backlog 다.
 allowed_tools: [Bash, Read, Edit, Write, Glob, Grep, Agent, SendMessage, TaskCreate, TaskList, TaskGet, TaskOutput, TaskStop, TaskUpdate, Skill]
 ---
 

@@ -1,5 +1,5 @@
 ---
-description: Claude Code 고아 teammate(서브에이전트) 잔재를 한 방에 정리한다. /clear·재시작 후에도 tmux pane 에 남은 pp-*@session-* 프로세스·pane, 그리고 팀 로스터(config.json)에 박제돼 UI 에 계속 뜨는 죽은 멤버를 모두 제거한다. "고아 에이전트 정리 / 팀원이 안 없어짐 / kill agents / killagents" 요청 시 사용.
+description: Claude Code 고아 teammate(서브에이전트) 잔재 — tmux pane 에 남은 pp-*@session-* 프로세스와 팀 로스터에 박제된 죽은 멤버 — 를 정리한다. "고아 에이전트 정리 / 팀원이 안 없어짐 / kill agents" 라고 할 때.
 allowed_tools: [Bash, Read]
 ---
 

@@ -1,6 +1,6 @@
 ---
 name: migrate-to-backlog
-description: 레거시 PLAN.md 저장소를 backlog 백엔드로 전환한다. 미완료 T-N 은 backlog task 로, I-N 은 draft 로, 산문(배경·설계 결정)은 backlog/docs/ 로 옮기고, PLAN 파일은 아카이브 헤더를 달아 보존한다. 완료(`[x]`) 항목은 옮기지 않고 아카이브 원문에 남긴다. 구현은 시작하지 않는다.
+description: 레거시 PLAN.md 저장소를 backlog 백엔드로 전환한다. "backlog 로 옮겨줘 / PLAN.md 전환해줘" 라고 할 때. 신규 계획 수립은 $init-backlog 다. 구현은 시작하지 않는다.
 ---
 
 전환할 대상: `$ARGUMENTS`

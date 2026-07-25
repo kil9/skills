@@ -1,5 +1,5 @@
 ---
-description: 작업 계획을 수립하고 단일 PLAN_XXX.md 마스터 문서(backlog 미사용 레거시 포맷)를 만든다. 구현은 시작하지 않는다(소비는 /start-backlog·/parallel-tasks 의 레거시 모드 몫). 사용자가 명시적으로 지시할 때만 이어서 진행한다.
+description: 작업 계획을 단일 PLAN_XXX.md 마스터 문서(backlog 미사용 레거시 포맷)로 만든다. 사용자가 그 포맷을 명시할 때만 — 기본은 /init-backlog 다. 구현은 시작하지 않는다.
 allowed_tools: [Bash, Read, Edit, Write, Glob, Grep, AskUserQuestion]
 ---
 

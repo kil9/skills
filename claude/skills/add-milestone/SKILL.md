@@ -1,5 +1,5 @@
 ---
-description: backlog(있으면) 또는 PLAN.md 에 새 마일스톤을 만들고 그 아래 세부 태스크들을 인터뷰로 확정해 함께 생성한다. 태스크 하나로 끝날 것 같으면 /add-task 위임을 제안하되 선택은 사용자에게 묻는다(개발 격리용 1태스크 마일스톤 허용). 작업은 시작하지 않는다.
+description: 여러 태스크로 이뤄진 마일스톤을 인터뷰로 확정해 태스크와 함께 생성한다. "마일스톤 추가 / 이 큰 작업 계획 잡아줘" 라고 할 때. 태스크 하나면 /add-task, 저장소 첫 계획은 /init-backlog 다. 작업은 시작하지 않는다.
 allowed_tools: [Bash, Read, Edit, Write, Glob, Grep, AskUserQuestion, Skill]
 ---
 

@@ -1,6 +1,6 @@
 ---
 name: zip-it
-description: 에이전트용 문서(AGENTS.md, CLAUDE.md, 스킬 SKILL.md, 커맨드)를 압축한다. 실행 시점에 탐색으로 알 수 있는 내용은 삭제하고, 실패를 겪어야 배우는 지식은 유지하거나 보강한다. 사용자가 문서/스킬 압축, 다이어트, zip-it 을 요청할 때 사용한다.
+description: 에이전트용 문서(AGENTS.md, CLAUDE.md, SKILL.md, 커맨드)를 압축해 정보 단가를 높인다. 사용자가 문서/스킬 압축·다이어트·zip-it 을 요청할 때.
 ---
 
 # Zip It
