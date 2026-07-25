@@ -161,6 +161,10 @@ nine non-obvious traps (each burns a fresh session if you skip it). the first si
 
 this path is also the only place you control **effort**: `--effort <level>` in the agent's argv works and is visible in the spawned pane's banner (`Opus 5 with medium effort`). pick the level per the effort policy in the global rules — the Agent-tool path has no effort knob at all.
 
+**what a pane actually costs** (kil9 note, measured 2026-07-25 on herdr 0.7.5 with Opus 5, same trivial task; the earlier numbers were Haiku on 2026-07-12). startup + one turn is ~6s (split 0.06s + `agent start` 3.2s + first response 2.7s), on par with the old ~7s. the prefix (first-turn `cache_write`) is 67k for a pane (two samples: 66,684 / 66,763) vs 50k for an Agent-tool subagent — 1.3x, same order of magnitude. so the real cost of a pane is not tokens but the **completion-detection round trip and orchestration chores**, a constant per task. a fork reuses the leader's prefix cache, so anything a fork can do is always cheapest that way.
+
+**a pane sometimes pays the prefix twice.** in one of those two samples the second turn came back with `cache_read=0` and regenerated the prefix, putting total `cache_write` at 134k against 68k for the healthy sample. the Agent-tool path never did this. it is probabilistic — one measurement will not show it — and when it hits, the pane costs double.
+
 ### spawn an antigravity (agy) agent
 
 herdr natively detects `agy` as an agent (working spinner / blocked permission-prompt rules built in), so the same start/wait/read pattern works (kil9 note, verified 2026-07). **the syntax below was mechanically updated to 0.7.5 alongside the claude recipe but not re-run on agy** — expect the same traps and trust the claude recipe over this one where they disagree:
