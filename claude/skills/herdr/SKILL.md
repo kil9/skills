@@ -73,7 +73,7 @@ look up: recipes that compose these commands, and traps learned by failing.
 ```bash
 NEW_PANE=$(herdr pane split 1-2 --direction right --no-focus | python3 -c 'import sys,json; print(json.load(sys.stdin)["result"]["pane"]["pane_id"])')
 herdr pane run "$NEW_PANE" "npm run dev"
-herdr wait output "$NEW_PANE" --match "ready" --timeout 30000
+herdr pane wait-output "$NEW_PANE" --match "ready" --timeout 30000
 herdr pane read "$NEW_PANE" --source recent --lines 20
 ```
 
@@ -82,7 +82,7 @@ herdr pane read "$NEW_PANE" --source recent --lines 20
 ```bash
 herdr pane split 1-2 --direction down --no-focus
 herdr pane run 1-3 "cargo test"
-herdr wait output 1-3 --match "test result" --timeout 60000
+herdr pane wait-output 1-3 --match "test result" --timeout 60000
 herdr pane read 1-3 --source recent --lines 30
 ```
 
@@ -102,7 +102,7 @@ use this pattern when you need to coordinate with a sibling pane:
 herdr pane read 1-3 --source recent --lines 40
 
 # wait only for the next output you expect
-herdr wait output 1-3 --match "ready" --timeout 30000
+herdr pane wait-output 1-3 --match "ready" --timeout 30000
 
 # if you need to inspect the same transcript the waiter matched,
 # read the unwrapped recent text directly
@@ -111,37 +111,66 @@ herdr pane read 1-3 --source recent-unwrapped --lines 40
 
 ### spawn a new agent and give it a task
 
-use `herdr agent start` — it splits, launches, and registers the agent under a name in one step (kil9 note, verified 2026-07):
+spawning takes **three** commands: make the pane, attach the agent with its task, wait. `agent start`
+does not create panes (kil9 note, re-verified 2026-07-25 on herdr 0.7.5 — the old one-step
+`agent start --split --cwd -- claude ...` form no longer exists):
 
 ```bash
-# pin the spawn to YOUR tab, skip permission prompts, retrieve the result via file
-herdr agent start reviewer --workspace "$HERDR_WORKSPACE_ID" --tab "$HERDR_TAB_ID" \
-  --split right --no-focus --cwd /path/to/repo \
-  -- claude --dangerously-skip-permissions "review the test coverage in src/api/. write the result to /path/to/repo/scratchpad/reviewer.md"
-herdr agent wait reviewer --status idle --timeout 600000     # wait for completion (idle, NOT done)
-cat /path/to/repo/scratchpad/reviewer.md                     # retrieve via file, not pane read
+# 1) make the pane. --current anchors to YOUR pane; --cwd lives here now, not on agent start.
+PID=$(herdr pane split --current --direction right --no-focus --cwd /path/to/repo \
+  | python3 -c 'import sys,json; print(json.load(sys.stdin)["result"]["pane"]["pane_id"])')
+
+# 2) attach the agent AND hand it the task in the same call — everything after `--` is the
+#    agent's own argv, and a positional arg there is claude's initial prompt.
+#    retry: this fails fast if the new pane has not reached its shell prompt yet.
+for i in 1 2 3; do
+  herdr agent start reviewer --kind claude --pane "$PID" \
+    -- --model opus --effort medium --dangerously-skip-permissions \
+    "review the test coverage in src/api/. write the result to /path/to/repo/scratchpad/reviewer.md" \
+    && break
+done
+
+# 3) catch the working transition, then wait for any terminal state.
+herdr agent wait reviewer --until working --timeout 60000
+herdr agent wait reviewer --timeout 600000    # no --until: matches idle, done, OR blocked
+cat /path/to/repo/scratchpad/reviewer.md      # retrieve via file, not pane read
 ```
 
-five non-obvious traps, all verified 2026-07 (each burns a fresh session if you skip it):
+**hand the first task over in argv, not as a separate submit step.** typing it in afterwards is where
+this recipe breaks: `pane run` normally types *and* presses Enter, but right after `agent start` the
+Enter is swallowed and the text just sits at the `❯` prompt with the agent idle forever (observed
+2026-07-25 — the working-wait burned its full 60s, and one `agent send-keys <name> Enter` then ran the
+task immediately). the same `pane run` works fine once the agent has completed a turn, so use it for
+follow-ups and coaching, not for the opening prompt. if you must type the first prompt in, verify with
+`pane read --source visible` and send Enter yourself when the text is still sitting there.
 
-- **pin the landing spot with `--workspace`/`--tab`.** `agent start --split` splits from whichever pane is focused in the herdr UI, which may be a *different* workspace than yours — the spawned agent lands there (and can vanish), not beside you. `agent start` has no anchor-pane flag, so pass `--workspace "$HERDR_WORKSPACE_ID" --tab "$HERDR_TAB_ID"` (your own env vars) to force it into your tab. fallback: `herdr pane split "$HERDR_PANE_ID" ...` explicitly, then `pane run` claude into the returned pane id (you lose the name registration and auto-`--cwd`).
-- **unattended runs need `--dangerously-skip-permissions`.** a spawned claude starts in the default interactive permission mode and goes `blocked` (see `pane list` status) on the very first tool call, waiting on a "Do you want to proceed?" prompt. add `--dangerously-skip-permissions` (or a suitable `--permission-mode`) so it runs to completion. an already-blocked pane can be approved with `herdr pane send-keys <id> Enter` (default highlight is "1. Yes"), but every new command re-prompts, so spawn with skip from the start.
-- **retrieve the result via a file, not `pane read`.** claude's TUI collapses its final answer, so `pane read --source recent/visible/recent-unwrapped` often returns nothing usable. put "write the result to <repo>/scratchpad/<name>.md" in the task and `cat` that file. reserve `pane read` for progress checks.
-- **wait for `idle`, never `done`** (see the wait-status section above).
-- **a fresh cwd triggers claude's folder-trust prompt.** on the first run in a directory claude has never seen, an "Is this a project you trust?" prompt appears before the task starts — `--dangerously-skip-permissions` does NOT bypass it, and herdr detects the pane as **idle** (not blocked), so `wait --status working` times out and an idle wait releases immediately (falsely). if the working-wait times out right after spawn, confirm with `pane read --source visible`, then approve with `herdr pane send-keys <id> Enter` (default highlight is "1. Yes, I trust this folder"). already-trusted directories (existing repos) don't prompt.
+nine non-obvious traps (each burns a fresh session if you skip it). the first six were re-verified
+2026-07-25 against herdr 0.7.5 by actually spawning workers; the rest carry over from 2026-07:
 
-`--cwd` is required in practice: without it the new pane inherits the herdr server's cwd (usually `~`), not your repo.
+- **anchor with `--current`, not `$HERDR_PANE_ID`.** the `HERDR_*` env vars are captured at pane start and go **stale** when the pane is later moved — a real session had `HERDR_WORKSPACE_ID=wAJ` while it was actually sitting in `wAQ`, and every spawn using it failed. `--current` asks the server where you are right now. (herdr also reassigns pane/workspace ids as panes open and close, so never cache them across steps.)
+- **`agent start` needs `--kind` and an existing pane.** signature is `agent start <NAME> --kind <KIND> --pane <ID> [-- AGENT_ARGV...]`. `--workspace`, `--tab`, `--split`, `--no-focus`, and `--cwd` are all gone from it; the canonical executable comes from `--kind` (`claude`, `codex`, `agy`, …), so `-- claude ...` becomes `-- <claude's own flags>`.
+- **`agent start` immediately after `pane split` can fail.** the new pane must already be at an interactive shell prompt; if it isn't, the call errors out in milliseconds instead of waiting, and the next command reports `agent_not_found`. **retry the identical command** — it succeeds on the next attempt. don't try to gate on the prompt with `pane wait-output --match '$ '`: that assumes a prompt shape, and it timed out against a themed zsh prompt that has no `$ ` in it.
+- **`agent prompt` does not press Enter.** it types the text into the input box and leaves it there — the same trap the old `agent send` had, under a new name. its `--wait` then fails with `agent_prompt_stalled` ("no observed state change... state_change_seq remained N"), which reads like the agent hung when nothing was ever submitted. use `pane run <pane_id> "<text>"` for follow-ups (it submits), and put the *first* prompt in argv per the note above.
+- **never wait on `--until idle`.** a finished pane you have not looked at reports `done`, not `idle`, so an idle wait runs to the timeout (measured: a full 300s while the task had finished in 19s). the bare `agent wait <name> --timeout <MS>` matches idle, done, **and** blocked — which also means a permission prompt wakes you instead of hanging. `--status` is spelled `--until` now.
+- **waiting right after submitting can match the *previous* state.** the agent is still `idle`/`done` for a moment, so a terminal-state wait returns in ~10ms having matched nothing new. wait `--until working` first, then wait for the terminal state.
+- **unattended runs need `--dangerously-skip-permissions`.** a spawned claude starts in the default interactive permission mode and goes `blocked` (see `pane list` status) on the very first tool call, waiting on a "Do you want to proceed?" prompt. an already-blocked pane can be approved with `herdr pane send-keys <id> Enter` (default highlight is "1. Yes"), but every new command re-prompts, so spawn with skip from the start.
+- **retrieve the result via a file, not `pane read`.** claude's TUI collapses its final answer, so `pane read --source recent/visible/recent-unwrapped` often returns nothing usable. put "write the result to <repo>/scratchpad/<name>.md" in the task and `cat` that file. reserve `pane read` for progress checks. note also that claude may render a *suggested* follow-up in the input box, so text sitting at the `❯` prompt is not proof that your own input landed.
+- **a fresh cwd triggers claude's folder-trust prompt.** on the first run in a directory claude has never seen, an "Is this a project you trust?" prompt appears before the task starts — `--dangerously-skip-permissions` does NOT bypass it, and herdr detects the pane as **idle** (not blocked), so the working-wait times out. confirm with `pane read --source visible`, then approve with `herdr pane send-keys <id> Enter` (default highlight is "1. Yes, I trust this folder"). already-trusted directories (existing repos) don't prompt.
 
-to send a follow-up task, note that `herdr agent send` writes literal text without pressing Enter. use `herdr pane run <pane_id> "<text>"` to submit, or follow `agent send` with `herdr pane send-keys <pane_id> Enter`.
+`--cwd` on the split is required in practice: without it the new pane inherits the herdr server's cwd (usually `~`), not your repo. `pane split --env KEY=VALUE` sets env for the launched shell — use it to forward `CLAUDE_CONFIG_DIR` when you run under a ccs profile.
+
+this path is also the only place you control **effort**: `--effort <level>` in the agent's argv works and is visible in the spawned pane's banner (`Opus 5 with medium effort`). pick the level per the effort policy in the global rules — the Agent-tool path has no effort knob at all.
 
 ### spawn an antigravity (agy) agent
 
-herdr natively detects `agy` as an agent (working spinner / blocked permission-prompt rules built in), so the same start/wait/read pattern works (kil9 note, verified 2026-07):
+herdr natively detects `agy` as an agent (working spinner / blocked permission-prompt rules built in), so the same start/wait/read pattern works (kil9 note, verified 2026-07). **the syntax below was mechanically updated to 0.7.5 alongside the claude recipe but not re-run on agy** — expect the same traps and trust the claude recipe over this one where they disagree:
 
 ```bash
-herdr agent start helper --split right --no-focus --cwd /path/to/repo -- agy --dangerously-skip-permissions -i "summarize what script/foo.sh does"
-herdr agent wait helper --status working --timeout 30000
-herdr agent wait helper --status idle --timeout 600000
+PID=$(herdr pane split --current --direction right --no-focus --cwd /path/to/repo \
+  | python3 -c 'import sys,json; print(json.load(sys.stdin)["result"]["pane"]["pane_id"])')
+herdr agent start helper --kind agy --pane "$PID" -- --dangerously-skip-permissions -i "summarize what script/foo.sh does"
+herdr agent wait helper --until working --timeout 30000
+herdr agent wait helper --timeout 600000
 herdr agent read helper --source visible --lines 60
 ```
 
@@ -155,19 +184,19 @@ for a one-shot task that needs no pane, run `agy -p "<prompt>"` headless from yo
 ### coordinate with another agent
 
 ```bash
-herdr agent wait 1-1 --status idle --timeout 120000
+herdr agent wait 1-1 --timeout 120000     # no --until: idle, done, or blocked
 herdr pane read 1-1 --source recent --lines 100
 ```
 
 ## notes
 
-- `workspace list`, `workspace create`, `tab list`, `tab create`, `tab get`, `tab focus`, `tab rename`, `tab close`, `pane list`, `pane get`, `pane split`, `wait output`, and `wait agent-status` print json on success.
+- `workspace list`, `workspace create`, `tab list`, `tab create`, `tab get`, `tab focus`, `tab rename`, `tab close`, `pane list`, `pane get`, `pane split`, `pane wait-output`, and `agent wait` print json on success.
 - `pane read` prints text, not json.
 - `pane read --format ansi` or `pane read --ansi` returns a rendered ANSI snapshot for TUI feedback loops.
-- `pane read --source recent-unwrapped` is useful when you want to inspect the same unwrapped transcript that `wait output --source recent` matches against.
+- `pane read --source recent-unwrapped` is useful when you want to inspect the same unwrapped transcript that `pane wait-output --source recent` matches against.
 - `pane send-text`, `pane send-keys`, and `pane run` print nothing on success.
 - parse ids from `workspace create`, `tab create`, and `pane split` responses when you need new ids. `workspace create` returns `result.workspace`, `result.tab`, and `result.root_pane`. `tab create` returns `result.tab` and `result.root_pane`. for `pane split`, the new pane id is at `result.pane.pane_id`.
-- use `pane read` for current output that already exists. use `wait output` for future output you expect next.
+- use `pane read` for current output that already exists. use `pane wait-output` for future output you expect next.
 - `--no-focus` on split, tab create, and workspace create keeps your current terminal context focused.
 - without `--label`, workspace create keeps cwd-based naming and tab create keeps numbered naming.
 - `--label` on tab create and workspace create applies the custom name immediately.

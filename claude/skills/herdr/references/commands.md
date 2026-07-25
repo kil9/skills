@@ -82,6 +82,16 @@ split downward instead:
 herdr pane split 1-2 --direction down --no-focus
 ```
 
+to split from *your own* pane without knowing its id, use `--current` instead of a pane id — safer
+than `$HERDR_PANE_ID`, which is captured at pane start and goes stale if the pane is later moved:
+
+```bash
+herdr pane split --current --direction right --no-focus --cwd /path/to/repo
+```
+
+`--cwd` sets the new shell's directory (otherwise it inherits the herdr server's cwd, usually `~`)
+and `--env KEY=VALUE` sets env for it.
+
 ## wait for output
 
 block until specific text appears in a pane. useful for waiting on servers, builds, and tests.
@@ -89,28 +99,42 @@ block until specific text appears in a pane. useful for waiting on servers, buil
 for `--source recent`, matching uses unwrapped recent terminal text, so pane width and soft wrapping do not break matches. `pane read --source recent` still shows the pane as rendered. if you want to inspect the same transcript that the waiter matches, use `pane read --source recent-unwrapped`.
 
 ```bash
-herdr wait output 1-3 --match "ready on port 3000" --timeout 30000
+herdr pane wait-output 1-3 --match "ready on port 3000" --timeout 30000
 ```
 
-with regex:
+with regex — `--regex` takes the pattern itself and replaces `--match`, it is not a modifier on it:
 
 ```bash
-herdr wait output 1-3 --match "server.*ready" --regex --timeout 30000
+herdr pane wait-output 1-3 --regex "server.*ready" --timeout 30000
 ```
 
 if it times out, exit code is `1`.
 
 ## wait for an agent status
 
-block until another agent reaches a specific status:
+block until another agent reaches a terminal state:
 
 ```bash
-herdr agent wait 1-1 --status idle --timeout 60000
+herdr agent wait 1-1 --timeout 60000
 ```
 
-`herdr agent wait` accepts pane ids, unique agent names, and detected agent labels.
+`herdr agent wait` accepts pane ids, unique agent names, and detected agent labels. the flag is
+`--until <STATUS>` (repeatable); the old `--status` spelling is gone, and the top-level
+`herdr wait output` / `herdr wait agent-status` commands are gone with it — they now live under
+`pane wait-output` and `agent wait`.
 
-do not wait for `done` (kil9 note, verified 2026-07). `done` is a UI notification state — idle plus "you have not looked at that pane yet". if the finished pane is visible on the active tab it is marked seen immediately and skips `done` entirely, so a wait on `done` can hang forever. always wait for `idle` to detect completion; `herdr agent wait` rejects `--status done` explicitly. the legacy `herdr wait agent-status` accepts `done` silently and only takes pane ids — prefer `herdr agent wait`.
+**prefer the bare wait above, with no `--until`** (kil9 note, re-verified 2026-07-25 on 0.7.5). it
+matches `idle`, `done`, or `blocked`, so it catches completion however herdr labels it *and* wakes on
+a permission prompt instead of hanging. the older advice — "always wait for `idle`, never `done`" —
+backfires here: `done` is idle plus "you have not looked at that pane yet", and a worker pane you
+spawned unfocused stays unseen, so it settles on `done` and **never** reaches `idle`. a measured
+`--until idle` wait burned its full 300s timeout on a task that had finished in 19s. (`--until done`
+has the mirror-image failure if you *are* looking at the pane, which is why neither one alone is
+safe.)
+
+one more race: right after you submit a prompt the agent is still in its previous state, so a
+terminal-state wait can return in milliseconds having matched nothing new. wait `--until working`
+first, then do the bare wait.
 
 ## send text or keys to a pane
 
