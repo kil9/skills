@@ -23,7 +23,34 @@
 #
 # 리모트 조회는 `git fetch` 를 한 번 태운다(타임아웃 10초, 실패는 무시).
 # 끄려면 BACKLOG_ID_GUARD_NO_FETCH=1.
+#
+# **BSD(macOS) 도구만 있는 환경을 가정한다.** 2026-07-26 에 여기서 두 구멍이 드러났다:
+# `grep -oP`(PCRE)와 `timeout`(GNU coreutils) 둘 다 macOS 기본 설치에 없다. 그런데 둘 다
+# `|| true` 로 감싸여 있어 **에러가 나도 exit 0 에 next= 는 정상 출력됐다** — 즉 가드가
+# 막으려던 두 구멍(archive·미동기 리모트)이 조용히 다시 열린 상태로 몇 달을 돌았다.
+# 그래서 아래는 GNU 전용 도구를 쓰지 않는다. 새 코드도 그 규칙을 지킬 것.
 set -euo pipefail
+
+# GNU timeout 대응물. 없으면 백그라운드 + 폴링으로 직접 만든다(macOS 에 timeout 이 없다).
+run_with_timeout() {  # $1=제한초, 나머지=실행할 명령
+  local secs=$1 pid rc i=0
+  shift
+  if command -v timeout >/dev/null 2>&1; then timeout "$secs" "$@"; return $?; fi
+  if command -v gtimeout >/dev/null 2>&1; then gtimeout "$secs" "$@"; return $?; fi
+  "$@" &
+  pid=$!
+  while ((i < secs * 10)); do
+    if ! kill -0 "$pid" 2>/dev/null; then
+      wait "$pid" && rc=0 || rc=$?
+      return "$rc"
+    fi
+    sleep 0.1
+    ((i++))
+  done
+  kill -TERM "$pid" 2>/dev/null || true
+  wait "$pid" 2>/dev/null || true
+  return 124
+}
 
 usage() {
   echo "usage: $(basename "$0") next | fix TASK-N" >&2
@@ -65,7 +92,10 @@ local_max() {
 remote_max() {
   git -C "$root" rev-parse --git-dir >/dev/null 2>&1 || { echo 0; return; }
   if [[ ${BACKLOG_ID_GUARD_NO_FETCH:-0} != 1 ]]; then
-    timeout 10 git -C "$root" fetch --all --quiet >/dev/null 2>&1 || true
+    # 인증 프롬프트에 걸려 매달리지 않게 GIT_TERMINAL_PROMPT=0 도 함께 준다
+    # (VPN 이 필요한 사내 origin 이 붙지 않을 때가 그 경우다).
+    GIT_TERMINAL_PROMPT=0 run_with_timeout 10 \
+      git -C "$root" fetch --all --quiet >/dev/null 2>&1 || true
   fi
   local refs=() up n max=0
   up=$(git -C "$root" rev-parse --abbrev-ref --symbolic-full-name '@{upstream}' 2>/dev/null) || up=""
@@ -73,11 +103,15 @@ remote_max() {
   while IFS= read -r r; do refs+=("$r"); done < <(
     git -C "$root" for-each-ref --format='%(refname:short)' \
       'refs/remotes/*/main' 'refs/remotes/*/master' 2>/dev/null)
+  # 번호 추출은 grep -oP 가 아니라 bash 정규식으로 한다(local_max 와 같은 방식). ls-tree -r 은
+  # blob 만 내놓으므로 마지막 경로 성분이 곧 파일명이다.
+  local p base
   for r in "${refs[@]}"; do
-    while IFS= read -r n; do
-      ((10#$n > max)) && max=$((10#$n))
-    done < <(git -C "$root" ls-tree -r --name-only "$r" -- backlog 2>/dev/null |
-               grep -oP '(?:^|/)task-\K[0-9]+' || true)
+    while IFS= read -r p; do
+      base=${p##*/}
+      [[ $base =~ ^task-([0-9]+) ]] || continue
+      ((10#${BASH_REMATCH[1]} > max)) && max=$((10#${BASH_REMATCH[1]}))
+    done < <(git -C "$root" ls-tree -r --name-only "$r" -- backlog 2>/dev/null || true)
   done
   echo "$max"
 }
