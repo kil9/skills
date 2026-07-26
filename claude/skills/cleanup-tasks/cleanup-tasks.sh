@@ -47,15 +47,37 @@ fm() { sed -n "s/^$1:[[:space:]]*//p" "$2" | head -1 | sed "s/^[\"']//; s/[\"']$
 
 TODAY="$(date +%F)"
 
+# UTC 타임스탬프('YYYY-MM-DD HH:MM')를 로컬 날짜로. Z 오프셋으로 넘긴다 — 타임존 '이름'
+# (예: "... UTC")을 붙이면 GNU date 가 그 존을 출력에도 적용해 변환이 일어나지 않고 UTC
+# 날짜가 그대로 나온다(KST 새벽 완료분이 전날로 찍힘). date -d 가 없는 BSD 는 앞 10자로 폴백.
+utc_to_local_date() { date -d "${1}Z" +%F 2>/dev/null || echo "${1:0:10}"; }
+
 # Done 태스크 수집(파일\t로컬완료날짜)
+#
+# **빈 타임스탬프를 date 에 넘기지 않는다.** `date -d "Z"` 는 에러가 아니라 '지금'으로 파싱돼
+# 그 태스크가 매번 오늘로 찍히고, --today 정책에서 영영 이동하지 않은 채 보드에 박힌다.
+# 실패가 조용한 것이 문제다 — "이동 0건"이 정상 결과와 구별되지 않는다(kil9conf task-217,
+# 실물은 backlog CLI 가 만든 뒤 한 번도 edit 되지 않고 Done 이 된 태스크). 그래서
+# updated_date → created_date → 파일 mtime 순으로 폴백하고, 폴백했으면 반드시 말한다.
 rows=""
+fallbacks=""
 while IFS= read -r f; do
   [ -n "$f" ] || continue
   [ "$(fm status "$f")" = "Done" ] || continue
   up="$(fm updated_date "$f")"
-  # Z 오프셋으로 넘긴다 — 타임존 '이름'(예: "... UTC")을 붙이면 GNU date 가 그 존을 출력에도
-  # 적용해 변환이 일어나지 않고 UTC 날짜가 그대로 나온다(KST 새벽 완료분이 전날로 찍힘).
-  d="$(date -d "${up}Z" +%F 2>/dev/null || echo "${up:0:10}")"
+  if [ -n "$up" ]; then
+    d="$(utc_to_local_date "$up")"
+  else
+    cr="$(fm created_date "$f")"
+    if [ -n "$cr" ]; then
+      d="$(utc_to_local_date "$cr")"
+      fallbacks+="  ! $(basename "$f"): updated_date 없음 → created_date($cr) 사용"$'\n'
+    else
+      # 둘 다 없으면 파일 mtime. GNU·BSD 둘 다 date -r <file> 을 지원한다.
+      d="$(date -r "$f" +%F 2>/dev/null || echo "$TODAY")"
+      fallbacks+="  ! $(basename "$f"): updated_date·created_date 둘 다 없음 → 파일 mtime($d) 사용"$'\n'
+    fi
+  fi
   rows+="${d}	${f}"$'\n'
 done < <(find "$TASKS_DIR" -maxdepth 1 -name 'task-*.md' | sort)
 
@@ -81,6 +103,9 @@ esac
 
 keep=$(( total - ${#MOVE[@]} ))
 echo "정책=$MODE  오늘=$TODAY  Done=$total  이동=${#MOVE[@]}  보드잔류=$keep"
+# 날짜를 폴백으로 정한 태스크는 반드시 드러낸다 — 조용히 넘어가면 그 태스크가 왜 안 움직이는지
+# (또는 왜 움직였는지) 알 길이 없다.
+[ -n "$fallbacks" ] && printf '%s' "$fallbacks"
 if [ "${#MOVE[@]}" -eq 0 ]; then echo "이동 대상 없음"; exit 0; fi
 for f in "${MOVE[@]}"; do echo "  → $(basename "$f")"; done
 
