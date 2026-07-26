@@ -1,5 +1,5 @@
 ---
-description: backlog 태스크를 스스로 진행 가능한 것이 남지 않을 때까지 라운드 단위로 자율 드레인한다. "백로그 다 해줘 / 남은 태스크 전부 진행" 이라고 할 때. 한 태스크만은 /start-backlog, 추천만은 /next-backlog 다.
+description: backlog 태스크를 스스로 진행 가능한 것이 남지 않을 때까지 라운드 단위로 자율 드레인한다. "백로그 다 해줘 / 남은 태스크 전부 진행 / 병렬로 해줘" 라고 할 때(게이트를 통과하면 worktree 병렬로 돌린다). 한 태스크만은 /start-backlog, 추천만은 /next-backlog 다.
 allowed_tools: [Bash, Read, Edit, Write, Glob, Grep, Agent, SendMessage, TaskCreate, TaskList, TaskGet, TaskOutput, TaskStop, TaskUpdate, Skill]
 ---
 
@@ -25,9 +25,9 @@ ready set = 지금 스스로 착수 가능한 태스크:
 
 **기본은 솔로 순차.** ready set 을 우선순위·의존 순으로 한 태스크씩 `/start-backlog` 루프(구현 → 검증 → 커밋, AC 기계화, 태스크 파일 변경을 같은 커밋에)로 완결하고 §3·§4 를 얹는다.
 
-병렬은 `/parallel-tasks` 의 병렬 적합성 게이트(팀원 cold-start·낮은 실효 동시성·토큰 배수의 함정)를 **인지하고도** 이득이 분명할 때만 쓴다: ready set 에 substantial 독립 태스크(다파일·신규·리팩터급이고 서로 파일이 안 겹침) ≥ 2개일 때. 애매하면 솔로. 선택 사유를 한 줄 보고한다.
+병렬은 [`../references/parallel-worktree.md`](../references/parallel-worktree.md) 의 병렬 적합성 게이트(팀원 cold-start·낮은 실효 동시성·토큰 배수의 함정)를 **인지하고도** 이득이 분명할 때만 쓴다: ready set 에 substantial 독립 태스크(다파일·신규·리팩터급이고 서로 파일이 안 겹침) ≥ 2개일 때. 애매하면 솔로. 선택 사유를 한 줄 보고한다.
 
-- 병렬 라운드는 게이트를 통과하는 태스크만 `/parallel-tasks` 절차(worktree → 순차 ff-merge, 워커 수정범위 제한)로, 나머지 사소·의존 태스크는 리드가 인라인 처리한다. 워커 프롬프트에 "발견한 선행·후속 작업을 RESULT 로 보고"를 넣고 리드가 머지 후 §4 로 태스크화한다(워커는 자기 태스크 파일 외 backlog 를 건드리지 않는다).
+- 병렬 라운드는 게이트를 통과하는 태스크만 그 문서의 절차(worktree → 순차 ff-merge, 워커 수정범위 제한)로 돌리고(리드가 직접 수행한다 — 별도 스킬로 위임하지 않는다), 나머지 사소·의존 태스크는 리드가 인라인 처리한다. 워커 프롬프트에 "발견한 선행·후속 작업을 RESULT 로 보고"를 넣고 리드가 머지 후 §4 로 태스크화한다(워커는 자기 태스크 파일 외 backlog 를 건드리지 않는다).
 
 ## 3. 하이브리드 막힘 정책 (질문으로 멈추지 않는다)
 

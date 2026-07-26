@@ -1,7 +1,7 @@
 # backlog 스킬군 공통 전제
 
 backlog 계열 스킬(`add-draft`·`add-task`·`add-milestone`·`init-backlog`·`migrate-to-backlog`·
-`next-backlog`·`start-backlog`·`loop-backlog`·`parallel-tasks`)이 공유하는 전제다. 각 스킬 본문은
+`next-backlog`·`start-backlog`·`loop-backlog`)이 공유하는 전제다. 각 스킬 본문은
 자기 고유 절차만 담고 여기를 가리킨다.
 
 ## CLI 전제
