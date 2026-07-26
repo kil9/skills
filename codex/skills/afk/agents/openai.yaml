@@ -1,0 +1,4 @@
+interface:
+  display_name: "AFK"
+  short_description: "자리를 비우는 동안 알아서 진행하고 복귀 시 보고한다"
+  default_prompt: "$afk 로 자리를 비우기 전에 물을 것을 모아 묻고, 부재 중엔 스스로 판단해 진행한 뒤 복귀 시 내린 결정을 보고한다."
