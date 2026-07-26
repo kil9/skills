@@ -1,0 +1,4 @@
+interface:
+  display_name: "Backlog Cleanup"
+  short_description: "Move finished (Done) backlog tasks into backlog/completed/ and archive milestones with nothing left"
+  default_prompt: "Use $cleanup-backlog to tidy the board: move Done tasks into backlog/completed/ and archive milestones with nothing left, keeping today's completions on the board by default."

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# cleanup-tasks.sh — backlog 의 완료(Done) 태스크를 backlog/completed/ 로 비대화형 정리한다.
+# cleanup-backlog.sh — backlog 의 완료(Done) 태스크를 backlog/completed/ 로 비대화형 정리한다.
 #
 # 배경: `backlog cleanup` 은 age 플래그가 없는 대화형 전용이라 자동화가 안 된다. 이 스크립트는 같은
 # 동작(완료 태스크를 completed 폴더로 이동)을 스크립트로 대체해 정책·기준을 인자로 받는다.
@@ -11,7 +11,7 @@
 # (repo 관례에 따라 호출측이 결정 — 이 repo 는 직배포라 호출측에서 push).
 #
 # 사용:
-#   cleanup-tasks.sh [--today | --all | --keep-recent=N] [--dry-run]
+#   cleanup-backlog.sh [--today | --all | --keep-recent=N] [--dry-run]
 #   --today (기본)   : 오늘 완료분만 보드에 남기고 나머지 이동
 #   --all            : Done 전부 이동(클린 슬레이트)
 #   --keep-recent=N  : updated_date 최신 N 건만 남기고 나머지 이동
@@ -82,11 +82,12 @@ while IFS= read -r f; do
 done < <(find "$TASKS_DIR" -maxdepth 1 -name 'task-*.md' | sort)
 
 rows="${rows%$'\n'}"
-if [ -z "$rows" ]; then echo "Done 태스크 없음 — 정리할 것 없음"; exit 0; fi
-total=$(printf '%s\n' "$rows" | grep -c . || true)
+total=0
+[ -n "$rows" ] && total=$(printf '%s\n' "$rows" | grep -c . || true)
 
 # 이동 대상 선정
 declare -a MOVE=()
+if [ -n "$rows" ]; then
 case "$MODE" in
   all)
     while IFS=$'\t' read -r d f; do [ -n "$f" ] && MOVE+=("$f"); done <<< "$rows" ;;
@@ -100,26 +101,101 @@ case "$MODE" in
       MOVE+=("$f")
     done <<< "$(printf '%s\n' "$rows" | sort -r)" ;;
 esac
+fi
 
 keep=$(( total - ${#MOVE[@]} ))
 echo "정책=$MODE  오늘=$TODAY  Done=$total  이동=${#MOVE[@]}  보드잔류=$keep"
 # 날짜를 폴백으로 정한 태스크는 반드시 드러낸다 — 조용히 넘어가면 그 태스크가 왜 안 움직이는지
 # (또는 왜 움직였는지) 알 길이 없다.
 [ -n "$fallbacks" ] && printf '%s' "$fallbacks"
-if [ "${#MOVE[@]}" -eq 0 ]; then echo "이동 대상 없음"; exit 0; fi
 for f in "${MOVE[@]}"; do echo "  → $(basename "$f")"; done
 
+# ── 다 끝난 마일스톤 아카이브 ────────────────────────────────────────────────
+#
+# 마일스톤 카운터(`backlog milestone list`)는 backlog/tasks/ 에 있는 태스크만 센다.
+# 그래서 위에서 완료 태스크를 completed/ 로 옮기는 순간 그 마일스톤은 0/0 이 되어
+# **끝난 것과 아직 시작 안 한 것이 보드에서 똑같이 보인다**(2026-07-27 실제로 m-7·m-9·
+# m-10 이 '껍데기 마일스톤'으로 오인됐다 — 셋 다 완료 태스크 8·7·3건을 가진 완료분이었다).
+# 태스크 정리가 만든 문제이므로 같은 자리에서 함께 처리한다.
+#
+# 판정: 남은 태스크 0건 **이고** completed/ 에 그 마일스톤 태스크가 1건 이상.
+# 뒤 조건이 핵심이다 — 양쪽 다 0 이면 태스크를 아직 안 붙인 **신규** 마일스톤이라
+# 아카이브하면 안 된다(/add-milestone 이 마일스톤을 먼저 만들고 태스크를 나중에 붙인다).
+# 아카이브는 CLI(`backlog milestone archive`)와 같은 동작인 단순 파일 이동이다.
+MS_DIR="backlog/milestones"
+MS_ARCHIVE="backlog/archive/milestones"
+
+# 이동 예정 파일은 아직 tasks/ 에 있으므로 잔여 계산에서 미리 뺀다(dry-run 도 같은 답을 낸다).
+# 파일명에 공백이 들어가므로 줄 단위로 담고 -Fx 로 통째 비교한다.
+moving_list="$(printf '%s\n' "${MOVE[@]-}")"
+
+count_ms() {  # $1=디렉터리 $2=마일스톤id $3=제외 목록(줄 단위, 빈 값 가능)
+  local n=0 f
+  for f in "$1"/task-*.md; do
+    [ -e "$f" ] || continue
+    if [ -n "$3" ] && printf '%s\n' "$3" | grep -Fxq -- "$f"; then continue; fi
+    if [ "$(fm milestone "$f")" = "$2" ]; then n=$((n+1)); fi
+  done
+  echo "$n"
+}
+
+declare -a MS_MOVE=()
+if [ -d "$MS_DIR" ]; then
+  for msf in "$MS_DIR"/*.md; do
+    [ -e "$msf" ] || continue
+    mid="$(fm id "$msf")"
+    [ -n "$mid" ] || mid="$(basename "$msf" | sed 's/ .*//')"
+    left="$(count_ms "$TASKS_DIR" "$mid" "$moving_list")"
+    [ "$left" -eq 0 ] || continue
+    # completed/ 에 이미 있는 것 + 이번에 옮겨질 것. 뒤엣것을 빼먹으면 첫 정리에서
+    # 막 끝난 마일스톤이 '완료 0건' 으로 보여 영영 아카이브되지 않는다.
+    done_n="$(count_ms "$DONE_DIR" "$mid" "")"
+    for mf in "${MOVE[@]-}"; do
+      [ -n "$mf" ] || continue
+      if [ "$(fm milestone "$mf")" = "$mid" ]; then done_n=$((done_n+1)); fi
+    done
+    [ "$done_n" -gt 0 ] || continue     # 신규 빈 마일스톤은 건드리지 않는다
+    MS_MOVE+=("$msf")
+    echo "  ⇒ $mid $(fm title "$msf") — 남은 태스크 0, 완료 ${done_n}건 → 아카이브"
+  done
+fi
+
+if [ "${#MOVE[@]}" -eq 0 ] && [ "${#MS_MOVE[@]}" -eq 0 ]; then
+  echo "이동 대상 없음"; exit 0
+fi
 if [ "$DRY" -eq 1 ]; then echo "(dry-run: 실제 이동/커밋 안 함)"; exit 0; fi
 
 for f in "${MOVE[@]}"; do git mv "$f" "$DONE_DIR/$(basename "$f")"; done
+if [ "${#MS_MOVE[@]}" -gt 0 ]; then
+  mkdir -p "$MS_ARCHIVE"
+  for f in "${MS_MOVE[@]}"; do git mv "$f" "$MS_ARCHIVE/$(basename "$f")"; done
+fi
 
+# 커밋 범위는 우리가 옮긴 파일의 옛/새 경로만 준다. 디렉터리를 주면 (a) 보드를 완전히
+# 비운 뒤 재실행할 때 빈 backlog/tasks 가 'pathspec did not match' 로 죽고, (b) 옆
+# 세션이 backlog 에 만들어 둔 다른 변경까지 쓸어담는다.
+declare -a COMMIT_PATHS=()
+for f in "${MOVE[@]-}"; do
+  [ -n "$f" ] || continue
+  COMMIT_PATHS+=("$f" "$DONE_DIR/$(basename "$f")")
+done
+for f in "${MS_MOVE[@]-}"; do
+  [ -n "$f" ] || continue
+  COMMIT_PATHS+=("$f" "$MS_ARCHIVE/$(basename "$f")")
+done
+
+subject="backlog: 완료 태스크 ${#MOVE[@]}건 completed 폴더로 정리"
+if [ "${#MS_MOVE[@]}" -gt 0 ]; then
+  subject="$subject · 완료 마일스톤 ${#MS_MOVE[@]}건 아카이브"
+fi
 body=""
 for f in "${MOVE[@]}"; do b="$(basename "${f%.md}")"; body+="- ${b}"$'\n'; done
-git commit -q -m "backlog: 완료 태스크 ${#MOVE[@]}건 completed 폴더로 정리
+for f in "${MS_MOVE[@]}"; do b="$(basename "${f%.md}")"; body+="- (마일스톤) ${b}"$'\n'; done
+git commit -q -m "$subject
 
 ${body}
-정책=${MODE}. /cleanup-tasks 정리.
+정책=${MODE}. /cleanup-backlog 정리.
 
-Co-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>" -- "$TASKS_DIR" "$DONE_DIR"
+Co-Authored-By: Claude Opus 5 (1M context) <noreply@anthropic.com>" -- "${COMMIT_PATHS[@]}"
 
 echo "커밋: $(git rev-parse --short HEAD)"
