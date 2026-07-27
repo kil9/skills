@@ -13,10 +13,10 @@ backlog 의 완료(Done) 태스크를 `backlog/completed/` 로 옮기고, **그 
 
 ## 1. 정책 선택
 
-기본은 `--today`(오늘 완료분만 남기고 나머지 이동)다. 사용자가 다르게 지시하면 그 정책으로 바꾼다.
+기본은 `--all`(완료 시각과 무관하게 Done 전부 이동)이다. 사용자가 다르게 지시하면 그 정책으로 바꾼다.
 
-- `--today` (기본): updated_date 가 오늘(로컬 날짜)인 Done 은 보드 유지, 나머지 Done 이동. updated_date 는 backlog 이 UTC 로 기록하므로 스크립트가 로컬 날짜로 변환해 "오늘" 을 판단한다.
-- `--all`: Done 전부 이동(클린 슬레이트).
+- `--all` (기본): Done 전부 이동(클린 슬레이트). 오늘 완료한 것도 옮긴다 — 정리 요청의 의도는 대개 보드를 비우는 것이고, 방금 끝낸 태스크가 보드에 남아 있어야 할 이유가 없다.
+- `--today`: updated_date 가 오늘(로컬 날짜)인 Done 은 보드 유지, 나머지 Done 이동. updated_date 는 backlog 이 UTC 로 기록하므로 스크립트가 로컬 날짜로 변환해 "오늘" 을 판단한다.
 - `--keep-recent=N`: updated_date 최신 N 건만 남기고 나머지 이동.
 
 ## 1-1. 마일스톤 아카이브 판정
@@ -34,9 +34,9 @@ backlog 의 완료(Done) 태스크를 `backlog/completed/` 로 옮기고, **그 
 
 ```bash
 # 미리보기
-"<이 스킬 base dir>/cleanup-backlog.sh" --today --dry-run
+"<이 스킬 base dir>/cleanup-backlog.sh" --dry-run
 # 실제 정리(스크립트가 이동 + backlog 경로만 커밋)
-"<이 스킬 base dir>/cleanup-backlog.sh" --today
+"<이 스킬 base dir>/cleanup-backlog.sh"
 ```
 
 스크립트는 이동 대상 파일을 `git mv` 하고 **자기가 옮긴 파일의 옛/새 경로만 범위로** 커밋한다(옆 세션이 backlog 에 만들어 둔 변경을 쓸어담지 않는다). 태스크·마일스톤 모두 이동 대상이 0건이면 아무것도 하지 않고 끝난다(멱등). dry-run 출력에서 태스크는 `→`, 마일스톤은 `⇒` 로 구분된다.

@@ -4,22 +4,23 @@
 # 배경: `backlog cleanup` 은 age 플래그가 없는 대화형 전용이라 자동화가 안 된다. 이 스크립트는 같은
 # 동작(완료 태스크를 completed 폴더로 이동)을 스크립트로 대체해 정책·기준을 인자로 받는다.
 #
-# 기본 정책(--today): 오늘(로컬 날짜) 완료한 Done 은 보드에 남기고 나머지 Done 을 git mv 로 이동한다.
-# updated_date 는 backlog 이 UTC 로 기록하므로 로컬 날짜로 변환해 "오늘" 을 판단한다.
+# 기본 정책(--all): Done 을 전부 git mv 로 이동한다(완료 시각과 무관하게 클린 슬레이트).
+# --today 를 주면 오늘(로컬 날짜) 완료분만 보드에 남긴다. updated_date 는 backlog 이 UTC 로 기록하므로
+# 로컬 날짜로 변환해 "오늘" 을 판단한다.
 #
 # 커밋은 backlog 경로만 대상으로 해 무관한 워킹트리 변경을 쓸어담지 않는다. push 는 하지 않는다
 # (repo 관례에 따라 호출측이 결정 — 이 repo 는 직배포라 호출측에서 push).
 #
 # 사용:
 #   cleanup-backlog.sh [--today | --all | --keep-recent=N] [--dry-run]
-#   --today (기본)   : 오늘 완료분만 보드에 남기고 나머지 이동
-#   --all            : Done 전부 이동(클린 슬레이트)
+#   --all (기본)     : Done 전부 이동(클린 슬레이트)
+#   --today          : 오늘 완료분만 보드에 남기고 나머지 이동
 #   --keep-recent=N  : updated_date 최신 N 건만 남기고 나머지 이동
 #   --dry-run, -n    : 실제 이동/커밋 없이 대상만 출력
 # 종료코드: 0=성공(이동 0건 포함), 2=backlog repo 아님/인자 오류
 set -euo pipefail
 
-MODE="today"
+MODE="all"
 KEEP_N=2
 DRY=0
 
