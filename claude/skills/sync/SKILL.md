@@ -12,6 +12,16 @@ allowed_tools: [Bash, Read, Edit, Write, Glob, Grep]
    bash ~/.claude/skills/sync/sync-repo.sh
    ```
 
+   - **dirty 인데 behind > 0 이면 autostash 가 안전한지 먼저 본다.** `--autostash` 는 소유권을
+     안 가리고 워킹트리 dirty 파일을 통째로 stash 했다 되돌리므로, 같은 체크아웃을 쓰는 다른
+     세션이 그 창 동안 파일을 쓰면 그 세션 작업이 깨진다(`/commit` 의 명시 스테이징 규칙은
+     커밋만 막지 pull 은 못 막는다). `HERDR_ENV=1` 이면 `herdr pane list` 로 같은 `cwd` 의 형제
+     pane 을 보고, `agent_status` 가 working 인 형제가 있으면 **pull 을 미루고 push 만** 한다
+     (`git push <remote> HEAD:<branch>`) — 그 세션이 idle 이 된 뒤 다시 /sync. behind 가 0 이면
+     pull 자체가 no-op 이니 이 판단 없이 push 만 해도 된다.
+   - **형제 pane 이 없다고 안전이 증명되진 않는다** — herdr 밖 세션·cron·SSH 는 목록에 안 잡힌다.
+     이 확인은 위험을 발견하면 멈추는 용도지, 없을 때 진행을 정당화하는 근거가 아니다.
+
    - **rebase→merge 폴백**: rebase 충돌 해결이 여러 커밋을 거슬러야 해 손이 많이 가면
      `git rebase --abort` 후 `sync-repo.sh merge`(=`pull --no-rebase`)로 전환한다. 가벼운
      충돌은 rebase 로 해결하는 편을 선호. 그 밖의 실패(push 거부 등)만 직접 개입.
@@ -27,4 +37,6 @@ allowed_tools: [Bash, Read, Edit, Write, Glob, Grep]
 2. **dirty 였으면 커밋·push** (clean 이면 생략): `/commit` 규칙대로 커밋한 뒤 `sync-repo.sh` 를
    다시 실행해 push 한다. worktree 안이어도 대상 브랜치 merge·정리는 하지 않는다 — 현재 브랜치
    커밋·push 까지만이며, worktree 마무리는 명시적 `/cip` 때만.
-3. **보고**: 동기화만 했는지, 커밋·push 까지 했는지 한두 줄로 밝힌다.
+3. **보고**: 동기화만 했는지, 커밋·push 까지 했는지 한두 줄로 밝힌다. 형제 pane 때문에 pull 을
+   미뤘거나 커밋을 건너뛰었으면 그 pane 의 표시 이름·id 를 함께 밝힌다("dirty 라서 건너뜀"보다
+   사용자가 판단하기 쉽다).
