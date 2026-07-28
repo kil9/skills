@@ -15,10 +15,16 @@ description: 현재 브랜치를 리모트와 동기화한다(pull rebase 우선
    - **dirty 인데 behind > 0 이면 autostash 가 안전한지 먼저 본다.** `--autostash` 는 소유권을
      안 가리고 워킹트리 dirty 파일을 통째로 stash 했다 되돌리므로, 같은 체크아웃을 쓰는 다른
      세션이 그 창 동안 파일을 쓰면 그 세션 작업이 깨진다(`$commit` 의 명시 스테이징 규칙은
-     커밋만 막지 pull 은 못 막는다). `HERDR_ENV=1` 이면 `herdr pane list` 로 같은 `cwd` 의 형제
-     pane 을 보고, `agent_status` 가 working 인 형제가 있으면 **pull 을 미루고 push 만** 한다
-     (`git push <remote> HEAD:<branch>`) — 그 세션이 idle 이 된 뒤 다시 동기화한다. behind 가
-     0 이면 pull 자체가 no-op 이니 이 판단 없이 push 만 해도 된다.
+     커밋만 막지 pull 은 못 막는다). `HERDR_ENV=1` 이면 `herdr pane list`(인자 없으면 **모든
+     워크스페이스**를 준다)로 형제를 찾고, `agent_status` 가 working 인 형제가 있으면 **pull 을
+     미루고 push 만** 한다 (`git push <remote> HEAD:<branch>`) — 그 세션이 idle 이 된 뒤 다시
+     동기화한다. behind 가 0 이면 pull 자체가 no-op 이니 이 판단 없이 push 만 해도 된다.
+   - **형제 판정은 cwd 문자열이 아니라 `git -C <그 pane 의 cwd> rev-parse --show-toplevel` 로 한다**
+     (`cwd`·`foreground_cwd` 둘 다 본다). 내 toplevel 과 같으면 형제다. 경로 비교는 **심링크로
+     들어간 pane 을 놓친다** — 예컨대 `~/.claude/skills/apply-kil9conf` 는 kil9conf 워킹트리
+     안인데 문자열이 전혀 안 닮았다(dotfile·스킬이 죄다 그런 심링크다). toplevel 비교는 덤으로
+     worktree(별개 워킹트리라 위험 아님)와 중첩 repo 를 정확히 제외하고, repo 밖 pane 은
+     rev-parse 가 비정상 종료해 자연히 빠진다.
    - **형제 pane 이 없다고 안전이 증명되진 않는다** — herdr 밖 세션·cron·SSH 는 목록에 안 잡힌다.
      이 확인은 위험을 발견하면 멈추는 용도지, 없을 때 진행을 정당화하는 근거가 아니다.
 
