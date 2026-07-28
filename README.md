@@ -40,12 +40,15 @@ Codex 는 `~/.codex/skills/` 를 읽는다.
 |---|---|
 | backlog·플랜 워크플로 | add-draft, add-milestone, add-task, cleanup-backlog, init-backlog, loop-backlog, loop-plan, make-a-plan, migrate-to-backlog, next-backlog, start-backlog |
 | git 워크플로 | commit, cip, cipd, sync |
-| 에이전트 메타 | fable-advisor, grill, handoff, learn, skill-creator, zip-it |
+| 에이전트 메타 | fable-advisor, learn, skill-creator, zip-it |
 | 에이전트 운용 | afk, herdr, kill-agents, shoot-and-forget |
 | 저장소·퍼블리시 유틸 | init-project, scan-bugs, paste-image, publish-til, kil9-writing-style, explain-diff |
 | 개인 워크플로 | manage-gmail-inbox |
 
 각 스킬의 동작·호출법은 해당 디렉터리의 `SKILL.md` 가 정본이다.
+
+`grill`·`handoff` 는 Claude 쪽에서는 `mattpocock-skills` 플러그인(`grilling`/`grill-me`, `handoff`)으로
+대체해 제거했다. Codex 는 그 플러그인을 못 받으므로 `codex/skills/` 에만 남겨 둔다.
 
 서브에이전트(`claude/agents/`): review-cleancode, review-logic, review-performance, review-security — scan-bugs 등 리뷰 스킬이 병렬로 띄우는 diff 리뷰 4종.
 
