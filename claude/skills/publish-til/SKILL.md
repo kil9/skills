@@ -107,6 +107,14 @@ WebP(1440px·q75) base64 `data:` URI 임베드, `figure.illust`+`alt`+`figcaptio
 beacon·갤러리 카드/README 행의 새 경로 참조 일관성을 일괄 확인한다. FAIL 항목이 있으면 보정
 후 재실행한다. 인자는 슬러그가 아니라 **새 상대경로**다.
 
+마지막 항목은 impeccable 디자인 가드다(til repo TASK-114). **새 페이지 디렉터리만** `npx impeccable
+detect` 로 보고 failures 가 하나라도 있으면 FAIL 이다 — 기존 발행물은 이관 당시의 자체 스타일을
+그대로 두기로 했으므로(TASK-113 triage) 전체를 걸지 않는다. advisory(em-dash 등)는 detect 가
+exit code 에 반영하지 않아 발행을 막지 않는다. 규칙 waive 목록의 정본은 repo 의
+`.impeccable/config.json`(커밋됨)이고, 시각 규칙 정본은 repo 루트 `DESIGN.md` 다. 도구를 실행할 수
+없는 환경(미설치·네트워크 실패)에서는 `skip:` 을 찍고 넘어간다 — 품질 게이트라 발행을 막지 않되
+조용히 통과시키지도 않는다.
+
 ```
 bash ~/.claude/skills/publish-til/til-verify.sh <YYYY>/<slug>   # 지원 페이지면 p/<slug>
 ```
