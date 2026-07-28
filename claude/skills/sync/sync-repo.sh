@@ -76,7 +76,52 @@ if [ ${#failed[@]} -gt 0 ]; then
   exit 1
 fi
 
-# --- 같은 repo 의 추가 워킹카피도 함께 동기화 (머신 로컬 설정, 없으면 조용히 생략) ---
+# --- 다른 체크아웃 동기화 (스킬 repo + 머신 로컬 추가분) -----------------------------
+#
+# 한 체크아웃을 pull(+조건부 push)한다. $2 가 'skip-push-if-dirty' 면 커밋 안 된 변경이 있을 때
+# push 를 건너뛴다 — 스킬 repo 처럼 '무엇을 커밋할지' 판단이 필요한 곳에 쓴다.
+sync_checkout() {
+  local dir="$1" dirty_policy="${2:-}" cbranch
+  echo "--- $dir"
+  local dirty=""
+  if [ -n "$(git -C "$dir" status --porcelain)" ]; then
+    dirty=1
+    # 여기서 커밋하지 않는다 — 무엇을 커밋할지는 사람/에이전트가 /commit 규칙으로 판단할 일.
+    echo "warn: $dir 에 커밋 안 된 변경이 있다. 커밋 후 다시 /sync 하라:" >&2
+    git -C "$dir" status --porcelain >&2
+  fi
+
+  if ! git -C "$dir" rev-parse --abbrev-ref '@{upstream}' >/dev/null 2>&1; then
+    echo "notice: $dir upstream 미설정 — pull 생략" >&2
+    return 0
+  fi
+
+  git -C "$dir" pull $pull_opt --autostash
+  cbranch=$(git -C "$dir" symbolic-ref --short HEAD)
+  if [ -n "$(git -C "$dir" log --oneline '@{upstream}..HEAD')" ]; then
+    if [ -n "$dirty" ] && [ "$dirty_policy" = "skip-push-if-dirty" ]; then
+      echo "  push 건너뜀(dirty): $dir — 커밋한 뒤 다시 /sync" >&2
+    else
+      git -C "$dir" push origin "$cbranch" && echo "pushed: $dir → origin/$cbranch"
+    fi
+  fi
+  echo "  $dir: $(git -C "$dir" log --oneline -1)"
+}
+
+# 스킬 repo 는 **기본 대상**이다. 머신 로컬 conf 에 맡기면 머신마다 수동이라 새 머신에서 또
+# 누락되고, 그 누락은 증상이 없어 오래 간다 — 2026-07-29 에 nuc14 에서 스킬을 고쳐 push 했는데
+# 다른 머신이 /sync 를 여러 번 돌리고도 못 받아 스킬셋이 갈라졌다(kil9conf task-242).
+# 없는 경로는 조용히 넘어간다(skills-naver 는 회사 머신에만 있다).
+self_top=$(git rev-parse --show-toplevel 2>/dev/null || echo "")
+for skill_repo in ${SYNC_SKILL_REPOS:-"$HOME/work/skills" "$HOME/work/skills-naver"}; do
+  [ -d "$skill_repo" ] || continue
+  git -C "$skill_repo" rev-parse --git-dir >/dev/null 2>&1 || continue
+  # 지금 그 repo 안에서 /sync 를 돌렸다면 위에서 이미 처리했다.
+  [ "$(git -C "$skill_repo" rev-parse --show-toplevel)" = "$self_top" ] && continue
+  sync_checkout "$skill_repo" skip-push-if-dirty
+done
+
+# 같은 repo 의 추가 워킹카피 (머신 로컬 설정, 없으면 조용히 생략).
 # 다른 체크아웃이 라이브 설정을 물고 있는 경우(예: WT junction → rc/windows-terminal-preview),
 # 그쪽이 stale 해지는 순간 repo 의 수정이 라이브에 도달하지 못한다. 증상은 "고쳤는데 안 고쳐짐"이라
 # 원인을 찾기 어렵다. 그래서 여기서 같이 당긴다.
@@ -95,23 +140,9 @@ if [ -f "$extra_conf" ]; then
       continue
     fi
 
-    echo "--- 추가 체크아웃: $extra"
-    if [ -n "$(git -C "$extra" status --porcelain)" ]; then
-      # 여기서 커밋하지 않는다 — 무엇을 커밋할지는 사람/에이전트가 /commit 규칙으로 판단할 일.
-      echo "warn: $extra 에 커밋 안 된 변경이 있다. 커밋 후 다시 /sync 하라:" >&2
-      git -C "$extra" status --porcelain >&2
-    fi
-
-    if git -C "$extra" rev-parse --abbrev-ref '@{upstream}' >/dev/null 2>&1; then
-      git -C "$extra" pull $pull_opt --autostash
-      extra_branch=$(git -C "$extra" symbolic-ref --short HEAD)
-      if [ -n "$(git -C "$extra" log --oneline '@{upstream}..HEAD')" ]; then
-        git -C "$extra" push origin "$extra_branch" && echo "pushed: $extra → origin/$extra_branch"
-      fi
-      echo "  $extra: $(git -C "$extra" log --oneline -1)"
-    else
-      echo "notice: $extra upstream 미설정 — pull 생략" >&2
-    fi
+    # 여기는 dirty 여도 push 한다 — 라이브 설정을 물고 있는 미러라 최신화가 목적이고,
+    # 그 체크아웃에서 사람이 편집하는 일은 드물다.
+    sync_checkout "$extra"
   done 3< "$extra_conf"
 fi
 
