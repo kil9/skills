@@ -15,10 +15,12 @@
 #   backlog-id-guard.sh fix TASK-N              # 방금 만든 태스크가 이미 쓰인 번호면 개명
 #   backlog-id-guard.sh fix m-N                 # 마일스톤도 같다 (엔티티는 접두사로 판별)
 #
-# 출력은 한 줄 key=value 다:
+# fix 출력은 ID 판정과 게시 상태 각 한 줄이다:
 #   next=TASK-206 | next=m-24
 #   ok=TASK-206                       # 개명 불필요
 #   moved=TASK-203 -> TASK-206        # 개명함
+#   published=TASK-206 ref=github/main
+#   warning=unpublished id=TASK-206 reason=uncommitted path=...
 #   skip=no-backlog | skip=no-cli     # 대상 저장소가 아님 (exit 0)
 #
 # fix 는 **방금 만든 것**에만 쓴다. 다른 파일·커밋이 이미 그 ID 를 참조하는 오래된 태스크·
@@ -93,6 +95,56 @@ ent_id() {  # $1=번호 → 표기용 ID
   if [[ $ENT == task ]]; then echo "TASK-$1"; else echo "m-$1"; fi
 }
 
+# 방금 만든 엔티티가 다른 머신의 ID 가드에서도 보이는지 보고한다. 새 파일이 커밋되지 않았거나
+# GitHub 리모트 트리에서 같은 blob 을 확인할 수 없으면 경고한다. fix 자체는 기존처럼 성공한다.
+report_publication() {  # $1=표시 ID, $2=현재 파일 절대 경로
+  local id=$1 file=$2 rel status remote current_blob ref remote_blob ref_count=0
+  if ! git -C "$root" rev-parse --git-dir >/dev/null 2>&1; then
+    echo "warning=unpublished id=$id reason=no-git path=$file"
+    return
+  fi
+  case $file in
+    "$root"/*) rel=${file#"$root"/} ;;
+    *)
+      echo "warning=unpublished id=$id reason=outside-repo path=$file"
+      return
+      ;;
+  esac
+
+  status=$(git -C "$root" status --porcelain -- "$rel") || status=""
+  if [[ -n $status ]]; then
+    echo "warning=unpublished id=$id reason=uncommitted path=$rel"
+    return
+  fi
+
+  current_blob=$(git -C "$root" rev-parse --verify "HEAD:$rel" 2>/dev/null) || current_blob=""
+  if [[ -z $current_blob ]]; then
+    echo "warning=unpublished id=$id reason=not-in-head path=$rel"
+    return
+  fi
+
+  remote=$(backlog_guard_github_remote "$root") || remote=""
+  if [[ -z $remote ]]; then
+    echo "warning=unpublished id=$id reason=no-github-remote path=$rel"
+    return
+  fi
+  while IFS= read -r ref; do
+    ref_count=$((ref_count + 1))
+    remote_blob=$(git -C "$root" rev-parse --verify "$ref:$rel" 2>/dev/null) || remote_blob=""
+    if [[ -n $remote_blob && $remote_blob == "$current_blob" ]]; then
+      echo "published=$id ref=$ref"
+      return
+    fi
+  done < <(git -C "$root" for-each-ref --format='%(refname:short)' \
+    "refs/remotes/$remote" 2>/dev/null)
+
+  if [[ $ref_count -eq 0 ]]; then
+    echo "warning=unpublished id=$id reason=no-remote-ref path=$rel"
+  else
+    echo "warning=unpublished id=$id reason=not-on-github path=$rel"
+  fi
+}
+
 # 로컬: 활성 + completed + archive 를 통틀어 쓰인 번호. exclude 로 준 경로 하나는 뺀다.
 local_max() {
   local exclude=${1:-} f base max=0
@@ -165,6 +217,7 @@ case $mode in
     other_max=$(used_max "$file")
     if ((num > other_max)); then
       echo "ok=$(ent_id "$num")"
+      report_publication "$(ent_id "$num")" "$file"
       exit 0
     fi
 
@@ -195,6 +248,7 @@ case $mode in
       mv "$file" "$newfile"
     fi
     echo "moved=$(ent_id "$num") -> $(ent_id "$new")"
+    report_publication "$(ent_id "$new")" "$newfile"
     ;;
   *)
     usage
