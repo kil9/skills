@@ -1,0 +1,7 @@
+interface:
+  display_name: "Sol Advisor"
+  short_description: "Sol 자문으로 답안과 계획의 허점과 대안을 검토합니다"
+  default_prompt: "Use $sol-advisor to get a Sol consultation on this plan."
+
+policy:
+  allow_implicit_invocation: false
