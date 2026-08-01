@@ -5,15 +5,13 @@ allowed_tools: [Bash, Read, Edit, Write, Glob, Grep, AskUserQuestion, Skill]
 
 백로그(또는 레거시 PLAN 파일)를 우선순위·의존 순서대로 끝까지 진행한다. 항목마다 **구현 → 검증 → 커밋** 으로 완결하며, 검증을 통과하지 않으면 커밋하지 않고, 커밋하지 않으면 다음 항목으로 넘어가지 않는다.
 
-## 0. 모드 판별
+## 0. 모드 판별 · snapshot
 
-backlog 모드면 §1-§6(기본 서술), 레거시 모드면 §L. 둘 다 없으면 "backlog 미초기화 + PLAN 파일 없음. `/init-backlog` 으로 먼저 만들어 주세요." 라고 알리고 중단한다. 공통 전제(설치 명령·`--plain` 규칙·모드 판별·상태 4종)는 [`../references/backlog-basics.md`](../references/backlog-basics.md).
-
-**CLI 없으면 중단.** `command -v backlog` 로 확인하고, 없으면 파일 손편집으로 폴백하지 말고 설치를 안내한 뒤 멈춘다.
+`bash ~/.claude/skills/references/backlog-context.sh`를 **한 번만** 호출한다. exit 0이면 그 snapshot만 읽어 §1-§6을 수행하고 목록·상세를 따로 조회하지 않는다. exit 2는 §L, exit 3은 CLI 설치 안내, 다른 non-zero는 오류 보고 후 중단이다. 공통 전제는 [`../references/backlog-basics.md`](../references/backlog-basics.md)를 따른다.
 
 ## 1. 대상 선정 (backlog 모드)
 
-`backlog task list --plain` 으로 전체를 조회한 뒤, 호출 인자(스킬 이름 뒤에 붙은 텍스트)에 따라 대상을 정한다. draft 는 진행 대상이 아니다(`backlog draft list` 로 따로 관리).
+snapshot의 `## tasks`와 `## unfinished task details`로 대상의 전체·Description·AC·의존·notes를 읽고, 호출 인자에 따라 정한다. draft는 자동 제외된다.
 
 - **인자 없음**: backlog 에서 직접 고른다. 선정 우선순위:
   - **In Progress** 태스크가 있으면 최우선으로 이어서 진행한다.
@@ -28,7 +26,8 @@ backlog 모드면 §1-§6(기본 서술), 레거시 모드면 §L. 둘 다 없�
 
   생성 직후 ID 가드를 태스크마다 1회 돌린다(`../references/backlog-basics.md` 의 '태스크 ID 발급'). `moved=` 가 나오면 그 태스크의 ID 가 바뀐 것이니 이후 보고·의존·커밋 태그에 새 번호를 쓴다.
 
-각 태스크 상세(Description·AC·의존·notes)는 `backlog task view <id> --plain` 으로 확인한다.
+  ID가 확정되면 `bash ~/.claude/skills/references/backlog-context.sh TASK-N`을 한 번 더 호출해 새 task의 상세 snapshot으로 바꾼다.
+
 대상을 확정한 뒤 §2 로 들어가기 전에 후보 ID 전부를 공통 전제의 **착수 신선도** 가드로 한 번에
 검사한다. `stale=` 후보는 상태를 바꾸지 않고 제외하며, `unknown=` 은 경고 후 계속한다.
 

@@ -15,61 +15,23 @@ description: backlog(또는 PLAN.md)를 훑어 남은 태스크를 마일스톤�
 
 인자가 마일스톤 id 로도 `--tasks` 로도 해석되지 않으면(오타 등) 임의로 짐작해 진행하지 말고, 인자를 무시한다고 밝힌 뒤 기본 동작을 한다.
 
-## 1. 모드 감지
+## 1. 모드 감지 · snapshot
 
-backlog 모드면 §2-5, 레거시 모드면 §6 으로 간다. 공통 전제(설치 명령·`--plain` 규칙·모드 판별·상태 4종)는 [`../references/backlog-basics.md`](../references/backlog-basics.md).
-
-**CLI 없으면 중단.** `command -v backlog` 로 확인하고, 없으면 파일 손편집으로 폴백하지 말고 설치를 안내한 뒤 멈춘다.
-
-## 2. 수집 (backlog 모드)
-
-### 2-1. 마일스톤
+먼저 아래를 **한 번만** 호출하고, 성공하면 그 출력만 읽는다. 별도로 milestone/task 목록이나 task 상세를 조회하지 않는다.
 
 ```
-backlog milestone list --plain --show-completed
+bash ~/.codex/skills/references/backlog-context.sh
 ```
 
-`--plain` 은 필수다(보드/브라우저 실행 금지). `--show-completed` 가 없으면 완료 마일스톤이 `(collapsed, use --show-completed to list)` 로 접혀 대시보드에 안 나온다 — 전체 진척이 목적이므로 항상 붙인다.
+- exit 0: backlog 모드다. `## milestones`에서 id·제목·완료/전체를, `## tasks`에서 상태별 ID·제목·priority를 읽는다. `## unfinished task details`의 `===== TASK-N =====` 블록에는 미완료 task의 원문이 있다.
+- exit 2: backlog가 없으므로 [`references/branch-modes.md`](references/branch-modes.md)의 §6 레거시 모드로 간다.
+- exit 3: CLI 설치를 안내하고 중단한다. 다른 non-zero는 스크립트의 오류를 보고하고 재조회하지 않는다.
 
-출력은 두 그룹이다.
+## 2. snapshot 해석
 
-```
-Active milestones (5):
-  m-1: skills repo 분리·공개 (0/1 done)
-  m-4: F13 STT 재부팅 내성 (5/6 done)
+`## tasks`의 Done ID 집합은 의존 해소 판정용이고, To Do/In Progress/Blocked ID는 각 상세 블록과 짝지어 읽는다. 상세의 `Milestone:` / `Dependencies:` / `Status:` / `Labels:` / `Acceptance Criteria:` / `Implementation Notes:`를 쓴다. 값 없는 필드는 줄 자체가 없으므로 미설정으로 읽는다. `Status:` 글리프(`○` / `◒` / `●` / `✔`)는 떼고 비교한다.
 
-Completed milestones (2):
-  m-6: vial 치트시트 인쇄 조판 개선 (7/7 done)
-```
-
-각 줄에서 **id·제목·완료/전체 카운트**를 얻는다. 이 한 번의 호출로 진척 바에 필요한 건 다 나온다 — 카운트를 얻으려고 태스크를 세지 말 것.
-
-마일스톤이 하나도 없으면 대시보드를 포기하고 `--tasks` 와 같은 출력(§5-2)을 내면서 `$add-milestone` 을 안내한다. 마일스톤이 없다는 이유로 멈추지는 않는다 — 남은 태스크를 아는 것이 원래 목적이다.
-
-### 2-2. 태스크
-
-```
-backlog task list --plain
-```
-
-`--plain` 은 필수다. 출력은 상태별 그룹(`To Do` / `In Progress` / `Done` / `Blocked`)으로 나오고, 각 줄은 `[PRIORITY] TASK-N - 제목` 형식이다(priority 미설정 시 앞의 대괄호 없음). draft·milestone 은 여기 안 나오므로 **자동 제외**된다.
-
-여기서 **Done 태스크 ID 집합**(의존 해소 판정용)과 미완료(To Do / In Progress / Blocked) 태스크의 ID·제목·priority 를 얻는다.
-
-태스크가 하나도 없으면 그 상태를 보고하고 `$init-backlog` 을 안내한 뒤 멈춘다.
-
-### 2-3. 미완료 태스크 상세
-
-목록만으로는 소속 마일스톤·의존·label·AC 가 안 보이므로 **미완료 태스크만** 개별 조회한다. Done·draft 는 조회하지 않는다 — 카운트는 §2-1 이 이미 줬다.
-
-```
-backlog task <id> --plain
-```
-
-`Milestone:` / `Dependencies:` / `Status:` / `Labels:` / `Acceptance Criteria:` / `Implementation Notes:` 를 읽는다. 파싱에서 걸리는 것 둘:
-
-- **값이 없는 필드는 줄 자체가 안 나온다.** 마일스톤·의존·label 이 없는 태스크에는 `Milestone:` 줄이 아예 없지 `Milestone: (none)` 같은 게 아니다. 줄이 없으면 "미설정"으로 읽을 것 — 조회 실패로 오해해 재시도하지 말 것.
-- **`Status:` 값에는 글리프가 붙는다**(`○ To Do` / `◒ In Progress` / `● Blocked` / `✔ Done`). 상태를 문자열 동등 비교하면 전부 어긋나므로 글리프를 떼고 본다. 상태의 진실원본은 이쪽이며, §2-2 목록의 그룹 헤더와 같은 값이다.
+마일스톤이 없으면 `--tasks`와 같은 출력(§5-2)으로 바꾸고 `$add-milestone`을 안내한다. task가 하나도 없으면 `$init-backlog`을 안내하고 중단한다.
 
 ## 3. 착수 가능 / 막힘 판정
 

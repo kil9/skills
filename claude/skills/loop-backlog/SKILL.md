@@ -5,15 +5,13 @@ allowed_tools: [Bash, Read, Edit, Write, Glob, Grep, Agent, SendMessage, TaskCre
 
 backlog 를 **스스로 진행할 수 있는 태스크가 남지 않을 때까지** 라운드 단위로 자율 드레인한다(백엔드가 PLAN 파일이면 `/loop-plan`). 각 라운드: **fresh 재조회 → ready set → 실행 → 발견분 자동 추가**. 각 태스크는 구현 → 검증 → 커밋(`/start-backlog` 규칙)으로 완결한다. **한 번 읽고 비었다고 종료하지 않고**(§5), **인터랙티브 질문으로 멈추지 않는다**(§3).
 
-## 0. 전제
+## 0. 전제 · snapshot
 
-`backlog/`(또는 `backlog/config.yml`) 필요. 없으면 "PLAN 파일 있으면 `/loop-plan`, 아니면 `/init-backlog`" 안내 후 중단. 공통 전제(설치 명령·`--plain` 규칙·모드 판별·상태 4종)는 [`../references/backlog-basics.md`](../references/backlog-basics.md).
-
-**CLI 없으면 중단.** `command -v backlog` 로 확인하고, 없으면 파일 손편집으로 폴백하지 말고 설치를 안내한 뒤 멈춘다. 무인 루프라 손편집의 어긋남이 라운드마다 번진다.
+매 라운드 `bash ~/.claude/skills/references/backlog-context.sh`를 **한 번만** 호출해 snapshot만 읽고 목록·상세를 따로 재조회하지 않는다. exit 2면 PLAN 파일은 `/loop-plan`, 없으면 `/init-backlog`; exit 3은 CLI 설치; 다른 non-zero는 오류 보고 후 라운드 중단이다. 공통 전제는 [`../references/backlog-basics.md`](../references/backlog-basics.md)를 따른다.
 
 ## 1. 라운드 · ready set
 
-라운드 시작마다 `backlog task list --plain` 을 **다시** 조회한다(이전 라운드 목록 재사용 금지 — 외부 세션·사용자가 라운드 중 추가한 태스크를 흡수한다). To Do 는 `backlog task view <id> --plain` 으로 Dependencies·Labels·AC 를 확인한다.
+매 라운드의 새 snapshot에서 `## tasks` 상태 그룹과 미완료 task의 `===== TASK-N =====` 원문을 읽는다. 따라서 외부 세션·사용자가 라운드 중 추가한 태스크를 흡수하면서 Dependencies·Labels·AC도 같은 snapshot에서 확인한다.
 
 ready set = 지금 스스로 착수 가능한 태스크:
 
