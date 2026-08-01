@@ -28,8 +28,11 @@ allowed_tools: [Bash, Read, Edit, Write, Glob, Grep, AskUserQuestion, Skill]
 
 1. 항목을 제대로 서술할 만큼만 코드베이스를 가볍게 조사한다(관련 파일·선행 태스크 확인 정도).
    선행 태스크 ID 는 `backlog task list --plain` 으로 확인한다.
-2. 애매한 점(범위, 완료 조건, 의존 관계, 접근 방식 등)이 하나라도 남으면 모두 해소될 때까지
-   `AskUserQuestion` 으로 인터뷰한다. 줄글 자유 입력은 쓰지 않는다.
+2. 애매한 점(범위, 완료 조건, 접근 방식 등)이 하나라도 남으면 모두 해소될 때까지
+   `AskUserQuestion` 으로 인터뷰한다. 줄글 자유 입력은 쓰지 않는다. 단, **이 일을 태스크
+   몇 개로 쪼갤지·마일스톤으로 묶을지는 묻지 않는다** — 재량으로 정하고 결과를 보고한다
+   (`../references/backlog-basics.md` 의 '분할은 묻지 않는다'). 범위가 커서 태스크 여러 개가
+   맞다고 판단되면 `Skill("add-milestone")` 으로 넘긴다.
 3. 확정 내용으로 태스크를 생성한다:
 
    ```
