@@ -43,6 +43,7 @@ Codex 는 `~/.codex/skills/` 를 읽는다.
 | 에이전트 메타 | fable-advisor, grill, handoff, learn, skill-creator, zip-it |
 | 에이전트 운용 | afk, herdr, kill-agents, shoot-and-forget |
 | 저장소·퍼블리시 유틸 | init-project, scan-bugs, paste-image, publish-til, kil9-writing-style, explain-diff |
+| 디자인 | impeccable (upstream 4.0.4, 명시 호출 전용, 내장 이미지 생성만 사용) |
 | 개인 워크플로 | manage-gmail-inbox |
 
 각 스킬의 동작·호출법은 해당 디렉터리의 `SKILL.md` 가 정본이다.
