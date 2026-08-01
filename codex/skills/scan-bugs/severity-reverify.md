@@ -1,1 +1,0 @@
-../../../claude/skills/scan-bugs/severity-reverify.md
