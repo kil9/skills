@@ -26,7 +26,8 @@
 # frontmatter 의 `milestone: m-N` 이 곧 그 참조라, 그런 태스크가 하나라도 있으면 개명하지 않고
 # error=refs 로 멈춘다 — 그 경우는 `backlog milestone rename` 이 맞는 도구다.
 #
-# 리모트 조회는 `git fetch` 를 한 번 태운다(타임아웃 10초, 실패는 무시).
+# 리모트 조회는 GitHub 리모트 하나만 `git fetch` 한다(타임아웃 3초, 실패는 무시).
+# VPN 전용 리모트는 건드리지 않아 사외망에서도 시작을 붙잡지 않는다.
 # 끄려면 BACKLOG_ID_GUARD_NO_FETCH=1.
 #
 # **BSD(macOS) 도구만 있는 환경을 가정한다.** 2026-07-26 에 여기서 두 구멍이 드러났다:
@@ -37,27 +38,9 @@
 # bash 3.2(macOS 기본)에서도 돌아야 한다. 새 코드도 그 규칙을 지킬 것.
 set -euo pipefail
 
-# GNU timeout 대응물. 없으면 백그라운드 + 폴링으로 직접 만든다(macOS 에 timeout 이 없다).
-run_with_timeout() {  # $1=제한초, 나머지=실행할 명령
-  local secs=$1 pid rc i=0
-  shift
-  if command -v timeout >/dev/null 2>&1; then timeout "$secs" "$@"; return $?; fi
-  if command -v gtimeout >/dev/null 2>&1; then gtimeout "$secs" "$@"; return $?; fi
-  "$@" &
-  pid=$!
-  while [ "$i" -lt $((secs * 10)) ]; do
-    if ! kill -0 "$pid" 2>/dev/null; then
-      wait "$pid" && rc=0 || rc=$?
-      return "$rc"
-    fi
-    sleep 0.1
-    # (( i++ )) 는 결과가 0 일 때 exit 1 이라 set -e 에 걸려 첫 바퀴에서 죽는다. 산술 확장으로 쓴다.
-    i=$((i + 1))
-  done
-  kill -TERM "$pid" 2>/dev/null || true
-  wait "$pid" 2>/dev/null || true
-  return 124
-}
+script_dir=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
+# shellcheck source=backlog-git-guard-lib.sh
+. "$script_dir/backlog-git-guard-lib.sh"
 
 usage() {
   echo "usage: $(basename "$0") next [task|milestone] | fix TASK-N | fix m-N" >&2
@@ -125,18 +108,12 @@ local_max() {
 # 리모트: 아직 안 당겨온 것이 다른 머신에서 push 됐을 수 있다.
 remote_max() {
   git -C "$root" rev-parse --git-dir >/dev/null 2>&1 || { echo 0; return; }
-  if [[ ${BACKLOG_ID_GUARD_NO_FETCH:-0} != 1 ]]; then
-    # 인증 프롬프트에 걸려 매달리지 않게 GIT_TERMINAL_PROMPT=0 도 함께 준다
-    # (VPN 이 필요한 사내 origin 이 붙지 않을 때가 그 경우다).
-    GIT_TERMINAL_PROMPT=0 run_with_timeout 10 \
-      git -C "$root" fetch --all --quiet >/dev/null 2>&1 || true
-  fi
-  local refs=() up r max=0
-  up=$(git -C "$root" rev-parse --abbrev-ref --symbolic-full-name '@{upstream}' 2>/dev/null) || up=""
-  [[ -n $up ]] && refs+=("$up")
+  backlog_guard_fetch_github "$root" "${BACKLOG_ID_GUARD_NO_FETCH:-0}"
+  local refs=() r max=0
+  [[ -n $BACKLOG_GUARD_REMOTE ]] || { echo 0; return; }
   while IFS= read -r r; do refs+=("$r"); done < <(
     git -C "$root" for-each-ref --format='%(refname:short)' \
-      'refs/remotes/*/main' 'refs/remotes/*/master' 2>/dev/null)
+      "refs/remotes/$BACKLOG_GUARD_REMOTE" 2>/dev/null)
   # 번호 추출은 grep -oP 가 아니라 bash 정규식으로 한다(local_max 와 같은 방식). ls-tree -r 은
   # blob 만 내놓으므로 마지막 경로 성분이 곧 파일명이다.
   local p base
@@ -196,9 +173,9 @@ case $mode in
     if [[ $ENT == milestone ]]; then
       # 매치가 없으면 grep 이 1 로 끝난다 — pipefail 이 켜져 있어 || true 가 없으면 여기서
       # 스크립트가 조용히 죽는다(참조 0 건, 즉 정상 경로가 통째로 사라진다).
-      refs=$( { grep -rlE "^milestone: [Mm]-$num$" "$root/backlog/tasks" 2>/dev/null || true; } | wc -l | tr -d ' ')
-      if [[ $refs != 0 ]]; then
-        echo "error=refs $(ent_id "$num") ($refs tasks) — use: backlog milestone rename" >&2
+      ref_count=$( { grep -rlE "^milestone: [Mm]-$num$" "$root/backlog/tasks" 2>/dev/null || true; } | wc -l | tr -d ' ')
+      if [[ $ref_count != 0 ]]; then
+        echo "error=refs $(ent_id "$num") ($ref_count tasks) — use: backlog milestone rename" >&2
         exit 1
       fi
     fi

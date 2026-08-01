@@ -38,6 +38,27 @@ bash ~/.claude/skills/references/backlog-id-guard.sh fix m-N      # 마일스톤
 그런 태스크가 이미 있으면 가드가 개명하지 않고 `error=refs` 로 멈춘다 — 그 경우는
 `backlog milestone rename` 이 맞는 도구다.
 
+## 착수 신선도
+
+`start-backlog`·`loop-backlog` 는 상태를 바꾸기 전에 이번 호출의 착수 후보를 한 번에 검사한다:
+
+```bash
+bash ~/.claude/skills/references/backlog-start-guard.sh TASK-N [TASK-M ...]  # codex 는 ~/.codex/skills/…
+```
+
+가드는 현재 upstream, 없으면 `github` → `origin` 순으로 **GitHub 리모트 하나만** 고르고 3초 안에
+fetch 한 뒤, 로컬 `HEAD` 에 없는 커밋이 후보의 backlog 파일을 건드렸는지만 수집한다. VPN 전용
+리모트는 조회하지 않는다.
+
+- `stale=TASK-N ref=... commits=...`: 다른 세션 변경일 수 있으므로 그 후보는 착수하지 않는다.
+  `$sync` 또는 pull 로 합친 뒤 태스크 상태·AC·notes 를 다시 읽어 재판정한다.
+- `fresh=TASK-N`: 이 검사 기준으로 원격 선행 변경이 없다.
+- `unknown=TASK-N reason=...`: GitHub 리모트 없음·fetch 실패·remote ref 없음이다. 경고를 한 번
+  남기되 로컬 상태로 계속한다. 네트워크 불확실성 때문에 착수 자체를 막거나 재시도 루프를 돌지 않는다.
+
+스크립트는 사실만 수집한다. Blocked 해제 여부나 지정 태스크 강행 같은 판단은 각 소비 스킬의 기존
+규칙이 맡는다.
+
 ## 분할은 묻지 않는다
 
 **마일스톤·태스크를 어떻게 쪼갤지(태스크 수·경계·마일스톤으로 묶을지 여부)는 `AskUserQuestion`
