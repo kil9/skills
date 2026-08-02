@@ -5,15 +5,31 @@ description: Sol이 사용자 의도와 통합을 소유한 채 bounded 실행 p
 
 # Luna Max Threads
 
-Sol의 비싼 판단과 Luna max의 값싼 실행을 분리한다. 가능하면 오케스트레이터를 Sol xhigh로 두되,
-현재 세션의 모델·effort가 다르다는 이유로 중단하거나 재시작하지 않는다.
+Sol의 판단과 Luna max의 quota-efficient 실행을 분리한다. Luna max는 속도 우선 모델이 아니므로,
+quota를 아끼면서 bounded packet을 완료하는 것이 목표일 때 우선한다. 빠른 피드백이나 짧은 interactive
+loop가 목표면 Luna max를 자동 선택하지 말고 Sol이 직접 처리하거나 호출자가 지정한 더 빠른 구성을 쓴다.
+가능하면 오케스트레이터를 Sol xhigh로 두되, 현재 세션의 모델·effort가 다르다는 이유로 중단하거나
+재시작하지 않는다.
 
 OpenAI는 `gpt-5.6-luna`를 효율적인 고용량 작업용으로 안내한다. 현재 native V2 `spawn_agent`는
 Luna를 거부하는 upstream 이슈가 열려 있으므로 catalog·바이너리를 패치하거나 native spawn을 probe하지
 않는다. 공식 지원 발표 뒤에만 이 스킬을 수동 개정한다.
 
 - 모델 근거: <https://developers.openai.com/api/docs/guides/latest-model>
+- quota·latency 근거: <https://artificialanalysis.ai/agents/coding-agents/comparisons/codex-vs-gemini-cli>
 - native spawn 상태: <https://github.com/openai/codex/issues/35097>
+
+2026-08-02 Codex coding-agent benchmark에서는 Luna max의 품질 점수 59가 Sol medium 61, Terra xhigh
+57과 가까웠지만 평균 작업시간은 8.0분으로 Sol medium 5.2분, Terra xhigh 6.9분보다 길었다. Luna max는
+quota-first 선택이지 fast 선택이 아니며, `max`는 더 오래 생각할 수 있는 quality-first effort로 취급한다.
+
+## 0. 모델·effort 선택
+
+- quota 절약이 우선이고 packet을 기다릴 수 있으면 `gpt-5.6-luna` + `max`를 선택한다.
+- 사용자가 빠른 완료·즉시 피드백·짧은 반복을 요구하면 Luna max를 강제하지 않는다. Sol direct 또는
+  caller가 명시한 Sol medium·Terra xhigh 같은 latency-first 구성을 선택한다.
+- 설계·위험 판단·범위 확대·최종 검증은 계속 Sol이 소유한다. 벤치마크 점수가 비슷하다는 이유로
+  고위험 결정을 Luna에 넘기지 않는다.
 
 ## 1. Sol과 Luna의 경계
 
@@ -49,8 +65,9 @@ result: 아래 RESULT 형식으로만 보고
 관련 파일 전문이나 대화 전체를 넘기지 말고 포인터와 필요한 발췌만 준다. Luna가 다시 판단해야 할
 모호한 요구는 보내기 전에 Sol이 닫는다.
 
-packet이 작아도 포장이 명백히 실행보다 큰 극소 작업이 아니면 Luna에 우선 위임한다. 관련된 극소
-작업은 한 packet으로 묶는다. 한 기능의 구현과 테스트를 쪼개지 말고 한 Luna가 완결하게 한다.
+packet이 작아도 포장이 명백히 실행보다 큰 극소 작업이 아니고 latency-first 요구가 없으면 Luna에
+우선 위임한다. 관련된 극소 작업은 한 packet으로 묶는다. 한 기능의 구현과 테스트를 쪼개지 말고 한
+Luna가 완결하게 한다.
 
 ## 3. Transport 선택
 
@@ -139,6 +156,6 @@ Luna의 자기보고를 그대로 믿지 말고 위험에 맞춰 검증한다.
 별도 지속 로그를 만들지 않는다. 매 실행의 최종 답변에 다음을 한 줄 또는 짧은 목록으로 남긴다.
 
 ```text
-Luna delegation: transport=<app-thread|cli-ephemeral|mixed|terra-fallback>, packets=<N>,
+Luna delegation: priority=<quota|latency>, transport=<app-thread|cli-ephemeral|mixed|terra-fallback>, packets=<N>,
 max_parallel=<N>, retries=<N>, sol_takeovers=<N>, terra_fallbacks=<N>, verification=<실제 검사>
 ```
