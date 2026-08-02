@@ -18,6 +18,9 @@ codex/skills/<skill>/    # 미러 (SKILL.md + agents/openai.yaml, 스크립트�
 - **fable-advisor는 Claude 전용이고 미러하지 않는다.** Codex에는 별도 `sol-advisor`가 있으며 사용자가
   명시 호출할 때 `gpt-5.6-sol` 자문 agent를 띄운다. 서로 다른 모델·agent API를 쓰는 독립 스킬이라
   한쪽을 고쳐 다른 쪽에 복사하지 않는다.
+- **lunamax-threads는 Codex 전용이고 Claude 원본을 두지 않는다.** 사용자의 명시 호출 또는 Codex의
+  loop-backlog·loop-plan packet 배분에서만 Luna max worker를 띄운다. App 최상위 thread가 없으면
+  ephemeral CLI를 쓰는 Codex 고유 transport라 미러 규칙의 예외다.
 - **에이전트에 대응물이 없어 보이는 개념**은 치환이 아니라 판단이 필요하다. 3단으로 가른다.
   1. **기계적 치환**(항상): 도구명·호출 표기·frontmatter 축소.
   2. **대응물 매핑**(허용 — `AskUserQuestion`→`request_user_input` 선례와 같은 부류): 문장 구조·단계·완료 기준은 그대로 두고 명사만 바꾼다. 판별법은 *치환 후 diff 가 명사 교체뿐인가* — 문장을 새로 지으면 규칙 밖이다. 예: learn 의 auto-memory→`~/.codex/AGENTS.local.md`, 글로벌 `~/.claude/CLAUDE.md`→`~/.codex/AGENTS.md`. publish-til §2-2 처럼 **능력 결핍에서 온 순수 호출 경로**도 여기 든다(claude 는 래스터를 못 만들어 codex 에 위임하는데, codex 미러는 자기 `image_generation` 을 직접 쓴다 — 래퍼만 벗기고 프롬프트 사양은 무변경).
@@ -42,7 +45,7 @@ Codex 는 `~/.codex/skills/` 를 읽는다.
 |---|---|
 | backlog·플랜 워크플로 | add-draft, add-milestone, add-task, cleanup-backlog, init-backlog, loop-backlog, loop-plan, make-a-plan, migrate-to-backlog, next-backlog, start-backlog |
 | git 워크플로 | commit, cip, cipd, sync |
-| 에이전트 메타 | fable-advisor (Claude), sol-advisor (Codex), grill, handoff, learn, skill-creator, zip-it |
+| 에이전트 메타 | fable-advisor (Claude), sol-advisor (Codex), lunamax-threads (Codex), grill, handoff, learn, skill-creator, zip-it |
 | 에이전트 운용 | afk, herdr, kill-agents, shoot-and-forget |
 | 저장소·퍼블리시 유틸 | init-project, paste-image, publish-til, kil9-writing-style, explain-diff |
 | 디자인 | impeccable (upstream 4.0.4, 명시 호출 전용, 내장 이미지 생성만 사용) |

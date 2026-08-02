@@ -1,0 +1,6 @@
+interface:
+  display_name: "Luna Max Threads"
+  short_description: "Delegate bounded execution packets to Luna max workers"
+  default_prompt: "Use $lunamax-threads to delegate this work as lean Luna max execution packets while retaining Sol orchestration and verification."
+policy:
+  allow_implicit_invocation: false

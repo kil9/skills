@@ -1,4 +1,4 @@
 interface:
-  display_name: "Plan Loop Task"
-  short_description: "Autonomously drain PLAN*.md tasks round by round until none are self-actionable"
-  default_prompt: "Use $loop-plan to autonomously drain the PLAN*.md tasks: implement-verify-commit each ready task, auto-add discovered follow-up work, prefer solo (parallel only when the $parallel-tasks gate clearly justifies it), and stop only after two consecutive empty re-reads."
+  display_name: "Plan Loop"
+  short_description: "Drain ready PLAN tasks through Luna workers"
+  default_prompt: "Use $loop-plan to drain every self-actionable PLAN task, delegate lean packets through $lunamax-threads, parallelize independent write-safe packets, and stop after two empty re-reads."

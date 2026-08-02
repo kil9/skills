@@ -1,96 +1,120 @@
-# worktree 병렬 실행 절차 (참조 문서)
+# worktree 위임·병렬 실행 절차
 
-**이것은 스킬이 아니다 — 스스로 발동하지 않는다.** 병렬 여부를 판단하는 것은 이 문서를 부르는
-쪽(`$loop-backlog`·`$loop-plan`)이고, 여기에는 그 판단에 쓰는 게이트와
-통과했을 때의 실행 배관만 있다. 호출한 스킬이 이 절차를 수행하며, 별도 스킬로 위임하지 않는다.
+**이것은 스킬이 아니며 스스로 발동하지 않는다.** `$loop-backlog`·`$loop-plan`이 ready set을 만들고,
+`$lunamax-threads`가 worker transport·packet·재시도·검증 정책을 소유한다. 이 문서는 Git worktree,
+태스크 상태, 순차 통합만 정의한다.
 
-**기본은 병렬이 아니다.** 아래 "병렬 적합성 게이트"의 실측이 말하듯 이득 구간이 좁다 — 게이트를
-통과하지 못하면 리드가 인라인으로 순차 처리하는 것이 싸고 빠르다.
+공통 backlog 전제는 [`backlog-basics.md`](backlog-basics.md)를 따른다. backlog 모드에서
+`command -v backlog`가 실패하면 파일 손편집으로 폴백하지 말고 설치를 안내한 뒤 중단한다.
 
-미완료 태스크 중 상호 의존이 없는 것들을 named 백그라운드 worker agent(필요하면 먼저 `tool_search` 로 multi-agent 도구를 노출한다)에게 배분해 각자 worktree 에서 구현·검증·커밋시키고, 성공한 브랜치를 base(보통 main)에 순차 fast-forward 머지한다. **PR 은 만들지 않고**, 태스크 사이에 사용자 확인도 묻지 않는다. multi-agent 도구가 없으면 worker agent fire-and-collect 로 폴백한다. 사용자가 명시적으로 herdr pane 사용을 지시한 경우에만 "herdr pane 모드"로 워커를 돌린다. `HERDR_ENV=1` 이라는 이유만으로 자동 전환하지 않는다.
+## 1. 후보와 실행 순서
 
-**모드 감지**: backlog 모드면 기본 서술, 레거시 PLAN.md 모드면 맨 아래 절. 공통 전제(설치 명령·`--plain` 규칙·모드 판별·상태 4종)는 [`backlog-basics.md`](backlog-basics.md).
+backlog 모드:
 
-**CLI 없으면 중단.** `command -v backlog` 로 확인하고, 없으면 파일 손편집으로 폴백하지 말고 설치를 안내한 뒤 멈춘다. 손편집의 어긋남이 팀원마다 제각각 번진다. 팀원 worktree 도 같은 PATH 를 쓰므로 리드에서 없으면 팀원에게도 없다.
+1. 라운드마다 `backlog task list --plain`을 새로 읽는다.
+2. In Progress를 먼저, 그다음 의존이 모두 Done인 To Do를 ready set에 넣는다. To Do마다
+   `backlog task view <id> --plain`으로 Dependencies·Labels·AC를 확인하고 Blocked는 제외한다.
+3. `solo` label은 worker 위임을 막지 않지만 다른 packet과 동시에 실행하지 않는다.
 
-## 태스크 추출 (backlog 모드)
+PLAN 모드:
 
-1. `backlog task list --plain` 으로 상태별 목록을 얻는다. list 출력에는 dep·label 이 안 나오므로 To Do 태스크마다 `backlog task view <id> --plain` 으로 **Dependencies·Labels** 를 확인한다.
-2. 이번 라운드 후보 = **To Do 이면서** Dependencies 가 비었거나 나열된 dep 이 **모두 Done** 인 태스크. `Blocked` 상태는 제외한다.
-3. `solo` label 태스크는 워커 병렬 배분에서 제외하고, 이번 라운드 머지가 모두 끝난 뒤 리드가 인라인으로 순차 처리한다.
+1. 라운드마다 대상 `PLAN*.md`를 새로 읽는다.
+2. `[→]`를 먼저, 그다음 의존이 모두 `[x]`인 `[ ]` 태스크를 ready set에 넣는다. `[!]`·`I-N`·`M-N`은
+   제외한다.
+3. `단독실행: 필요`는 worker 위임을 막지 않지만 다른 packet과 동시에 실행하지 않는다.
 
-## 병렬 적합성 게이트
+ready set을 우선순위와 의존 순으로 packet화한다. 한 기능의 구현과 테스트는 같은 worker가 완결한다.
+관련 극소 작업은 한 packet으로 묶고, 포장이 실행보다 명백히 큰 작업만 Sol이 직접 한다.
 
-병렬은 공짜가 아니다. 워커는 리드 대화를 상속받지 못해 컨텍스트를 cold 로 재구성한다. 이 머신 실측 두 벌:
+## 2. 위임과 병렬 게이트
 
-- **opus 4.8/sonnet 워커**(전사 분석): 3\~5명을 띄워도 실효 동시성 약 1.8x(최악 0.73x, 직렬보다 느림).
-- **Opus 5 워커 3명**(2026-07-25, task-168): 실효 동시성 **1.36x**(팀 구간 19.2분 / 워커 wall 합 26.2분).
+위임 여부와 병렬 여부를 분리한다.
 
-비용은 **같은 태스크 셋을 세 방식으로 돌려** 실측했다(2026-07-25, 단가 환산):
+- 닫힌 packet은 크기와 무관하게 `$lunamax-threads`로 위임한다.
+- 상호 의존이 없고 write 소유 범위가 겹치지 않는 packet이 2개 이상이면 병렬 실행한다.
+- 작업량·cold-start·예전 모델 비용은 병렬 게이트로 쓰지 않는다.
+- Sol을 위한 슬롯 하나를 남기고 나머지 런타임 가용 슬롯을 모두 쓴다.
+- 같은 생성물·lockfile·migration·공유 설정을 만지는 packet은 한 worker에 묶거나 직렬화한다.
+- read-only packet끼리는 main cwd를 공유할 수 있다. writer packet은 아래 worktree를 사용한다.
 
-| 방식 | 비용 | 캐시 write |
-|---|---|---|
-| 병렬 워커 3명 | $33.17 | $13.73 |
-| 워커 1명 순차 | $29.31 | $9.84 |
-| 리드가 인라인으로 | $17.73 | $1.06 |
+## 3. Worktree 준비와 packet 소유권
 
-**"단일 에이전트 대비 3\~10배" 는 과장이었다 — 실측은 1.1\~1.9배다.** 병렬화 자체가 무는 값은 작고(순차 워커 대비 1.13배), 진짜 격차는 **위임하느냐 리드가 직접 하느냐**에 있다(1.87배). 그 차이의 정체도 캐시 write 한 항목이다: 워커는 프리픽스를 새로 캐시하지만 리드는 이미 들고 있다.
+writer packet마다 Sol이 base branch에서 별도 worktree와 branch를 만든다. 경로에는 태스크 ID를
+영문·숫자·하이픈·언더스코어만 남겨 쓴다.
 
-그래서 **cold-start 는 세대가 올라가도 줄지 않는다** — 모델 능력이 아니라 구조적 비용이다. 그리고 실효 동시성을 실제로 좌우한 것은 모델이 아니라 **태스크 크기 균질성**이었다: 19.2분짜리 하나에 3.7·3.3분짜리 둘이라, 짧은 둘이 끝난 뒤 구간의 3/4 을 한 명이 혼자 돌았다. 따라서:
+```text
+MAIN_PATH=<base worktree 절대 경로>
+BASE_BRANCH=<main 또는 master>
+REPO_NAME=<저장소명>
+TASK_ID=<task-2 또는 T-2>
+TASK_SLUG=<경로 안전 ID>
+WORKTREE=<MAIN_PATH>/../<REPO_NAME>__<TASK_SLUG>
+BRANCH=task/<TASK_SLUG>_<짧은-slug>
+```
 
-- **substantial 독립 태스크 ≥ 2개**(워커 cold-start 를 상쇄할 만큼 큰 것. 다파일·신규 구현·리팩터급)일 때만 팀을 띄운다. 사소한 태스크(단일 파일·기계적 수정)는 워커에 끼우지 말고 리드가 인라인 처리한다 — 위 표의 1.87배가 정확히 그 선택의 값이다.
-- **크기가 고르지 않으면 그만큼 동시성이 깎인다.** 가장 큰 태스크가 나머지의 몇 배면 작은 것들은 워커에 태우지 말고 리드가 인라인으로 가져간다.
-- 아니면 솔로 폴백(직접 순차 처리 또는 `$start-backlog`). 폴백 이유를 한 줄 보고하고 진행한다.
-- 워커가 상위 모델로 돈다는 이유로 문턱을 낮추지 않는다 — 위 실측대로 cold-start 는 세대로 줄지 않는다. 문턱을 낮출 근거는 모델이 아니라 태스크 크기 균질성이다.
+생성 전에 `git -C "$MAIN_PATH" rev-parse --show-toplevel`과 현재 branch를 확인한다. packet의 cwd는
+`WORKTREE`, ownership은 코드·테스트와 해당 태스크에 필요한 파일만 준다.
 
-## 디스패치
+```bash
+git -C "$MAIN_PATH" worktree add -b "$BRANCH" "$WORKTREE" "$BASE_BRANCH"
+```
 
-1태스크=1워커 기본, 팀 규모는 `min(태스크 수, 5)`. 많으면 워커당 여러 태스크를 순차(각각 별도 worktree·브랜치)로 처리시킨다. 같은 파일을 건드릴 가능성이 큰 태스크들은 같은 워커에게 묶어 직렬화한다. 분해는 항상 컨텍스트 경계 기준. 한 태스크의 구현/테스트/리뷰를 여러 워커에 나누면 핸드오프마다 컨텍스트가 유실되므로 한 워커가 완결한다. 디스패치 전 `update_plan` 으로 태스크보드에 등록한다.
+Luna packet에는 `$lunamax-threads`의 필수 필드와 다음 제약을 넣는다.
 
-**워커 모델**: 호출 시 지정이 없으면 `model: "opus"` 를 기본으로 명시한다. 리드가 상위 모델(Fable 등)로 돌아도 워커에게 상속시키지 않기 위함. 내리는 기준은 난이도가 아니라 **컨텍스트 폭**이다 — 기계적·단문맥(파일 하나에서 값 하나 고치기, 정형 치환)은 `haiku`, 다파일이지만 판단이 얕은 것은 `sonnet`, 나머지는 opus. Opus 5 는 낮은 effort 로도 이전 세대 상위 effort 급을 내므로 "어려우니 sonnet 은 무리" 로 내리던 작업 상당수는 opus 가 맞다. 특별히 무거운 태스크만 리드 재량으로 그 태스크에 한해 올린다.
+- 정의·참조·테스트를 먼저 읽고 구현한다.
+- 허용 경로 밖 파일, AGENTS.md·README.md 같은 공용 메타 파일, 다른 태스크 파일을 수정하지 않는다.
+- 관련 stack 검사와 AC를 실제 실행한다. `--no-verify` 같은 우회를 쓰지 않는다.
+- 발견한 필수 선행·후속 작업은 구현 범위를 넓히지 말고 `RESULT.failure_context` 또는
+  `remaining_risks`로 보고한다.
+- 사용자에게 묻거나 PR·rebase·merge·push·worktree 정리를 하지 않는다.
 
-워커 프롬프트에는 `MAIN_PATH`·`BASE_BRANCH`·`REPO_NAME`·`TASK_ID`(예: `task-2`)·`backlog task view <TASK_ID> --plain` 발췌·경로안전 `TASK_SLUG`(영문/숫자/하이픈/언더스코어 외 `_` 치환)를 넣고 다음을 지시한다:
+backlog worker는 worktree에서 자기 태스크만 `In Progress`로 바꾸고, 완료 시 AC를 check하고 notes를
+붙인 뒤 Done으로 바꾼다. 코드와 자기 태스크 파일을 `[{TASK_ID}] 요약` commit 하나에 담는다.
 
-- worktree 생성: `git -C {MAIN_PATH} worktree add -b task/{TASK_SLUG}_{slug} {MAIN_PATH}/../{REPO_NAME}__{TASK_SLUG} {BASE_BRANCH}`, 이후 모든 git 은 `git -C <worktree>` 로.
-- 정의·참조·테스트를 먼저 읽고 구현. 한국어 커밋 `[{TASK_ID}] 요약`(규칙은 `$commit`).
-- **수정 허용 범위**: 코드 + 자기 태스크의 `backlog/tasks/task-<id>*.md` 파일만. 착수 시 worktree 안에서 `backlog task edit <TASK_ID> -s "In Progress"`, 완료 시 AC 항목별 `--check-ac N` 과 `--append-notes "<요약>"`, `-s Done` 을 CLI 로 수행하고 그 태스크 파일 변경을 **같은 커밋**에 포함한다. **AGENTS.md/README.md 등 메타 파일·다른 태스크 파일 수정 금지**. 메타 파일은 리드가 머지 단계에서 일괄 처리한다.
-- 스택에 맞는 검증(typecheck/lint/build/test)을 모두 통과시킨다. `--no-verify` 등 안전 우회 금지.
-- RESULT 블록(`task`/`status`(success|failed)/`branch`/`worktree`/`commit`/`checks`/`failure_context`)을 최종 메시지로 리드에게 보고. `checks` 에는 **이번 세션에서 실제 실행한 명령과 결과만** 적고, 못 돌린 검증은 그렇다고 명시한다. 안 돌린 검증을 통과로 적지 말 것.
-- **과잉 검증 금지 · 요청 범위 밖으로 넓히지 말 것 · RESULT 는 간결히.** 워커 스폰에는 effort 노브가 없어 출력량을 줄이는 레버는 이 지시뿐이다.
-- 사용자에게 묻지 말고(막히면 리드에게), worktree·브랜치를 직접 정리하지 말고, 실패해도 부분 커밋을 그대로 두고, PR 생성 금지.
+PLAN worker는 코드·테스트만 수정하고 `PLAN*.md`는 건드리지 않는다. 검증 뒤 `[{TASK_ID}] 요약`으로
+commit한다. PLAN 상태와 진행 로그는 Sol이 통합 단계에서 갱신한다.
 
-**이 RESULT 지시를 빼지 말 것** — 지시 없이 띄운 워커의 최종 텍스트가 리드에 도달하지 않아 파일로 회수해야 했던 사례가 있다(task-167). 지시가 있으면 도달한다(2026-07-25 실측 3/3). 그래서 회수 방식을 파일로 바꾸지 않았다.
+## 4. 회수와 위험 기반 검증
 
-`failed` 보고는 1\~2회 진단·재시도를 코칭하고, 그래도 실패하면 블록 처리한다. 무응답 워커는 출력을 확인 후 필요시 중단시킨다.
+`$lunamax-threads`의 RESULT 형식을 회수하고 다음을 확인한다.
 
-## herdr pane 모드 (opt-in)
+1. branch와 commit SHA가 실제 존재하는지 확인한다.
+2. `git diff "$BASE_BRANCH"..."$BRANCH" --stat`과 전체 diff로 ownership 위반을 확인한다.
+3. 저위험은 scope·diff·worker 로그, 중위험은 관련 코드 재독·핵심 검사 재실행, 고위험은 Sol 직접
+   소유·negative test로 판정한다.
+4. 작업 실패는 `$lunamax-threads` 규칙대로 한 번만 코칭 재시도하고, 다시 실패하면 Sol이 회수한다.
 
-기본값은 pane 미사용(위 팀/worker agent 경로)이다. 사용자가 호출 시 명시적으로 herdr pane 을 지시했을 때만 전환한다. 그 지시는 단점(skip-permissions 전권 실행, 조율 왕복 증가)을 감수하고 워커 작업을 실시간으로 지켜보겠다는 뜻이므로 재판단 없이 pane 을 쓴다. 적합성 게이트의 팀/솔로 판단과 무관하게 substantial 태스크가 1개뿐이어도 pane 워커로 스폰한다(사소한 태스크의 리드 인라인 처리 규칙은 유지). `HERDR_ENV` 가 `1` 이 아니면 pane 불가 사유를 한 줄 보고하고 기본 경로로 진행한다.
+## 5. 순차 통합과 충돌
 
-태스크 선별·프롬프트 내용·머지 로직은 동일하고 워커 실행 배관만 바뀐다. 그 배관 상세(스폰 명령·
-ccs 프로필 전파·결과 파일 회수·코칭 주입·pane 정리)는
-**[`parallel-worktree-herdr-pane.md`](parallel-worktree-herdr-pane.md)** 에 있다 — pane 모드로 갈 때만 읽는다.
+success branch만 태스크 순으로 한 건씩 통합한다. `git merge` 전에 cwd가 base branch worktree인지
+반드시 확인한다.
 
-## 머지 · 보고
+```bash
+git rev-parse --show-toplevel
+git branch --show-current
+```
 
-워커 자기보고를 그대로 믿지 않는다: 브랜치·커밋 SHA 가 실제 존재하는지 확인하고, 위험이 큰 태스크는 머지 전에 fresh-context 검증자 워커를 띄울 수 있다(선택). 검증자는 블랙박스로. worktree 경로·diff·태스크의 체크 가능한 성공 기준(AC)·검증 실행법만 주고, 워커의 구현 서사·failure_context 는 넘기지 않는다. 전체 검증 스위트를 실제 실행한 결과만 판정 근거로 인정하고, 가능하면 negative 확인(기준을 위반하는 입력이 실제로 실패하는지) 1개 이상.
+base를 최신으로 맞춘 뒤 `merge-base --is-ancestor`로 fast-forward 가능성을 확인한다. 불가능하면 해당
+worker worktree에서 base 위로 rebase한다. 충돌하면 `rebase --abort`하고 그 packet을 실패로 남긴 뒤
+다음 태스크로 간다. 충돌을 Sol이 임의로 합쳐 worker 검증을 무효화하지 않는다.
 
-success 브랜치만 태스크 순으로 한 건씩: base ff-pull → `merge-base --is-ancestor` 로 ff 가능성 확인, 불가면 worktree 에서 rebase. **태스크 파일이 태스크별로 분리돼 있어 태스크 파일 충돌은 구조적으로 없다.** 그 외 파일 충돌은 `rebase --abort` 후 블록 처리하고 다음으로. 머지는 cwd 가 base 브랜치 디렉터리인지 확인 후 `merge --ff-only` → `push origin {BASE_BRANCH}` → `push github {BASE_BRANCH} 2>/dev/null || true` → worktree remove + 브랜치 삭제.
+가능한 branch는 base cwd에서 `git merge --ff-only`하고 설정된 remotes에 push한다. 성공 뒤에만
+worktree를 제거하고 branch를 삭제한다. 실패 worktree·branch는 진단용으로 남긴다.
 
-머지마다 리드가 **메인에서** 해당 태스크의 상태·notes 를 `backlog task view <id> --plain` 으로 확인한다. 워커가 Done 전이·notes 갱신을 안 했으면 리드가 `backlog task edit <id> -s Done --append-notes "<머지 요약>"` 으로 보정하고, 그 태스크 파일 변경을 즉시 커밋·푸시한다(다음 rebase 충돌 면적 축소).
+backlog 모드는 merge마다 main에서 `backlog task view <id> --plain`으로 Done·notes·AC를 확인한다.
+worker가 빠뜨렸다면 Sol이 보정하고 해당 태스크 파일만 즉시 별도 commit·push한다.
 
-실패·블록 태스크는 머지하지 않고, worktree·브랜치를 사용자 진단용으로 남긴다. 상태는 To Do 로 두되(Blocked 로 강등하지 않음), 사유를 `backlog task edit <id> --append-notes "자동 실행 실패: <한 줄>"` 로 남긴다.
+PLAN 모드는 merge마다 main의 PLAN에 `[x]`와 merge SHA·검증 요약을 기록해 별도 commit·push한다.
+PLAN 충돌은 worker가 PLAN을 수정하지 않으므로 만들지 않는다.
 
-최종 보고 전에 Done 태스크가 7개 이상 쌓여 있으면 리드가 `$cleanup-backlog` 를 실행해 정리한다(완료 태스크를 completed 폴더로 이동). 팀원에게 시키지 않는다 — 모든 머지가 끝난 뒤 리드에서 한 번만 돈다.
+실패 태스크는 To Do 또는 `[ ]`를 유지하고 자동 실행 실패 증거를 notes·진행 로그에 남긴다. 사용자
+결정이 필요한 경우에만 loop 스킬의 막힘 정책으로 Blocked 또는 `[!]`로 전이한다.
 
-최종 보고: 성공/실패/블록 수, 머지된 태스크(ID·제목·SHA), 실패 태스크와 진단, cleanup 결과(해당 시 정책·이동 건수·커밋), 이번 머지로 dep 이 풀린 다음 라운드 후보(위 "태스크 추출" 기준으로 재산출). 후보가 있으면 이 절차를 부른 스킬을 다시 실행하면 처리된다고 안내한다(자동 재실행 금지).
+## 6. 라운드 마무리
 
-## 레거시 모드 (PLAN.md)
+모든 merge 뒤 ready set을 fresh 조회해 다음 라운드를 계속한다. 완료 정리는 loop 스킬의 임계치와
+`$cleanup-backlog` 규칙을 따른다.
 
-repo 에 `backlog/` 가 없으면 `PLAN.md`(없으면 `PLAN_*.md`, 여러 개면 최근 수정본)를 진실원본으로 쓴다. PLAN 이 없으면 `$init-backlog` 을 안내하고 중단한다. 위 병렬 적합성 게이트·디스패치·herdr pane 모드·머지 절차를 그대로 쓰되 아래만 다르다:
-
-- **태스크 추출**: PLAN 에 실제 쓰인 ID 체계를 그대로 쓴다. 의존 판단. 표준 필드 `의존:` 이 있으면 그 값만(`의존: 없음` 이면 없음 확정), 없는 구식 플랜은 본문의 `Depends on:`·`선행:` 등을 쓰되 명시가 없어도 절차상 직전 태스크 산출물을 명백히 전제로 하면 의존으로 본다. dependencies 가 비었거나 모두 DONE 인 미완료 태스크가 대상, `[!] BLOCKED` 는 제외, `단독실행: 필요` 는 워커 배분에서 빼고 라운드 머지 후 리드 인라인 처리.
-- **워커 수정 범위**: 코드만. **PLAN.md/AGENTS.md/README.md 수정 금지**(메타 파일은 리드가 머지 단계에서 일괄 처리). RESULT 블록은 최종 메시지로 보고, 커밋은 `[{TASK_ID}] 요약`.
-- **머지 시 PLAN 충돌 해소**: 충돌이 `PLAN.md` 뿐이면 append-only 로 해소한다(양쪽 진행 로그 시간순 보존, 같은 태스크 상태 라인은 완료>진행>TODO 로 통합). 그 외 파일 충돌은 `rebase --abort` 후 블록. 머지마다 메인의 PLAN.md 에 완료·머지 SHA 를 기록하고 즉시 커밋·푸시한다.
-- 실패·블록 태스크는 PLAN.md 진행 로그에 `자동 실행 실패: <한 줄>` 을 append(상태 TODO 유지).
-- 최종 보고 전 완료(`[x]`) 태스크가 5개 이상이면 리드가 완료 태스크를 작업 ID·한 줄 요약만 남기도록 압축하고 별도 커밋·푸시한다(머지 반영이 모두 끝난 뒤에만). 다음 라운드 후보가 있으면 이 절차를 부른 스킬을 다시 실행하면 처리된다고 안내.
+최종 보고에는 성공·실패·Blocked, merge된 태스크와 SHA, 남긴 worktree, 다음 후보를 적는다. 이어서
+`$lunamax-threads`의 transport, packet 수, 최대 병렬도, Luna 재시도, Sol 회수, Terra fallback,
+Sol이 실제 실행한 검증을 짧게 남긴다.
