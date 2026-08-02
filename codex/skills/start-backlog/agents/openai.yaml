@@ -1,4 +1,4 @@
 interface:
   display_name: "Backlog Start"
   short_description: "Work through backlog tasks in dependency order: implement, verify, commit"
-  default_prompt: "Use $start-backlog to work through the backlog in priority and dependency order, completing implement-verify-commit for each task."
+  default_prompt: "Use $start-backlog to work through the backlog in priority and dependency order, completing implement-verify-commit for each task. A task ID selects tasks explicitly; a milestone ID such as m-29 processes that milestone's unfinished tasks."

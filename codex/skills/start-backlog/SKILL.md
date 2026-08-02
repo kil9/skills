@@ -1,6 +1,6 @@
 ---
 name: start-backlog
-description: 저장소의 backlog 태스크(없으면 PLAN_*.md)를 우선순위 순으로 구현·검증·커밋한다. "태스크 시작 / 이거 구현해줘 / 백로그 진행해줘" 라고 할 때. 후보만 추리는 것은 $next-backlog, 자율 드레인은 $loop-backlog 다.
+description: 저장소의 backlog 태스크(없으면 PLAN_*.md)를 우선순위 순으로 구현·검증·커밋한다. 태스크 ID 또는 마일스톤 ID로 범위를 지정할 수 있다. "태스크 시작 / 이거 구현해줘 / 백로그 진행해줘" 라고 할 때. 후보만 추리는 것은 $next-backlog, 자율 드레인은 $loop-backlog 다.
 ---
 
 백로그(또는 레거시 PLAN 파일)를 우선순위·의존 순서대로 끝까지 진행한다. 항목마다 **구현 → 검증 → 커밋** 으로 완결하며, 검증을 통과하지 않으면 커밋하지 않고, 커밋하지 않으면 다음 항목으로 넘어가지 않는다.
@@ -17,6 +17,7 @@ snapshot의 `## tasks`와 `## unfinished task details`로 대상의 전체·Desc
   - **In Progress** 태스크가 있으면 최우선으로 이어서 진행한다.
   - 없으면 **To Do** 중 의존(dependencies)이 모두 Done 인 것을 priority 높은 순, 같으면 생성 순(created_date)으로 고른다. 의존이 안 풀린 To Do 는 제외한다.
   - **Blocked** 는 건너뛴다. 단 막힘 사유가 해소된 것이 확인되면 `backlog task edit <id> -s "To Do"` 로 되돌려 포함한다.
+- **마일스톤 ID 지정** (`m-N` 또는 `M-N` 1개, 예: `$start-backlog m-29`): snapshot의 `## milestones`에서 ID를 확인한다. ID가 없으면 존재하는 마일스톤 ID를 보여 주고 멈춘다. 완료된 마일스톤이면 완료 사실만 알리고 멈춘다. 활성 마일스톤이면 그 마일스톤에 속한 **모든 미완료 태스크**를 대상으로 삼는다. In Progress를 먼저, 그다음 의존이 모두 Done인 To Do를 priority 높은 순, 같은 priority면 created_date 순으로 처리한다. 마일스톤 안에서 앞 태스크를 Done으로 만들면 뒤 태스크의 의존을 다시 판정한다. 외부 의존이 풀리지 않은 To Do와 Blocked는 상태를 바꾸지 않고 건너뛰며 완료 보고에 사유를 남긴다. 마일스톤 ID는 태스크 ID와 섞지 않고 한 번에 하나만 지정한다.
 - **태스크 번호 지정**(`7`, `task-7`, `T-7` 등, 여러 개 가능): 지정된 태스크만 지정 순서대로 진행한다. 이미 Done 이면 알리고 제외한다. 의존 미해소·Blocked 상태면 그 사실을 알리고 `request_user_input` 으로 진행 방식(의존/막힘 먼저 해소, 그대로 강행, 제외)을 확인한다.
 - **작업 내용 서술**(번호가 아닌 구체적 작업 지시): 그 작업을 태스크로 등록한 뒤 바로 그 태스크를 진행한다. $add-task 수준의 사전 인터뷰는 생략하되 AC 는 검증 가능한 문장으로 채운다(판단이 필요한 모호점은 §2-1 에서 해소):
 
@@ -30,6 +31,8 @@ snapshot의 `## tasks`와 `## unfinished task details`로 대상의 전체·Desc
 
 대상을 확정한 뒤 §2 로 들어가기 전에 후보 ID 전부를 공통 전제의 **착수 신선도** 가드로 한 번에
 검사한다. `stale=` 후보는 상태를 바꾸지 않고 제외하며, `unknown=` 은 경고 후 계속한다.
+
+마일스톤 지정에서는 In Progress·To Do인 대상 ID를 후보로 가드에 넣고, 처음부터 Blocked인 태스크는 넣지 않는다. 태스크를 하나 Done으로 전이할 때마다 같은 마일스톤의 대기 중인 To Do를 다시 판정하되, snapshot에 없는 새 태스크를 임의로 추가하지 않는다.
 
 ## 2. 항목별 루프
 
@@ -106,3 +109,5 @@ Done 태스크가 7개 이상 쌓였으면 `$cleanup-backlog` 를 실행해 완�
 
 §0 에서 레거시 모드로 판별됐으면 [`references/legacy-mode.md`](references/legacy-mode.md) 를 펴고
 그 절차를 따른다. backlog 모드면 이 절은 건너뛴다.
+
+레거시 PLAN 모드에서 `m-N`/`M-N` 인자는 실행 대상으로 지원하지 않는다. 레거시의 `M-N`은 태스크를 묶는 상위 표기일 뿐이므로, 해당 인자가 들어오면 이를 알리고 멈춘다. 마일스톤 지정 실행은 backlog 모드에서만 사용한다.
