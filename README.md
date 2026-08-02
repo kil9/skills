@@ -53,7 +53,8 @@ Codex 는 `~/.codex/skills/` 를 읽는다.
 
 각 스킬의 동작·호출법은 해당 디렉터리의 `SKILL.md` 가 정본이다.
 
-서브에이전트(`claude/agents/`): review-cleancode, review-logic, review-performance, review-security — 리뷰 스킬이 병렬로 띄우는 diff 리뷰 4종.
+서브에이전트: `claude/agents/*.md`와 `codex/agents/*.toml`에 review-cleancode, review-logic,
+review-performance, review-security 4종을 둔다. 각 host의 리뷰 스킬이 자기 형식을 호출한다.
 
 ## 라이선스
 
