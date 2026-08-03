@@ -36,7 +36,7 @@ description: 현재 브랜치를 리모트와 동기화한다(pull rebase 우선
      명령을 출력한다. **발산 해소를 rebase 로 대신하지 말 것** — 다른 리모트에 이미 push 된
      커밋이 재작성돼 발산이 리모트 간에 핑퐁친다(그래서 기본 pull 도 `--rebase=merges` 다).
    - **스킬 repo 는 현재 repo 가 무엇이든 항상 함께 동기화한다** — `~/work/skills` 와
-     `~/work/skills-naver`(회사 머신 한정)를 pull + push 한다. 없는 경로는 조용히 넘어가고,
+     `~/work/skills-naver`·`~/work/kil9/workflow`(회사 머신 한정)를 pull + push 한다. 없는 경로는 조용히 넘어가고,
      지금 그 repo 안에서 돌렸으면 중복 처리하지 않는다. 머신 로컬 conf 에 맡기지 않는 이유는
      그러면 머신마다 수동이라 새 머신에서 또 누락되고, **그 누락은 증상이 없어 오래 가기**
      때문이다(2026-07-29 에 한 머신에서 고쳐 push 한 스킬을 다른 머신이 /sync 를 여러 번

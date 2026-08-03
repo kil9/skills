@@ -111,9 +111,9 @@ sync_checkout() {
 # 스킬 repo 는 **기본 대상**이다. 머신 로컬 conf 에 맡기면 머신마다 수동이라 새 머신에서 또
 # 누락되고, 그 누락은 증상이 없어 오래 간다 — 2026-07-29 에 nuc14 에서 스킬을 고쳐 push 했는데
 # 다른 머신이 /sync 를 여러 번 돌리고도 못 받아 스킬셋이 갈라졌다(kil9conf task-242).
-# 없는 경로는 조용히 넘어간다(skills-naver 는 회사 머신에만 있다).
+# 없는 경로는 조용히 넘어간다(skills-naver·workflow 는 회사 머신에만 있다).
 self_top=$(git rev-parse --show-toplevel 2>/dev/null || echo "")
-for skill_repo in ${SYNC_SKILL_REPOS:-"$HOME/work/skills" "$HOME/work/skills-naver"}; do
+for skill_repo in ${SYNC_SKILL_REPOS:-"$HOME/work/skills" "$HOME/work/skills-naver" "$HOME/work/kil9/workflow"}; do
   [ -d "$skill_repo" ] || continue
   git -C "$skill_repo" rev-parse --git-dir >/dev/null 2>&1 || continue
   # 지금 그 repo 안에서 /sync 를 돌렸다면 위에서 이미 처리했다.
