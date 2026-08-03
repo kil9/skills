@@ -230,6 +230,23 @@ case $mode in
       exit 0
     fi
 
+    # 이미 커밋된 항목은 개명하지 않는다. fix 의 판정은 '갓 만든 번호가 max 인가' 라 자기
+    # 충돌이 아니어도(다른 머신이 더 큰 번호를 올렸기만 해도) 개명 대상이 되는데, 커밋된
+    # 파일을 옮기면 그 번호를 참조하는 커밋 태그·문서가 깨지고 다른 체크아웃과 rename/rename
+    # 충돌이 난다. 갓 만든 것에만 쓰라는 계약이 깨진 호출이므로 손대지 않고 멈춘다(task-314).
+    # 기준은 게시 여부가 아니라 HEAD 존재다 — 커밋 뒤 상태만 바뀐(그래서 dirty 인) 태스크도
+    # 갓 만든 것이 아니고, 그 경우가 실제로 조용히 개명됐다.
+    if [[ -n $file ]]; then
+      case $file in
+        "$root"/*)
+          if git -C "$root" rev-parse --verify "HEAD:${file#"$root"/}" >/dev/null 2>&1; then
+            echo "error=committed $(ent_id "$num") — 이미 커밋된 항목은 개명하지 않는다(fix 는 갓 만든 것에만 쓴다)" >&2
+            exit 1
+          fi
+          ;;
+      esac
+    fi
+
     # 마일스톤을 참조하는 태스크가 이미 있으면 개명이 그 참조를 끊는다. 갓 만든 것에만 쓰라는
     # 계약이 깨진 경우이므로 손대지 않고 멈춘다 — 그 상황은 milestone rename 이 맞는 도구다.
     if [[ $ENT == milestone ]]; then

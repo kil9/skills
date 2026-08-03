@@ -37,9 +37,12 @@ bash ~/.claude/skills/references/backlog-id-guard.sh fix m-N      # 마일스톤
 태그·문서가 그 번호를 참조하고 있어 수습이 비싸다(태스크 3건 + 마일스톤 m-22 두 벌이 그렇게 났다).
 만들기 전에 번호를 알아야 하면 `next` / `next milestone`.
 
-**`fix` 는 방금 만든 것에만 쓴다.** 마일스톤은 태스크 frontmatter 의 `milestone: m-N` 이 참조라,
-그런 태스크가 이미 있으면 가드가 개명하지 않고 `error=refs` 로 멈춘다 — 그 경우는
-`backlog milestone rename` 이 맞는 도구다.
+**`fix` 는 방금 만든 것에만 쓴다.** 이미 커밋된 것에 돌리면 가드가 `error=committed` 로 멈춘다
+(exit 1) — 판정이 '이 번호가 max 인가' 라서, 다른 머신이 더 큰 번호를 올렸기만 해도 개명 대상이
+되는데 그 개명은 커밋 태그·문서의 참조를 깨뜨린다. 그 상황에서 번호를 정말 바꿔야 하면
+`backlog task edit`·`milestone rename` 과 참조 갱신을 손으로 한다(task-314).
+마일스톤은 태스크 frontmatter 의 `milestone: m-N` 이 참조라, 그런 태스크가 이미 있으면
+가드가 개명하지 않고 `error=refs` 로 멈춘다 — 그 경우는 `backlog milestone rename` 이 맞는 도구다.
 
 ## 착수 신선도
 

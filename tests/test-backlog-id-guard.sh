@@ -108,6 +108,25 @@ assert_contains "$output" 'published=TASK-7'
 assert_not_contains "$output" 'moved='
 test -f "$local_repo/$published" || fail 'published task file was renamed'
 
+# 커밋된 항목은 '더 큰 번호가 다른 데 있다' 는 이유로도 개명되지 않는다 — fix 의 판정은
+# '이 번호가 max 인가' 라서 자기 충돌이 아니어도 개명 대상이 된다.
+printf '%s\n' '---' 'id: TASK-8' '---' >"$local_repo/backlog/tasks/task-8 - higher.md"
+output=$(cd "$local_repo" && PATH="$fake_bin:$PATH" BACKLOG_ID_GUARD_NO_FETCH=1 \
+  bash "$guard" fix TASK-7 2>&1) && fail 'fix on a committed task should exit non-zero'
+assert_contains "$output" 'error=committed TASK-7'
+assert_not_contains "$output" 'moved='
+test -f "$local_repo/$published" || fail 'committed task file was renamed'
+
+# 커밋 뒤 상태만 바뀌어 dirty 인 태스크도 갓 만든 것이 아니다 — 그 경우가 실제로 조용히
+# 개명됐다(kil9conf TASK-314 -> 317).
+printf '%s\n' '---' 'id: TASK-7' 'status: In Progress' '---' >"$local_repo/$published"
+output=$(cd "$local_repo" && PATH="$fake_bin:$PATH" BACKLOG_ID_GUARD_NO_FETCH=1 \
+  bash "$guard" fix TASK-7 2>&1) && fail 'fix on a dirty committed task should exit non-zero'
+assert_contains "$output" 'error=committed TASK-7'
+test -f "$local_repo/$published" || fail 'dirty committed task file was renamed'
+git -C "$local_repo" checkout -q -- "$published"
+rm -f "$local_repo/backlog/tasks/task-8 - higher.md"
+
 # 진짜 충돌(다른 머신이 같은 번호를 리모트에 올림)은 여전히 개명한다. 제목이 다르므로
 # 파일명도 다르고, 위 제외 규칙에 걸리지 않는다.
 git -C "$seed" fetch -q origin main
