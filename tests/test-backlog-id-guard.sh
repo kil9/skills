@@ -94,6 +94,37 @@ test -f "$local_repo/backlog/tasks/task-6 - collision.md" || fail 'renamed task 
 grep -q '^id: TASK-6$' "$local_repo/backlog/tasks/task-6 - collision.md" \
   || fail 'renamed task frontmatter was not updated'
 
+# 이미 push 된 태스크에 fix 를 돌려도 개명하지 않는다. 리모트에 있는 자기 사본을 충돌로
+# 세면 커밋 태그·문서가 참조하는 번호가 조용히 옮겨진다(task-314).
+published='backlog/tasks/task-7 - published.md'
+printf '%s\n' '---' 'id: TASK-7' '---' >"$local_repo/$published"
+git -C "$local_repo" add "$published"
+git -C "$local_repo" commit -q -m published-task
+git -C "$local_repo" push -q origin main
+output=$(cd "$local_repo" && PATH="$fake_bin:$PATH" BACKLOG_ID_GUARD_NO_FETCH=1 \
+  bash "$guard" fix TASK-7)
+assert_contains "$output" 'ok=TASK-7'
+assert_contains "$output" 'published=TASK-7'
+assert_not_contains "$output" 'moved='
+test -f "$local_repo/$published" || fail 'published task file was renamed'
+
+# 진짜 충돌(다른 머신이 같은 번호를 리모트에 올림)은 여전히 개명한다. 제목이 다르므로
+# 파일명도 다르고, 위 제외 규칙에 걸리지 않는다.
+git -C "$seed" fetch -q origin main
+git -C "$seed" reset -q --hard origin/main
+remote_only='backlog/tasks/task-9 - from-another-machine.md'
+printf '%s\n' '---' 'id: TASK-9' '---' >"$seed/$remote_only"
+git -C "$seed" add "$remote_only"
+git -C "$seed" commit -q -m other-machine-task
+git -C "$seed" push -q origin main
+git -C "$local_repo" fetch -q origin
+mine='backlog/tasks/task-9 - mine.md'
+printf '%s\n' '---' 'id: TASK-9' '---' >"$local_repo/$mine"
+output=$(cd "$local_repo" && PATH="$fake_bin:$PATH" BACKLOG_ID_GUARD_NO_FETCH=1 \
+  bash "$guard" fix TASK-9)
+assert_contains "$output" 'moved=TASK-9 -> TASK-10'
+test -f "$local_repo/backlog/tasks/task-10 - mine.md" || fail 'colliding task was not renamed'
+
 grep -q 'warning=unpublished' "$repo_root/claude/skills/references/backlog-basics.md" \
   || fail 'publication warning contract missing from shared backlog instructions'
 for skill in add-task add-milestone init-backlog migrate-to-backlog start-backlog loop-backlog; do

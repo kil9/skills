@@ -158,7 +158,15 @@ local_max() {
 }
 
 # 리모트: 아직 안 당겨온 것이 다른 머신에서 push 됐을 수 있다.
+#
+# exclude 로 준 파일명(basename)은 뺀다. 안 빼면 **이미 push 된 대상에 fix 를 돌릴 때 리모트에
+# 있는 자기 사본이 max 를 자기 번호까지 밀어올려 항상 개명 대상이 된다** — 커밋 태그·문서가
+# 그 번호를 참조하는데 경고 없이 조용히 옮겨진다(task-314 실측: 이미 push 한 TASK-313 이
+# TASK-314 로 옮겨졌다). 다른 머신이 같은 번호로 만든 진짜 충돌은 제목이 달라 파일명이
+# 다르므로 그대로 걸린다. local_max 는 같은 이유로 절대경로를 뺀다(리모트는 경로가 완료
+# 디렉터리로 옮겨져 있을 수 있어 basename 으로 비교한다).
 remote_max() {
+  local exclude=${1:-}
   git -C "$root" rev-parse --git-dir >/dev/null 2>&1 || { echo 0; return; }
   backlog_guard_fetch_github "$root" "${BACKLOG_ID_GUARD_NO_FETCH:-0}"
   local refs=() r max=0
@@ -172,6 +180,7 @@ remote_max() {
   for r in "${refs[@]}"; do
     while IFS= read -r p; do
       base=${p##*/}
+      [[ -n $exclude && $base == "$exclude" ]] && continue
       [[ $base =~ $ENT_NUM_RE ]] || continue
       ((10#${BASH_REMATCH[1]} > max)) && max=$((10#${BASH_REMATCH[1]}))
     done < <(git -C "$root" ls-tree -r --name-only "$r" -- "${ENT_TREE_PATHS[@]}" 2>/dev/null || true)
@@ -180,9 +189,9 @@ remote_max() {
 }
 
 used_max() {
-  local l r
-  l=$(local_max "${1:-}")
-  r=$(remote_max)
+  local l r exclude=${1:-}
+  l=$(local_max "$exclude")
+  r=$(remote_max "${exclude:+$(basename "$exclude")}")
   ((r > l)) && l=$r
   echo "$l"
 }
