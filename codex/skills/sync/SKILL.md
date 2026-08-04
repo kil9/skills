@@ -16,9 +16,12 @@ description: 현재 브랜치를 리모트와 동기화한다(pull rebase 우선
      안 가리고 워킹트리 dirty 파일을 통째로 stash 했다 되돌리므로, 같은 체크아웃을 쓰는 다른
      세션이 그 창 동안 파일을 쓰면 그 세션 작업이 깨진다(`$commit` 의 명시 스테이징 규칙은
      커밋만 막지 pull 은 못 막는다). `HERDR_ENV=1` 이면 `herdr pane list`(인자 없으면 **모든
-     워크스페이스**를 준다)로 형제를 찾고, `agent_status` 가 working 인 형제가 있으면 **pull 을
-     미루고 push 만** 한다 (`git push <remote> HEAD:<branch>`) — 그 세션이 idle 이 된 뒤 다시
-     동기화한다. behind 가 0 이면 pull 자체가 no-op 이니 이 판단 없이 push 만 해도 된다.
+     워크스페이스**를 준다)로 형제를 찾고, `agent_status` 가 **working 이거나 unknown** 인 형제가
+     있으면 **pull 을 미루고 push 만** 한다 (`git push <remote> HEAD:<branch>`) — 그 세션이 정착한
+     뒤 다시 동기화한다. behind 가 0 이면 pull 자체가 no-op 이니 이 판단 없이 push 만 해도 된다.
+     `unknown` 까지 미루는 이유: 그 값은 "에이전트는 있는데 herdr 가 확신 있게 분류하지 못했다" 는
+     뜻이고 **완료의 증거가 아니다**(herdr 0.8.0 번들 스킬). 작업 중인 형제를 idle 로 오판해 그
+     워킹트리를 stash 하는 쪽이, 안전한 pull 을 한 번 미루는 쪽보다 훨씬 비싸다.
    - **형제 판정은 cwd 문자열이 아니라 `git -C <그 pane 의 cwd> rev-parse --show-toplevel` 로 한다**
      (`cwd`·`foreground_cwd` 둘 다 본다). 내 toplevel 과 같으면 형제다. 경로 비교는 **심링크로
      들어간 pane 을 놓친다** — 예컨대 `~/.claude/skills/apply-kil9conf` 는 kil9conf 워킹트리

@@ -27,12 +27,23 @@ pane 을 스스로 닫아 뒤에 죽은 pane 을 남기지 않는다. 깨끗하�
     함께 출력하는 텍스트는 pane 이 사라지므로 아무도 보지 못한다 — 요약을 길게 쓰지 말고 그냥 닫는다.
 
     ```bash
-    herdr pane close "$HERDR_PANE_ID"
+    PID=$(herdr pane current --current \
+      | python3 -c 'import sys,json; print(json.load(sys.stdin)["result"]["pane"]["pane_id"])')
+    herdr pane close "$PID"
     ```
 
-    `herdr pane current`(포커스된 pane)를 쓰지 말 것 — 이 pane 은 포커스돼 있지 않을 수 있어 남의 pane
-    을 닫게 된다. 반드시 자기 pane 인 `$HERDR_PANE_ID` 를 닫는다. (`HERDR_ENV` 가 1 이 아니면 닫을
-    pane 이 없으니 그냥 3b 로 간다.)
+    닫을 pane 을 고르는 두 가지 틀린 방법이 있고, 위 형태는 그 둘을 동시에 피한다:
+
+    - **인자 없는 `herdr pane current` 를 쓰지 말 것** — 그건 UI 포커스 pane 이라 이 pane 이 포커스돼
+      있지 않으면 남의 pane 을 닫는다. `--current` 는 "이 명령을 실행한 pane" 을 서버에 묻는 것이라
+      의미가 다르다(herdr 0.8.0 번들 스킬이 명시: 타겟을 생략하면 다른 클라이언트의 포커스 pane 으로
+      갈 수 있다).
+    - **`$HERDR_PANE_ID` 도 쓰지 말 것** — 그 env 는 pane 이 뜰 때 박히고 **pane 이 이동되면 stale 이
+      된다**(`/herdr` 스킬의 첫 함정. 실제로 `HERDR_WORKSPACE_ID` 가 옛 값이라 스폰이 전부 실패한
+      세션이 있었다). 죽은 id 면 닫기가 실패하고, 그 사이 그 id 가 재사용됐다면 엉뚱한 pane 을 닫는다.
+
+    (`HERDR_ENV` 가 1 이 아니면 닫을 pane 이 없으니 그냥 3b 로 간다. `pane close` 는 `--current` 를
+    받지 않으므로 위처럼 id 를 먼저 얻어야 한다.)
 
 3b. **깨끗하지 않으면 남긴다.** pane 을 닫지 않고 결과를 평소대로 보고한다. 어긋난 조건을 한 줄로
     덧붙여 왜 남겼는지 알린다(예: "검토할 diff 가 있어 pane 은 닫지 않았다").
