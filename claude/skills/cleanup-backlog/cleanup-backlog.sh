@@ -109,7 +109,12 @@ echo "정책=$MODE  오늘=$TODAY  Done=$total  이동=${#MOVE[@]}  보드잔류
 # 날짜를 폴백으로 정한 태스크는 반드시 드러낸다 — 조용히 넘어가면 그 태스크가 왜 안 움직이는지
 # (또는 왜 움직였는지) 알 길이 없다.
 [ -n "$fallbacks" ] && printf '%s' "$fallbacks"
-for f in "${MOVE[@]}"; do echo "  → $(basename "$f")"; done
+# 배열 전개는 전부 `${arr[@]+"${arr[@]}"}` 형태를 지킨다 — bash 4.4 미만은 `set -u` 아래 빈 배열의
+# `"${arr[@]}"` 를 unbound 로 보고 죽는다. 맥 기본 /bin/bash 가 3.2 라 거기서 실제로 터졌다
+# (2026-08-04: MS_MOVE 가 비어 194행에서 죽었고, git mv 는 이미 끝났는데 커밋은 안 된 채로
+# 남았다. Done 이 0건이면 이 112행에서 먼저 터진다). 같은 결함이 references/ 쪽 스크립트에도
+# 있었다 — kil9conf task-377.
+for f in ${MOVE[@]+"${MOVE[@]}"}; do echo "  → $(basename "$f")"; done
 
 # ── 다 끝난 마일스톤 아카이브 ────────────────────────────────────────────────
 #
@@ -166,7 +171,7 @@ if [ "${#MOVE[@]}" -eq 0 ] && [ "${#MS_MOVE[@]}" -eq 0 ]; then
 fi
 if [ "$DRY" -eq 1 ]; then echo "(dry-run: 실제 이동/커밋 안 함)"; exit 0; fi
 
-for f in "${MOVE[@]}"; do git mv "$f" "$DONE_DIR/$(basename "$f")"; done
+for f in ${MOVE[@]+"${MOVE[@]}"}; do git mv "$f" "$DONE_DIR/$(basename "$f")"; done
 if [ "${#MS_MOVE[@]}" -gt 0 ]; then
   mkdir -p "$MS_ARCHIVE"
   for f in "${MS_MOVE[@]}"; do git mv "$f" "$MS_ARCHIVE/$(basename "$f")"; done
@@ -176,12 +181,10 @@ fi
 # 비운 뒤 재실행할 때 빈 backlog/tasks 가 'pathspec did not match' 로 죽고, (b) 옆
 # 세션이 backlog 에 만들어 둔 다른 변경까지 쓸어담는다.
 declare -a COMMIT_PATHS=()
-for f in "${MOVE[@]-}"; do
-  [ -n "$f" ] || continue
+for f in ${MOVE[@]+"${MOVE[@]}"}; do
   COMMIT_PATHS+=("$f" "$DONE_DIR/$(basename "$f")")
 done
-for f in "${MS_MOVE[@]-}"; do
-  [ -n "$f" ] || continue
+for f in ${MS_MOVE[@]+"${MS_MOVE[@]}"}; do
   COMMIT_PATHS+=("$f" "$MS_ARCHIVE/$(basename "$f")")
 done
 
@@ -190,8 +193,8 @@ if [ "${#MS_MOVE[@]}" -gt 0 ]; then
   subject="$subject · 완료 마일스톤 ${#MS_MOVE[@]}건 아카이브"
 fi
 body=""
-for f in "${MOVE[@]}"; do b="$(basename "${f%.md}")"; body+="- ${b}"$'\n'; done
-for f in "${MS_MOVE[@]}"; do b="$(basename "${f%.md}")"; body+="- (마일스톤) ${b}"$'\n'; done
+for f in ${MOVE[@]+"${MOVE[@]}"}; do b="$(basename "${f%.md}")"; body+="- ${b}"$'\n'; done
+for f in ${MS_MOVE[@]+"${MS_MOVE[@]}"}; do b="$(basename "${f%.md}")"; body+="- (마일스톤) ${b}"$'\n'; done
 git commit -q -m "$subject
 
 ${body}
