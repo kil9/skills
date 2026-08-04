@@ -177,7 +177,9 @@ remote_max() {
   # 번호 추출은 grep -oP 가 아니라 bash 정규식으로 한다(local_max 와 같은 방식). ls-tree -r 은
   # blob 만 내놓으므로 마지막 경로 성분이 곧 파일명이다.
   local p base
-  for r in "${refs[@]}"; do
+  # refs 는 for-each-ref 결과라 리모트 추적 ref 가 하나도 없으면 빈 배열이다. bash 4.4 미만은
+  # `set -u` 아래 빈 배열의 `"${arr[@]}"` 를 unbound 로 죽이므로(맥 기본 3.2, task-377) 가드한다.
+  for r in ${refs[@]+"${refs[@]}"}; do
     while IFS= read -r p; do
       base=${p##*/}
       [[ -n $exclude && $base == "$exclude" ]] && continue

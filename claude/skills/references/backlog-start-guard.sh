@@ -56,11 +56,14 @@ refs=()
 while IFS= read -r ref; do refs+=("$ref"); done < <(
   backlog_guard_relevant_refs "$root" "$BACKLOG_GUARD_REMOTE"
 )
+# refs 는 관련 ref 가 없으면 빈 배열이다. bash 4.4 미만은 `set -u` 아래 빈 배열의 `"${arr[@]}"` 를
+# unbound 로 죽이므로(맥 기본 3.2, task-377) 아래 전개를 `+` 로 가드한다. tasks 는 usage() 가
+# 인자 1개 이상을 보장하므로 그대로 둔다.
 
 for task in "${tasks[@]}"; do
   num=${task#TASK-}
   found=0
-  for ref in "${refs[@]}"; do
+  for ref in ${refs[@]+"${refs[@]}"}; do
     count=$(git -C "$root" rev-list --count "HEAD..$ref" -- \
       ":(glob)backlog/**/task-$num.md" \
       ":(glob)backlog/**/task-$num *.md" \
