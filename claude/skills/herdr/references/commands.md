@@ -105,6 +105,11 @@ and `--env KEY=VALUE` sets env for it.
 
 block until specific text appears in a pane. useful for waiting on servers, builds, and tests.
 
+it matches against the snapshot **as it already is**, then keeps watching — text printed before you
+called it still matches, immediately (verified 2026-08-04). so there is no race to lose by starting
+the waiter late, and equally: a stale line from an earlier run can satisfy it. `--regex` takes a Rust
+regular expression. omitting `--timeout` waits indefinitely.
+
 for `--source recent`, matching uses unwrapped recent terminal text, so pane width and soft wrapping do not break matches. `pane read --source recent` still shows the pane as rendered. if you want to inspect the same transcript that the waiter matches, use `pane read --source recent-unwrapped`.
 
 ```bash
@@ -149,6 +154,25 @@ do **not** put that guard on the spawn path. on 0.8.0 `agent start` returns only
 interactive-ready, so a short task can be finished before it returns and the working transition never
 arrives — measured 2026-08-04, a full 60s timeout on a task whose output file already existed. the
 skill body's spawn recipe covers this.
+
+## submit a prompt to an agent
+
+```bash
+herdr agent prompt reviewer "<task text>" --wait --timeout 600000
+```
+
+sends the text and an encoded Enter in one atomic request, bracketed-paste aware. `--wait` settles on
+idle, done, or blocked — the same defaults as a bare `agent wait`, so don't restate them with `--until`.
+if no lifecycle change is observed within 5s of a submission from a non-working state, it returns
+`agent_prompt_stalled`; a shorter `--timeout` returns `timeout` instead. it tracks lifecycle state, not
+turns, so if the agent was already working, that in-flight turn's completion can satisfy the wait.
+
+keys go through the agent surface too, validated before any byte is written:
+
+```bash
+herdr agent send-keys reviewer esc
+herdr agent send-keys reviewer ctrl+c
+```
 
 ## send text or keys to a pane
 
@@ -223,6 +247,7 @@ herdr pane move wHW:p2 --tab wHV:t1 --split right
 - `--split right|down` is required and sets how it docks in the target tab.
 - `--target-pane ID` docks it next to a specific pane in that tab (default: the tab's active pane).
 - `--ratio FLOAT` sets the split ratio.
+- **the pane's id changes** when the move crosses workspaces (ids are workspace-qualified). take the new one from `.result.move_result.pane.pane_id`; `.result.move_result.previous_pane_id` holds the old value, which afterwards resolves only for the moved process's own inherited context — not as a target you can pass back in.
 
 break a pane out into a new tab (same workspace by default, or `--workspace ID` for another):
 
