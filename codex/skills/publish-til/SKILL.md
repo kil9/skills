@@ -1,6 +1,6 @@
 ---
 name: publish-til
-description: (사외용) 준비된 정적 콘텐츠를 공개 GitHub `kil9/til` 에 새 페이지로 추가·push 해 GitHub Pages 로 배포한다. "TIL 올려줘 / 이거 공개 페이지로" 라고 할 때. 사내는 /publish-naver, 자동 분기는 /publish-pages 다.
+description: (사외용) 준비된 정적 콘텐츠를 공개 GitHub `kil9/til` 에 새 페이지로 추가·push 해 GitHub Pages 로 배포한다. "TIL 올려줘 / 이거 공개 페이지로" 라고 할 때. 사내는 /publish-naver 다.
 ---
 
 호출: `$publish-til [<slug>]`
