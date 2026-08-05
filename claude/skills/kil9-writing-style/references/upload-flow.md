@@ -15,6 +15,16 @@
 
 작성한 파일 경로를 사용자에게 알리고, 에디터로 직접 수정할 수 있게 안내한다(이슈는 title 도 첫 H1 라인에서 편집 가능). 본문 미리보기를 채팅에 다시 붙여 넣지 않는다 — 파일이 정본이다.
 
+**herdr 안이면(`HERDR_ENV=1`) 경로 안내에 그치지 말고 옆 pane 에 vi 를 바로 열어 준다**(밖이면 생략):
+
+```bash
+VI_PANE=$(herdr pane split --current --direction right --cwd "$(pwd)" \
+  | python3 -c 'import sys,json; print(json.load(sys.stdin)["result"]["pane"]["pane_id"])')
+herdr pane run "$VI_PANE" "vi '{초안 절대경로}'"
+```
+
+일부러 `--no-focus` 를 주지 않는다 — 사용자가 바로 편집하라고 여는 pane 이다. §9-4 정리 때(업로드·취소 모두) `herdr pane close "$VI_PANE"` 로 닫는다(사용자가 이미 닫았으면 에러 무시).
+
 ### 9-2. 사용자 확인 (AskUserQuestion)
 
 **AskUserQuestion 도구로** 편집을 마쳤는지 확인한다. 질문 예: "`.git/ISSUE_DRAFT.md` 편집을 마치셨나요?" (코멘트면 `.git/COMMENT_DRAFT.md`).
