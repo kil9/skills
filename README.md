@@ -13,7 +13,7 @@ codex/skills/<skill>/    # 미러 (SKILL.md + agents/openai.yaml, 스크립트�
 - 미러는 claude 본문에 **도구명 치환만** 얹은 사본이다. 독자 재작성·확장은 금지 — 드리프트가 보이면 claude 원본 기준으로 재생성한다. 새 범용 스킬은 claude·codex 를 함께 맞춘다.
   - codex: `AskUserQuestion`→`request_user_input`, `` `/스킬` ``→`` `$스킬` ``, 서브에이전트→worker agent(+`tool_search` 노출).
   - **gemini(Antigravity) 미러는 두지 않는다.** 2026-07-20 에 갱신을 멈췄고(Antigravity 를 거의 안 써서 스킬마다 세 번째 사본을 다시 쓰는 토큰이 값을 못 했다), 2026-07-23 에 실물 `gemini/skills/`(+ 소비용 `.agents/skills` 심링크)를 지웠다. 남겨 둔 stale 사본이 스킬 이름을 바꾸거나 본문을 고칠 때마다 "이것도 같이 고쳐야 하나" 를 되묻게 만드는 값이 유지 비용의 전부였기 때문이다. 다시 쓰기로 하면 **claude 원본에서 새로 굽는다** — 옛 사본을 되살리지 말 것(지운 시점에 이미 loop-task·next-task 시절 이름이었다). 원문은 git history 에 있고, 치환 규칙은 참고용으로 남긴다: →`ask_question`, `invoke_subagent`, `view_file` 등.
-  - backlog 스킬군(init-backlog, add-task, add-milestone, add-draft, next-backlog, start-backlog, migrate-to-backlog, cleanup-backlog, loop-backlog 등)은 CLI(backlog) 기반이라 backlog CLI 명령 블록은 두 에이전트 공통 무치환이고, 치환은 인터뷰 도구명·스킬 참조 표기·워커 오케스트레이션 문단 정도다.
+  - backlog 스킬군(init-backlog, add-task, add-milestone, add-backlog, add-draft, next-backlog, start-backlog, migrate-to-backlog, cleanup-backlog, loop-backlog 등)은 CLI(backlog) 기반이라 backlog CLI 명령 블록은 두 에이전트 공통 무치환이고, 치환은 인터뷰 도구명·스킬 참조 표기·워커 오케스트레이션 문단 정도다.
 - 부속 스크립트(`.sh` 뿐 아니라 `GLOSSARY.md` 같은 부속 문서도)는 claude 원본에만 실체를 두고 미러에는 상대 심링크를 둔다(드리프트 원천 차단).
 - **fable-advisor는 Claude 전용이고 미러하지 않는다.** Codex에는 별도 `sol-advisor`가 있으며 사용자가
   명시 호출할 때 `gpt-5.6-sol` 자문 agent를 띄운다. 서로 다른 모델·agent API를 쓰는 독립 스킬이라
@@ -43,7 +43,7 @@ Codex 는 `~/.codex/skills/` 를 읽는다.
 
 | 분류 | 스킬 |
 |---|---|
-| backlog·플랜 워크플로 | add-draft, add-milestone, add-task, cleanup-backlog, init-backlog, loop-backlog, loop-plan, make-a-plan, migrate-to-backlog, next-backlog, start-backlog |
+| backlog·플랜 워크플로 | add-backlog, add-draft, add-milestone, add-task, cleanup-backlog, init-backlog, loop-backlog, loop-plan, make-a-plan, migrate-to-backlog, next-backlog, start-backlog |
 | git 워크플로 | commit, cip, cipd, sync |
 | 에이전트 메타 | fable-advisor (Claude), sol-advisor (Codex), lunamax-threads (Codex), grill, handoff, learn, skill-creator, zip-it |
 | 에이전트 운용 | afk, herdr, kill-agents, shoot-and-forget |
