@@ -1,0 +1,6 @@
+interface:
+  display_name: "Opus Threads"
+  short_description: "Delegate bounded packets to limit-aware Claude Opus workers"
+  default_prompt: "Use $opus-threads to delegate independent bounded packets to Claude Opus while retaining Codex orchestration and verification."
+policy:
+  allow_implicit_invocation: false
