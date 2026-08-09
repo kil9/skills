@@ -11,7 +11,7 @@ description: (사외용) 준비된 정적 콘텐츠를 공개 GitHub `kil9/til` 
 
 ## 사전 지식 (저장소 사실)
 
-- 저장소 경로: `~/work/kil9/til`. origin = github.com 의 `kil9/til` — **PUBLIC 저장소**다. push 하는 순간 전부 공개되며, 되돌려도 히스토리에 남는다.
+- 저장소 경로: 기본 `~/work/kil9/til`. 무인 워처처럼 격리 클론을 쓰는 호출은 `TIL_PUBLISH_REPO`의 절대경로가 우선한다. origin = github.com 의 `kil9/til` — **PUBLIC 저장소**다. push 하는 순간 전부 공개되며, 되돌려도 히스토리에 남는다.
 - 기본 브랜치: `main`. 단일 브랜치.
 - 호스팅: GitHub Pages 가 `main` 브랜치 루트를 그대로 서빙한다(별도 빌드 없음). **push 만으로 몇십 초 뒤 자동 반영** — 명시적 deploy 단계가 없다.
 - URL: 아티클 `https://kil9.github.io/til/<YYYY>/<slug>/`, 지원 페이지 `https://kil9.github.io/til/p/<slug>/` (루트 갤러리: `https://kil9.github.io/til/`). 구 평면 URL(`/til/<slug>/`)은 `404.html` 리다이렉트 맵이 새 경로로 넘긴다.
@@ -33,7 +33,7 @@ bash ~/.codex/skills/publish-til/til-preflight.sh [<slug>]
 
 - exit 1: 전제 불충족 — 출력을 근거로 중단한다(경로 없음이면 사용자에게 클론 위치를 묻는다).
 - exit 3: 슬러그 경로(`<연도>/<slug>/`·`p/<slug>/`·구 루트 중 하나) 이미 존재 — 덮어쓰기 금지 원칙대로 사용자에게 물은 뒤에만 진행한다.
-- 통과 후 `cd ~/work/kil9/til`, 저장소의 `AGENTS.md` 퍼블리시 런북을 읽어 둔다 (이후 단계의 정본).
+- 통과 후 `cd "${TIL_PUBLISH_REPO:-$HOME/work/kil9/til}"` 하고, 그 저장소의 `AGENTS.md` 퍼블리시 런북을 읽어 둔다(이후 단계의 정본). `TIL_PUBLISH_REPO`가 있으면 작업·커밋·push 전부 그 클론 안에서 수행하고 기본 클론으로 돌아가지 않는다.
 
 ---
 

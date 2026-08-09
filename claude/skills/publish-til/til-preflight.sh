@@ -4,10 +4,16 @@
 # 종료코드: 0=통과, 1=전제 불충족(중단), 3=슬러그 충돌(덮어쓰기 여부는 사용자 판단).
 set -euo pipefail
 
-repo="$HOME/work/kil9/til"
+# 대화형 실행의 기본 클론은 그대로 두되, 무인 워처처럼 격리된 클론을 쓰는 호출자는
+# TIL_PUBLISH_REPO 로 작업 대상을 명시한다. cwd 추론은 호출 위치에 따라 조용히 달라지므로 하지 않는다.
+repo="${TIL_PUBLISH_REPO:-$HOME/work/kil9/til}"
+case "$repo" in
+  /*) ;;
+  *) echo "error: TIL_PUBLISH_REPO 는 절대경로여야 함: $repo" >&2; exit 1 ;;
+esac
 [ -d "$repo" ] || { echo "error: 저장소 경로 없음: $repo — 클론 위치를 사용자에게 물을 것" >&2; exit 1; }
+repo=$(git -C "$repo" rev-parse --show-toplevel)
 cd "$repo"
-git rev-parse --show-toplevel >/dev/null
 
 url=$(git remote get-url origin)
 case "$url" in
