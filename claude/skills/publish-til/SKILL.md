@@ -120,6 +120,7 @@ bash ~/.claude/skills/publish-til/til-verify.sh <YYYY>/<slug>   # 지원 페이�
 ```
 
 - 빌드·테스트 없음(정적 파일). 로컬 미리보기(`python3 -m http.server`)는 사용자가 요청할 때만.
+- base64 이미지 임베드 뒤에는 data URI가 든 HTML 본문이나 전체 `git diff`를 터미널에 출력하지 않는다. 변경 확인은 `git status --short`·`git diff --stat`·경로 한정 grep으로 하고, HTML 내용을 봐야 하면 data URI 값을 짧은 placeholder로 치환해 출력한다. 큰 바이너리 문자열을 모델 컨텍스트에 다시 넣는 것은 검증이 아니다.
 
 ---
 
