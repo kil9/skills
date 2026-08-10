@@ -11,6 +11,36 @@ description: 요청이나 내가 낸 답안·계획을 Fable 5 에 넘겨 자문
 **자동 호출 금지.** 이 스킬은 사용자가 `/fable-advisor` 를 직접 적었을 때만 동작한다. 계획·설계·중대한
 결정이라는 이유만으로 스스로 붙이지 않는다.
 
+## 종량제 게이트 (스킬 진입 시 1회)
+
+Fable 은 비싸다. **구독 한도 안에서 도는 동안만 쓰고, 종량 과금으로 넘어간 상태면 먼저 묻는다.**
+스킬에 진입하면 §0 보다 먼저 아래를 확인한다. **이번 세션에서 이미 한 번 물었으면 다시 묻지 않고**
+그때 사용자가 고른 선택을 그대로 따른다(대화 기록에 그 문답이 있는지로 판단한다).
+
+두 신호 중 **하나라도** 걸리면 종량제로 본다:
+
+1. **인증·과금 방식** — 구독 OAuth 가 아니라 API 키/클라우드 과금으로 도는 경우.
+   ```bash
+   env | grep -E '^(ANTHROPIC_API_KEY|ANTHROPIC_AUTH_TOKEN|ANTHROPIC_BASE_URL|CLAUDE_CODE_USE_BEDROCK|CLAUDE_CODE_USE_VERTEX)=' | sed 's/=.*/=<set>/'
+   python3 -c "import json,os;p=os.path.join(os.environ.get('CLAUDE_CONFIG_DIR',os.path.expanduser('~/.claude')),'.claude.json');print(json.load(open(p)).get('oauthAccount',{}).get('billingType'))" 2>/dev/null
+   ```
+   위 환경변수가 하나라도 설정돼 있거나, `billingType` 이 `stripe_subscription` 계열이 아니면 종량제다.
+2. **구독 한도 소진** — 한도를 다 쓰면 extra usage 로 넘어가 그때부터 종량 과금이다.
+   `~/kil9conf/script/cc-usage-brief.py` 가 있으면 실행해 활성 프로필(`🟢`)의 5h/7d 사용률을 읽고,
+   **둘 중 하나라도 95% 이상**이면 종량제로 본다. 그 스크립트가 없는 머신이면 이 신호는 건너뛴다
+   (없다고 해서 경고하지 않는다 — 조용히 통과).
+
+둘 다 아니면 아무 말 없이 §0 으로 넘어간다. **경고는 종량제일 때만 낸다.**
+
+걸렸으면 AskUserQuestion 으로 한 번 묻고 **답을 기다린 뒤** 진행한다. 무엇이 걸렸는지(API 키 과금인지,
+한도 소진인지)와 현재 사용률을 질문에 담는다. 선택지는 셋:
+
+- **그래도 Fable 로 진행** — 종량 과금을 감수한다.
+- **Opus 5 로 대신** — §2 의 강등 경로로 진행하고, 강등 사실을 결과 보고에 밝힌다.
+- **자문 취소** — 자문 없이 내가 직접 답한다.
+
+경고 없이 종량제로 Fable 을 띄우지 말 것. 사용자는 한도가 남아 있을 때만 Fable 을 쓰려 한다.
+
 ## 0. 무엇을 자문할지 확정
 
 `/fable-advisor` 는 보통 요청 끝에 붙는다. **자문 대상**을 먼저 정한다:
