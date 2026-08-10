@@ -1,0 +1,4 @@
+interface:
+  display_name: "Show It Side"
+  short_description: "Open just-created documents in vi in a side herdr pane"
+  default_prompt: "Use $show-it-side to open the documents just created in this session in vi in a side herdr pane so the user can read them immediately."
