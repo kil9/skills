@@ -1,4 +1,4 @@
 interface:
   display_name: "Backlog Add (Auto-compose)"
-  short_description: "Decide the milestone/task composition yourself and register the work in the backlog (or legacy PLAN.md)"
+  short_description: "Decide the milestone/task composition yourself and register the work in the backlog"
   default_prompt: "Use $add-backlog to interview me on goals and acceptance criteria, decide the milestone/task composition yourself, and register it without starting the work."

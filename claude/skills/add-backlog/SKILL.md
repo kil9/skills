@@ -5,9 +5,9 @@ allowed_tools: [Bash, Read, Edit, Write, Glob, Grep, AskUserQuestion, Skill]
 
 등록할 작업: `$ARGUMENTS`
 
-공통 전제(설치 명령·`--plain` 규칙·모드 판별·상태 4종)는
-[`../references/backlog-basics.md`](../references/backlog-basics.md). 어느 모드든 구현·커밋은 하지
-않는다 — 구성을 정해 등록만 한다. backlog 도 PLAN.md 도 없는 새 저장소면 `Skill("init-backlog")`
+공통 전제(설치 명령·`--plain` 규칙·상태 4종)는
+[`../references/backlog-basics.md`](../references/backlog-basics.md). 구현·커밋은 하지
+않는다 — 구성을 정해 등록만 한다. `backlog/` 가 없는 새 저장소면 `Skill("init-backlog")`
 로 먼저 초기화하도록 안내한다.
 
 ## 절차
@@ -22,7 +22,7 @@ allowed_tools: [Bash, Read, Edit, Write, Glob, Grep, AskUserQuestion, Skill]
    필드가 없으므로 구획 간 순서 제약은 태스크 `--dep` 로 표현한다.
 3. **생성.**
    - 태스크 1개면 `Skill("add-task")` 로 위임하고 종료한다(위임 사실을 보고에 남긴다).
-   - 그 외에는 [`../add-milestone/SKILL.md`](../add-milestone/SKILL.md) 의 해당 모드 생성
+   - 그 외에는 [`../add-milestone/SKILL.md`](../add-milestone/SKILL.md) 의 생성
      절차(생성 명령·ID 가드 포함)를 마일스톤마다 적용한다. 태스크 없는 마일스톤은
-     `backlog milestone add` 와 ID 가드만 실행한다(레거시 모드는 `### M-N. <이름>` 헤딩만 추가).
+     `backlog milestone add` 와 ID 가드만 실행한다.
 4. **보고.** 고른 형태와 그 근거 한 줄, 생성된 마일스톤 이름·태스크 ID·제목 목록을 알리고 끝낸다.

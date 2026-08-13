@@ -20,7 +20,6 @@ assert_smaller 129 claude/skills/next-backlog/SKILL.md
 # TASK-226가 추가한 착수 신선도 가드까지 포함한 upstream 기준선이다.
 assert_smaller 109 claude/skills/start-backlog/SKILL.md
 assert_smaller 66 claude/skills/loop-backlog/SKILL.md
-assert_smaller 55 claude/skills/loop-plan/SKILL.md
 
 for path in \
   claude/skills/next-backlog/SKILL.md \
@@ -31,11 +30,9 @@ for path in \
     fail "$path has an inline backlog collector"
   fi
 done
-grep -q 'plan-context.sh --dump' claude/skills/loop-plan/SKILL.md \
-  || fail 'loop-plan must reuse plan-context'
 [ "$(readlink codex/skills/references/backlog-context.sh)" = \
   ../../../claude/skills/references/backlog-context.sh ] \
   || fail 'Codex backlog-context mirror'
 
-printf '%s\n' 'AGENT_ROUND_TRIPS: next=2+U->1 start=1+U->1 loop=1+U->1 loop-plan=1+P->1'
+printf '%s\n' 'AGENT_ROUND_TRIPS: next=2+U->1 start=1+U->1 loop=1+U->1'
 echo 'PASS: task-252 public metrics'

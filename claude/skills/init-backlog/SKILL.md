@@ -1,11 +1,11 @@
 ---
-description: 작업 계획을 수립하고 저장소를 backlog 백엔드로 초기화한다. "계획 세워줘 / backlog 만들어줘" 라고 할 때. 레거시 PLAN.md 포맷은 /make-a-plan, 기존 PLAN.md 전환은 /migrate-to-backlog 다. 구현은 시작하지 않는다.
+description: 작업 계획을 수립하고 저장소를 backlog 백엔드로 초기화한다. "계획 세워줘 / backlog 만들어줘" 라고 할 때. 기존 PLAN.md 저장소 전환은 /migrate-to-backlog 다. 구현은 시작하지 않는다.
 allowed_tools: [Bash, Read, Edit, Glob, Grep, AskUserQuestion]
 ---
 
 작업 설명: `$ARGUMENTS`
 
-이 스킬은 backlog 도입점이다. 저장소를 backlog 백엔드로 초기화하고 계획을 태스크로 심는다. 기존 PLAN.md 가 있어도 새 PLAN 파일을 만들지 않고 backlog 를 쓴다(기존 PLAN 파일은 건드리지 않는다). 레거시(PLAN.md) 분기는 없다.
+이 스킬은 backlog 도입점이다. 저장소를 backlog 백엔드로 초기화하고 계획을 태스크로 심는다. 옛 PLAN.md 가 있어도 새 PLAN 파일을 만들지 않고 backlog 를 쓴다(기존 PLAN 파일은 건드리지 않는다).
 
 **CLI 없으면 중단.** `command -v backlog` 로 확인하고, 없으면 파일 손편집으로 폴백하지 말고 설치를 안내한 뒤 멈춘다. 공통 전제(설치 명령·`--plain` 규칙·모드 판별·상태 4종)는 [`../references/backlog-basics.md`](../references/backlog-basics.md).
 

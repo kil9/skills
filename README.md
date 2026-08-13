@@ -19,10 +19,10 @@ codex/skills/<skill>/    # 미러 (SKILL.md + agents/openai.yaml, 스크립트�
   명시 호출할 때 `gpt-5.6-sol` 자문 agent를 띄운다. 서로 다른 모델·agent API를 쓰는 독립 스킬이라
   한쪽을 고쳐 다른 쪽에 복사하지 않는다.
 - **lunamax-threads는 Codex 전용이고 Claude 원본을 두지 않는다.** 사용자의 명시 호출 또는 Codex의
-  loop-backlog·loop-plan packet 배분에서만 Luna max worker를 띄운다. App 최상위 thread가 없으면
+  loop-backlog packet 배분에서만 Luna max worker를 띄운다. App 최상위 thread가 없으면
   ephemeral CLI를 쓰는 Codex 고유 transport라 미러 규칙의 예외다.
 - **opus-threads는 Codex 전용이고 Claude 원본을 두지 않는다.** 사용자의 명시 호출 또는 Codex의
-  loop-backlog·loop-plan 고난도 packet 배분에서만 HERDR의 Claude Code Opus worker를 띄운다. Codex가
+  loop-backlog 고난도 packet 배분에서만 HERDR의 Claude Code Opus worker를 띄운다. Codex가
   Claude를 외부 worker로 조율하는 transport라 미러 규칙의 예외다.
 - **에이전트에 대응물이 없어 보이는 개념**은 치환이 아니라 판단이 필요하다. 3단으로 가른다.
   1. **기계적 치환**(항상): 도구명·호출 표기·frontmatter 축소.
@@ -46,7 +46,7 @@ Codex 는 `~/.codex/skills/` 를 읽는다.
 
 | 분류 | 스킬 |
 |---|---|
-| backlog·플랜 워크플로 | add-backlog, add-draft, add-milestone, add-task, cleanup-backlog, init-backlog, loop-backlog, loop-plan, make-a-plan, migrate-to-backlog, next-backlog, start-backlog |
+| backlog 워크플로 | add-backlog, add-draft, add-milestone, add-task, cleanup-backlog, init-backlog, loop-backlog, migrate-to-backlog, next-backlog, start-backlog |
 | git 워크플로 | commit, cip, cipd, sync |
 | 에이전트 메타 | fable-advisor (Claude), sol-advisor (Codex), lunamax-threads·opus-threads (Codex), grill, handoff, learn, skill-creator, zip-it |
 | 에이전트 운용 | afk, herdr, kill-agents, shoot-and-forget |

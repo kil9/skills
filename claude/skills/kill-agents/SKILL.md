@@ -3,7 +3,7 @@ description: Claude Code 고아 teammate(서브에이전트) 잔재 — tmux pan
 allowed_tools: [Bash, Read]
 ---
 
-Claude Code 팀(parallel-plan 등)으로 띄운 teammate 의 **잔재를 모두 정리**한다. 부모 세션을
+Claude Code 팀(`/loop-backlog` 의 worktree 병렬 경로 등)으로 띄운 teammate 의 **잔재를 모두 정리**한다. 부모 세션을
 `/clear`·재시작으로 끝낸 뒤에도 팀원이 사라지지 않을 때 호출한다.
 
 추가 지시가 있으면 힌트로 사용한다: `$ARGUMENTS`

@@ -1,11 +1,11 @@
 ---
-description: backlog(또는 PLAN.md)를 훑어 남은 태스크를 마일스톤별로 나열하고 다음 하나를 추천한다. "다음 뭐 하지 / 남은 일 뭐 있지 / 어디까지 왔지 / 전체 진척" 을 물을 때. 착수는 /start-backlog 다.
+description: backlog 를 훑어 남은 태스크를 마일스톤별로 나열하고 다음 하나를 추천한다. "다음 뭐 하지 / 남은 일 뭐 있지 / 어디까지 왔지 / 전체 진척" 을 물을 때. 착수는 /start-backlog 다.
 allowed_tools: [Bash, Read, Glob, Grep]
 ---
 
-백로그(또는 플랜 파일)만 읽고 **마일스톤을 단위로 남은 태스크를 나열**한 뒤 다음에 착수할 것 하나를 추천한다. 진척 개괄(어디까지 왔는지)과 태스크 후보(무엇을 할지)를 한 화면에서 같이 본다.
+백로그만 읽고 **마일스톤을 단위로 남은 태스크를 나열**한 뒤 다음에 착수할 것 하나를 추천한다. 진척 개괄(어디까지 왔는지)과 태스크 후보(무엇을 할지)를 한 화면에서 같이 본다.
 
-**읽기 전용**이다: 태스크·플랜·코드를 건드리지 않고 보고만 한다. 근거는 backlog 데이터(레거시 모드는 플랜 본문)뿐 — 코드·이슈·git·웹은 조사하지 않는다. 후보를 고른 뒤 실제로 하는 것은 `/start-backlog`·`/loop-backlog` 몫이다.
+**읽기 전용**이다: 태스크·코드를 건드리지 않고 보고만 한다. 근거는 backlog 데이터뿐 — 코드·이슈·git·웹은 조사하지 않는다. 후보를 고른 뒤 실제로 하는 것은 `/start-backlog`·`/loop-backlog` 몫이다.
 
 ## 0. 호출 인자 분기
 
@@ -15,7 +15,7 @@ allowed_tools: [Bash, Read, Glob, Grep]
 
 인자가 마일스톤 id 로도 `--tasks` 로도 해석되지 않으면(오타 등) 임의로 짐작해 진행하지 말고, 인자를 무시한다고 밝힌 뒤 기본 동작을 한다.
 
-## 1. 모드 감지 · snapshot
+## 1. snapshot
 
 먼저 아래를 **한 번만** 호출하고, 성공하면 그 출력만 읽는다. 별도로 milestone/task 목록이나 task 상세를 조회하지 않는다.
 
@@ -24,7 +24,7 @@ bash ~/.claude/skills/references/backlog-context.sh
 ```
 
 - exit 0: backlog 모드다. `## milestones`에서 id·제목·완료/전체를, `## tasks`에서 상태별 ID·제목·priority를 읽는다. `## unfinished task details`의 `===== TASK-N =====` 블록에는 미완료 task의 원문이 있다.
-- exit 2: backlog가 없으므로 [`references/branch-modes.md`](references/branch-modes.md)의 §6 레거시 모드로 간다.
+- exit 2: backlog 가 없다. 새 저장소면 `/init-backlog`, 옛 `PLAN.md` 만 있으면 `/migrate-to-backlog` 을 안내하고 멈춘다.
 - exit 3: CLI 설치를 안내하고 중단한다. 다른 non-zero는 스크립트의 오류를 보고하고 재조회하지 않는다.
 
 ## 2. snapshot 해석
@@ -79,9 +79,9 @@ bash ~/.claude/skills/references/backlog-context.sh
 
 추천에는 **한 줄 근거**를 붙인다. 진척 숫자만 다시 말하지 말고 왜 지금 그것인지를 적는다.
 
-## 5-6. 인자 모드 · 레거시 모드
+## 5. 인자 모드
 
-인자로 마일스톤 id 나 `--tasks` 가 들어왔거나(§0), backlog 가 없어 PLAN.md 를 읽어야 하면(§1)
+인자로 마일스톤 id 나 `--tasks` 가 들어왔으면(§0)
 [`references/branch-modes.md`](references/branch-modes.md) 를 펴고 그 절차로 출력한다. 기본
 실행은 여기까지로 끝난다.
 

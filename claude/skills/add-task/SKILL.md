@@ -5,12 +5,12 @@ allowed_tools: [Bash, Read, Edit, Write, Glob, Grep, AskUserQuestion, Skill]
 
 추가할 태스크: `$ARGUMENTS`
 
-공통 전제(설치 명령·`--plain` 규칙·모드 판별·상태 4종)는 [`../references/backlog-basics.md`](../references/backlog-basics.md). 어느 모드든 구현·커밋은 하지 않는다 — 태스크만 만든다. 둘 다 없는 새 저장소면
+공통 전제(설치 명령·`--plain` 규칙·상태 4종)는 [`../references/backlog-basics.md`](../references/backlog-basics.md). 구현·커밋은 하지 않는다 — 태스크만 만든다. `backlog/` 가 없는 새 저장소면
 `Skill("init-backlog")` 로 먼저 초기화하도록 안내한다.
 
 ---
 
-## backlog 모드
+## 절차
 
 **CLI 없으면 중단.** `command -v backlog` 로 확인하고, 없으면 파일 손편집으로 폴백하지 말고 설치를 안내한 뒤 멈춘다.
 
@@ -49,30 +49,3 @@ allowed_tools: [Bash, Read, Edit, Write, Glob, Grep, AskUserQuestion, Skill]
    도구가 채우므로 지정하지 않는다.
 
 생성한 태스크의 ID·제목을 알리고 끝낸다.
-
----
-
-## 레거시(PLAN.md) 모드
-
-대상 플랜 파일과 다음 `T-N` 번호는 `bash ~/.claude/skills/add-task/plan-context.sh` **1회 호출**로
-확인한다(`primary` 가 대상 파일, `next=T-N` 이 부여할 번호). Glob/Grep 으로 따로 찾지 않는다.
-exit 1(플랜 파일 없음)이면 `Skill("init-backlog")` 로 안내한다.
-
-- **아이디어 위임.** `$ARGUMENTS` 가 "(아이디어)"로 시작하거나 보류만 원하면 `Skill("add-draft")`
-  로 넘긴다(인터뷰·구현 없음).
-- **아이디어 승격(I → T).** `$ARGUMENTS` 가 기존 `I-N` 착수를 지시하면 그 본문을 출발점으로 상세
-  인터뷰 후 새 `T-<다음 번호>` 로 편입하고, 원래 `I-N` 첫 줄에 `→ T-M 편입 (YYYY-MM-DD)` 를 마킹한다
-  (I 번호 재사용 금지).
-
-신규 태스크는 항목을 서술할 만큼만 가볍게 조사하고, 애매한 점이 남으면 `AskUserQuestion` 으로 모두
-해소한다(줄글 자유 입력 금지). 태스크 표준 필드를 반드시 적는다: `완료 조건:`(검증 가능한 기준),
-`의존:`(선행 태스크 ID, 없으면 `없음` 명시), `범위 힌트:`(파악된 파일, 모르면 생략), `단독실행:`
-(병렬이 안전하지 않을 때만 `필요 — <사유>`), `접수:`(오늘 날짜). `의존: 없음` 명시는 소비자 스킬이
-worktree 병렬 배분의 안전성을 추측 없이 판단하는 근거다.
-
-`T-N` 은 플랜 전체에서 유일하게 증가하는 전역 카운터로 헬퍼가 준 `next=T-N` 을 부여한다. 새 태스크는
-적절한 마일스톤 아래 맨 밑에 `T-<다음 번호>` · `[ ]` 상태로 추가한다(상태 표기 `[ ]`/`[→]`/`[x]`/`[!]`).
-마일스톤 구분이 없으면 강제로 만들지 말고 기존 포맷을 존중한다. 원문 ID 표기가 표준과 다르면(예:
-`T1`, `NU-3`) 그 표기를 이어서 붙인다. 그 외 기존 내용은 수정하지 않는다.
-
-마지막으로 추가한 항목의 번호·제목을 알리고 끝낸다.

@@ -1,15 +1,15 @@
 ---
 name: start-backlog
-description: 저장소의 backlog 태스크(없으면 PLAN_*.md)를 우선순위 순으로 구현·검증·커밋한다. 태스크 ID 또는 마일스톤 ID로 범위를 지정할 수 있다. "태스크 시작 / 이거 구현해줘 / 백로그 진행해줘" 라고 할 때. 후보만 추리는 것은 $next-backlog, 자율 드레인은 $loop-backlog 다.
+description: 저장소의 backlog 태스크를 우선순위 순으로 구현·검증·커밋한다. 태스크 ID 또는 마일스톤 ID로 범위를 지정할 수 있다. "태스크 시작 / 이거 구현해줘 / 백로그 진행해줘" 라고 할 때. 후보만 추리는 것은 $next-backlog, 자율 드레인은 $loop-backlog 다.
 ---
 
-백로그(또는 레거시 PLAN 파일)를 우선순위·의존 순서대로 끝까지 진행한다. 항목마다 **구현 → 검증 → 커밋** 으로 완결하며, 검증을 통과하지 않으면 커밋하지 않고, 커밋하지 않으면 다음 항목으로 넘어가지 않는다.
+백로그를 우선순위·의존 순서대로 끝까지 진행한다. 항목마다 **구현 → 검증 → 커밋** 으로 완결하며, 검증을 통과하지 않으면 커밋하지 않고, 커밋하지 않으면 다음 항목으로 넘어가지 않는다.
 
-## 0. 모드 판별 · snapshot
+## 0. 전제 · snapshot
 
-`bash ~/.codex/skills/references/backlog-context.sh`를 **한 번만** 호출한다. exit 0이면 그 snapshot만 읽어 §1-§6을 수행하고 목록·상세를 따로 조회하지 않는다. exit 2는 §L, exit 3은 CLI 설치 안내, 다른 non-zero는 오류 보고 후 중단이다. 공통 전제는 [`../references/backlog-basics.md`](../references/backlog-basics.md)를 따른다.
+`bash ~/.codex/skills/references/backlog-context.sh`를 **한 번만** 호출한다. exit 0이면 그 snapshot만 읽어 §1-§6을 수행하고 목록·상세를 따로 조회하지 않는다. exit 2는 backlog 가 없는 것이니 `$init-backlog`(옛 `PLAN.md` 만 있으면 `$migrate-to-backlog`)을 안내하고 중단, exit 3은 CLI 설치 안내, 다른 non-zero는 오류 보고 후 중단이다. 공통 전제는 [`../references/backlog-basics.md`](../references/backlog-basics.md)를 따른다.
 
-## 1. 대상 선정 (backlog 모드)
+## 1. 대상 선정
 
 snapshot의 `## tasks`와 `## unfinished task details`로 대상의 전체·Description·AC·의존·notes를 읽고, 호출 인자에 따라 정한다. draft는 자동 제외된다.
 
@@ -104,10 +104,3 @@ backlog 데이터(상태·AC·notes)가 파일에 영속되므로 세션 리셋 
 모든 대상을 소진한 뒤 요약해 알린다: 완료한 태스크 목록, Blocked 로 남긴 태스크와 각 사유, 기록한 설계 결정, 추가 확인이 필요한 사항.
 
 Done 태스크가 7개 이상 쌓였으면 `$cleanup-backlog` 를 실행해 완료 태스크를 정리(completed 폴더로 이동)하고, 그 결과(정책·이동 건수·커밋)를 완료 보고에 **한 줄로** 덧붙인다. 사용자에게 수동 실행을 권고하지 않는다.
-
-## L. 레거시 모드 (PLAN.md)
-
-§0 에서 레거시 모드로 판별됐으면 [`references/legacy-mode.md`](references/legacy-mode.md) 를 펴고
-그 절차를 따른다. backlog 모드면 이 절은 건너뛴다.
-
-레거시 PLAN 모드에서 `m-N`/`M-N` 인자는 실행 대상으로 지원하지 않는다. 레거시의 `M-N`은 태스크를 묶는 상위 표기일 뿐이므로, 해당 인자가 들어오면 이를 알리고 멈춘다. 마일스톤 지정 실행은 backlog 모드에서만 사용한다.

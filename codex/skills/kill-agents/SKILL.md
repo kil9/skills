@@ -3,7 +3,7 @@ name: kill-agents
 description: Claude Code 고아 teammate(서브에이전트) 잔재 — tmux pane 에 남은 pp-*@session-* 프로세스와 팀 로스터에 박제된 죽은 멤버 — 를 정리한다. "고아 에이전트 정리 / 팀원이 안 없어짐 / kill agents" 라고 할 때.
 ---
 
-Codex 팀(parallel-plan 등)으로 띄운 teammate 의 **잔재를 모두 정리**한다. 부모 세션을
+Codex 팀(`$loop-backlog` 의 worktree 병렬 경로 등)으로 띄운 teammate 의 **잔재를 모두 정리**한다. 부모 세션을
 `컨텍스트 리셋`·재시작으로 끝낸 뒤에도 팀원이 사라지지 않을 때 호출한다.
 
 추가 지시가 있으면 힌트로 사용한다: `$ARGUMENTS`

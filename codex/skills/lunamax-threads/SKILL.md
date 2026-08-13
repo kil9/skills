@@ -1,6 +1,6 @@
 ---
 name: lunamax-threads
-description: Sol이 사용자 의도와 통합을 소유한 채 bounded 실행 packet을 Luna max thread에 위임한다. 사용자가 `$lunamax-threads`를 직접 호출하거나 `$loop-backlog`·`$loop-plan`이 ready set 실행 packet을 배분할 때만 사용한다.
+description: Sol이 사용자 의도와 통합을 소유한 채 bounded 실행 packet을 Luna max thread에 위임한다. 사용자가 `$lunamax-threads`를 직접 호출하거나 `$loop-backlog`이 ready set 실행 packet을 배분할 때만 사용한다.
 ---
 
 # Luna Max Threads

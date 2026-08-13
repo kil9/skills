@@ -1,27 +1,18 @@
 # worktree 위임·병렬 실행 절차
 
-**이것은 스킬이 아니며 스스로 발동하지 않는다.** `$loop-backlog`·`$loop-plan`이 ready set을 만들고,
+**이것은 스킬이 아니며 스스로 발동하지 않는다.** `$loop-backlog`이 ready set을 만들고,
 `$lunamax-threads`가 worker transport·packet·재시도·검증 정책을 소유한다. 이 문서는 Git worktree,
 태스크 상태, 순차 통합만 정의한다.
 
-공통 backlog 전제는 [`backlog-basics.md`](backlog-basics.md)를 따른다. backlog 모드에서
+공통 backlog 전제는 [`backlog-basics.md`](backlog-basics.md)를 따른다.
 `command -v backlog`가 실패하면 파일 손편집으로 폴백하지 말고 설치를 안내한 뒤 중단한다.
 
 ## 1. 후보와 실행 순서
-
-backlog 모드:
 
 1. 라운드마다 `backlog task list --plain`을 새로 읽는다.
 2. In Progress를 먼저, 그다음 의존이 모두 Done인 To Do를 ready set에 넣는다. To Do마다
    `backlog task view <id> --plain`으로 Dependencies·Labels·AC를 확인하고 Blocked는 제외한다.
 3. `solo` label은 worker 위임을 막지 않지만 다른 packet과 동시에 실행하지 않는다.
-
-PLAN 모드:
-
-1. 라운드마다 대상 `PLAN*.md`를 새로 읽는다.
-2. `[→]`를 먼저, 그다음 의존이 모두 `[x]`인 `[ ]` 태스크를 ready set에 넣는다. `[!]`·`I-N`·`M-N`은
-   제외한다.
-3. `단독실행: 필요`는 worker 위임을 막지 않지만 다른 packet과 동시에 실행하지 않는다.
 
 ready set을 우선순위와 의존 순으로 packet화한다. 한 기능의 구현과 테스트는 같은 worker가 완결한다.
 관련 극소 작업은 한 packet으로 묶고, 포장이 실행보다 명백히 큰 작업만 Sol이 직접 한다.
@@ -71,9 +62,6 @@ Luna packet에는 `$lunamax-threads`의 필수 필드와 다음 제약을 넣는
 backlog worker는 worktree에서 자기 태스크만 `In Progress`로 바꾸고, 완료 시 AC를 check하고 notes를
 붙인 뒤 Done으로 바꾼다. 코드와 자기 태스크 파일을 `[{TASK_ID}] 요약` commit 하나에 담는다.
 
-PLAN worker는 코드·테스트만 수정하고 `PLAN*.md`는 건드리지 않는다. 검증 뒤 `[{TASK_ID}] 요약`으로
-commit한다. PLAN 상태와 진행 로그는 Sol이 통합 단계에서 갱신한다.
-
 ## 4. 회수와 위험 기반 검증
 
 `$lunamax-threads`의 RESULT 형식을 회수하고 다음을 확인한다.
@@ -101,13 +89,10 @@ worker worktree에서 base 위로 rebase한다. 충돌하면 `rebase --abort`하
 가능한 branch는 base cwd에서 `git merge --ff-only`하고 설정된 remotes에 push한다. 성공 뒤에만
 worktree를 제거하고 branch를 삭제한다. 실패 worktree·branch는 진단용으로 남긴다.
 
-backlog 모드는 merge마다 main에서 `backlog task view <id> --plain`으로 Done·notes·AC를 확인한다.
+merge마다 main에서 `backlog task view <id> --plain`으로 Done·notes·AC를 확인한다.
 worker가 빠뜨렸다면 Sol이 보정하고 해당 태스크 파일만 즉시 별도 commit·push한다.
 
-PLAN 모드는 merge마다 main의 PLAN에 `[x]`와 merge SHA·검증 요약을 기록해 별도 commit·push한다.
-PLAN 충돌은 worker가 PLAN을 수정하지 않으므로 만들지 않는다.
-
-실패 태스크는 To Do 또는 `[ ]`를 유지하고 자동 실행 실패 증거를 notes·진행 로그에 남긴다. 사용자
+실패 태스크는 To Do 를 유지하고 자동 실행 실패 증거를 notes·진행 로그에 남긴다. 사용자
 결정이 필요한 경우에만 loop 스킬의 막힘 정책으로 Blocked 또는 `[!]`로 전이한다.
 
 ## 6. 라운드 마무리

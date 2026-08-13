@@ -1,7 +1,7 @@
 # worktree 병렬 실행 절차 (참조 문서)
 
 **이것은 스킬이 아니다 — 스스로 발동하지 않는다.** 병렬 여부를 판단하는 것은 이 문서를 부르는
-쪽(`/loop-backlog`·`/loop-plan`)이고, 여기에는 그 판단에 쓰는 게이트와
+쪽(`/loop-backlog`)이고, 여기에는 그 판단에 쓰는 게이트와
 통과했을 때의 실행 배관만 있다. 호출한 스킬이 이 절차를 수행하며, 별도 스킬로 위임하지 않는다.
 
 **기본은 병렬이 아니다.** 아래 "병렬 적합성 게이트"의 실측이 말하듯 이득 구간이 좁다 — 게이트를
@@ -9,11 +9,11 @@
 
 미완료 태스크 중 상호 의존이 없는 것들을 named 백그라운드 팀원(`Agent` + `name` + `run_in_background: true`)에게 배분해 각자 worktree 에서 구현·검증·커밋시키고, 성공한 브랜치를 base(보통 main)에 순차 fast-forward 머지한다. **PR 은 만들지 않고**, 태스크 사이에 사용자 확인도 묻지 않는다. 팀 도구가 없으면(전제: `CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1` + `teammateMode`) 서브에이전트 fire-and-collect 로 폴백한다. 사용자가 명시적으로 herdr pane 사용을 지시한 경우에만 "herdr pane 모드"로 워커를 돌린다. `HERDR_ENV=1` 이라는 이유만으로 자동 전환하지 않는다.
 
-**모드 감지**: backlog 모드면 기본 서술, 레거시 PLAN.md 모드면 맨 아래 절. 공통 전제(설치 명령·`--plain` 규칙·모드 판별·상태 4종)는 [`backlog-basics.md`](backlog-basics.md).
+공통 전제(설치 명령·`--plain` 규칙·상태 4종)는 [`backlog-basics.md`](backlog-basics.md).
 
 **CLI 없으면 중단.** `command -v backlog` 로 확인하고, 없으면 파일 손편집으로 폴백하지 말고 설치를 안내한 뒤 멈춘다. 손편집의 어긋남이 팀원마다 제각각 번진다. 팀원 worktree 도 같은 PATH 를 쓰므로 리드에서 없으면 팀원에게도 없다.
 
-## 태스크 추출 (backlog 모드)
+## 태스크 추출
 
 1. `backlog task list --plain` 으로 상태별 목록을 얻는다. list 출력에는 dep·label 이 안 나오므로 To Do 태스크마다 `backlog task view <id> --plain` 으로 **Dependencies·Labels** 를 확인한다.
 2. 이번 라운드 후보 = **To Do 이면서** Dependencies 가 비었거나 나열된 dep 이 **모두 Done** 인 태스크. `Blocked` 상태는 제외한다.
@@ -84,13 +84,3 @@ success 브랜치만 태스크 순으로 한 건씩: base ff-pull → `merge-bas
 최종 보고 전에 Done 태스크가 7개 이상 쌓여 있으면 리드가 `Skill("cleanup-backlog")` 를 실행해 정리한다(완료 태스크를 completed 폴더로 이동). 팀원에게 시키지 않는다 — 모든 머지가 끝난 뒤 리드에서 한 번만 돈다.
 
 최종 보고: 성공/실패/블록 수, 머지된 태스크(ID·제목·SHA), 실패 태스크와 진단, cleanup 결과(해당 시 정책·이동 건수·커밋), 이번 머지로 dep 이 풀린 다음 라운드 후보(위 "태스크 추출" 기준으로 재산출). 후보가 있으면 이 절차를 부른 스킬을 다시 실행하면 처리된다고 안내한다(자동 재실행 금지).
-
-## 레거시 모드 (PLAN.md)
-
-repo 에 `backlog/` 가 없으면 `PLAN.md`(없으면 `PLAN_*.md`, 여러 개면 최근 수정본)를 진실원본으로 쓴다. PLAN 이 없으면 `/init-backlog` 을 안내하고 중단한다. 위 병렬 적합성 게이트·디스패치·herdr pane 모드·머지 절차를 그대로 쓰되 아래만 다르다:
-
-- **태스크 추출**: PLAN 에 실제 쓰인 ID 체계를 그대로 쓴다. 의존 판단. 표준 필드 `의존:` 이 있으면 그 값만(`의존: 없음` 이면 없음 확정), 없는 구식 플랜은 본문의 `Depends on:`·`선행:` 등을 쓰되 명시가 없어도 절차상 직전 태스크 산출물을 명백히 전제로 하면 의존으로 본다. dependencies 가 비었거나 모두 DONE 인 미완료 태스크가 대상, `[!] BLOCKED` 는 제외, `단독실행: 필요` 는 팀원 배분에서 빼고 라운드 머지 후 리드 인라인 처리.
-- **워커 수정 범위**: 코드만. **PLAN.md/AGENTS.md/README.md 수정 금지**(메타 파일은 리드가 머지 단계에서 일괄 처리). RESULT 블록은 SendMessage 로 보고, 커밋은 `[{TASK_ID}] 요약`.
-- **머지 시 PLAN 충돌 해소**: 충돌이 `PLAN.md` 뿐이면 append-only 로 해소한다(양쪽 진행 로그 시간순 보존, 같은 태스크 상태 라인은 완료>진행>TODO 로 통합). 그 외 파일 충돌은 `rebase --abort` 후 블록. 머지마다 메인의 PLAN.md 에 완료·머지 SHA 를 기록하고 즉시 커밋·푸시한다.
-- 실패·블록 태스크는 PLAN.md 진행 로그에 `자동 실행 실패: <한 줄>` 을 append(상태 TODO 유지).
-- 최종 보고 전 완료(`[x]`) 태스크가 5개 이상이면 리드가 완료 태스크를 작업 ID·한 줄 요약만 남기도록 압축하고 별도 커밋·푸시한다(머지 반영이 모두 끝난 뒤에만). 다음 라운드 후보가 있으면 이 절차를 부른 스킬을 다시 실행하면 처리된다고 안내.

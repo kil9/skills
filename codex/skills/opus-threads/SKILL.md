@@ -1,6 +1,6 @@
 ---
 name: opus-threads
-description: Codex가 사용자 의도와 통합을 소유한 채 어려운 bounded 실행 packet을 HERDR의 Claude Code Opus worker에 위임한다. 사용자가 `$opus-threads`를 직접 호출하거나 `$loop-backlog`·`$loop-plan`이 ready set의 고난도 packet을 배분할 때만 사용하며, Claude 구독 사용량을 확인해 동시성을 제한한다.
+description: Codex가 사용자 의도와 통합을 소유한 채 어려운 bounded 실행 packet을 HERDR의 Claude Code Opus worker에 위임한다. 사용자가 `$opus-threads`를 직접 호출하거나 `$loop-backlog`이 ready set의 고난도 packet을 배분할 때만 사용하며, Claude 구독 사용량을 확인해 동시성을 제한한다.
 ---
 
 # Opus Threads

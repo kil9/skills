@@ -3,11 +3,11 @@ description: backlog 태스크를 스스로 진행 가능한 것이 남지 않�
 allowed_tools: [Bash, Read, Edit, Write, Glob, Grep, Agent, SendMessage, TaskCreate, TaskList, TaskGet, TaskOutput, TaskStop, TaskUpdate, Skill]
 ---
 
-backlog 를 **스스로 진행할 수 있는 태스크가 남지 않을 때까지** 라운드 단위로 자율 드레인한다(백엔드가 PLAN 파일이면 `/loop-plan`). 각 라운드: **fresh 재조회 → ready set → 실행 → 발견분 자동 추가**. 각 태스크는 구현 → 검증 → 커밋(`/start-backlog` 규칙)으로 완결한다. **한 번 읽고 비었다고 종료하지 않고**(§5), **인터랙티브 질문으로 멈추지 않는다**(§3).
+backlog 를 **스스로 진행할 수 있는 태스크가 남지 않을 때까지** 라운드 단위로 자율 드레인한다. 각 라운드: **fresh 재조회 → ready set → 실행 → 발견분 자동 추가**. 각 태스크는 구현 → 검증 → 커밋(`/start-backlog` 규칙)으로 완결한다. **한 번 읽고 비었다고 종료하지 않고**(§5), **인터랙티브 질문으로 멈추지 않는다**(§3).
 
 ## 0. 전제 · snapshot
 
-매 라운드 `bash ~/.claude/skills/references/backlog-context.sh`를 **한 번만** 호출해 snapshot만 읽고 목록·상세를 따로 재조회하지 않는다. exit 2면 PLAN 파일은 `/loop-plan`, 없으면 `/init-backlog`; exit 3은 CLI 설치; 다른 non-zero는 오류 보고 후 라운드 중단이다. 공통 전제는 [`../references/backlog-basics.md`](../references/backlog-basics.md)를 따른다.
+매 라운드 `bash ~/.claude/skills/references/backlog-context.sh`를 **한 번만** 호출해 snapshot만 읽고 목록·상세를 따로 재조회하지 않는다. exit 2면 backlog 가 없는 것이니 `/init-backlog`(옛 `PLAN.md` 만 있으면 `/migrate-to-backlog`)을 안내하고 중단; exit 3은 CLI 설치; 다른 non-zero는 오류 보고 후 라운드 중단이다. 공통 전제는 [`../references/backlog-basics.md`](../references/backlog-basics.md)를 따른다.
 
 ## 1. 라운드 · ready set
 

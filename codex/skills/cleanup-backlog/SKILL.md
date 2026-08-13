@@ -7,7 +7,7 @@ backlog 의 완료(Done) 태스크를 `backlog/completed/` 로 옮기고, **그 
 
 ## 0. 전제
 
-- repo 루트에 `backlog/tasks/` 가 있어야 한다(backlog 모드 전용). 없으면 스크립트가 exit 2 로 알린다 — 레거시 PLAN.md repo 에는 completed 폴더 개념이 없으니 이 스킬을 쓰지 않는다.
+- repo 루트에 `backlog/tasks/` 가 있어야 한다. 없으면 스크립트가 exit 2 로 알린다.
 - 이동 대상은 **status: Done** 인 태스크뿐이다. To Do·In Progress·Blocked 는 항상 보드에 남는다(Blocked 는 terminal 이 아니라 나이가 많아도 이동하지 않는다).
 - 마일스톤 아카이브는 **태스크 이동의 뒤처리**다. 마일스톤 카운터(`backlog milestone list`)는 `backlog/tasks/` 에 있는 태스크만 세므로, 완료분을 `completed/` 로 옮기는 순간 그 마일스톤은 `0/0` 이 되어 **끝난 것과 아직 시작 안 한 것이 보드에서 구별되지 않는다**. 정리가 만든 문제이니 같은 자리에서 함께 처리한다.
 
