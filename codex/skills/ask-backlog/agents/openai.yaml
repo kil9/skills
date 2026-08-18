@@ -1,0 +1,4 @@
+interface:
+  display_name: "Backlog Ask"
+  short_description: "Surface backlog items needing your decision, approval, or action and ask them in one batch"
+  default_prompt: "Use $ask-backlog to find what in the backlog needs my decision, approval, or action, ask me in one batch, and record the answers."

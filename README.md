@@ -46,7 +46,7 @@ Codex 는 `~/.codex/skills/` 를 읽는다.
 
 | 분류 | 스킬 |
 |---|---|
-| backlog 워크플로 | add-backlog, add-draft, add-milestone, add-task, cleanup-backlog, init-backlog, loop-backlog, migrate-to-backlog, next-backlog, start-backlog |
+| backlog 워크플로 | add-backlog, add-draft, add-milestone, add-task, ask-backlog, cleanup-backlog, init-backlog, loop-backlog, migrate-to-backlog, next-backlog, start-backlog |
 | git 워크플로 | commit, cip, cipd, sync |
 | 에이전트 메타 | fable-advisor (Claude), sol-advisor (Codex), lunamax-threads·opus-threads (Codex), grill, handoff, learn, skill-creator, zip-it |
 | 에이전트 운용 | afk, herdr, kill-agents, shoot-and-forget |
