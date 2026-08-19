@@ -15,6 +15,7 @@ tests=(
   tests/test-backlog-context.sh
   tests/test-backlog-id-guard.sh
   tests/test-backlog-start-guard.sh
+  tests/test-backlog-hidden-guard.sh
   tests/test-task-252-metrics.sh
 )
 

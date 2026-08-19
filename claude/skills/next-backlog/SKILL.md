@@ -23,7 +23,7 @@ allowed_tools: [Bash, Read, Glob, Grep]
 bash ~/.claude/skills/references/backlog-context.sh
 ```
 
-- exit 0: backlog 모드다. `## milestones`에서 id·제목·완료/전체를, `## tasks`에서 상태별 ID·제목·priority를 읽는다. `## unfinished task details`의 `===== TASK-N =====` 블록에는 미완료 task의 원문이 있다.
+- exit 0: backlog 모드다. `## milestones`에서 id·제목·완료/전체를, `## tasks`에서 상태별 ID·제목·priority를 읽는다. `## unfinished task details`의 `===== TASK-N =====` 블록에는 미완료 task의 원문이 있다. `## hidden tasks` 가 0 이 아니면 그 태스크들은 `## tasks` 에 **없지만 실재하는 일**이다(목록이 감춘 것) — 상세에 함께 실려 있으니 후보에서 빼지 않는다.
 - exit 2: backlog 가 없다. 새 저장소면 `/init-backlog`, 옛 `PLAN.md` 만 있으면 `/migrate-to-backlog` 을 안내하고 멈춘다.
 - exit 3: CLI 설치를 안내하고 중단한다. 다른 non-zero는 스크립트의 오류를 보고하고 재조회하지 않는다.
 

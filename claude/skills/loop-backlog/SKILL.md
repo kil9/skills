@@ -11,7 +11,7 @@ backlog 를 **스스로 진행할 수 있는 태스크가 남지 않을 때까�
 
 ## 1. 라운드 · ready set
 
-매 라운드의 새 snapshot에서 `## tasks` 상태 그룹과 미완료 task의 `===== TASK-N =====` 원문을 읽는다. 따라서 외부 세션·사용자가 라운드 중 추가한 태스크를 흡수하면서 Dependencies·Labels·AC도 같은 snapshot에서 확인한다.
+매 라운드의 새 snapshot에서 `## tasks` 상태 그룹과 미완료 task의 `===== TASK-N =====` 원문을 읽는다. **`## hidden tasks` 가 0 이 아니면 그 목록도 ready set 후보다** — `backlog task list` 가 태스크를 조용히 감출 수 있어(다른 브랜치·리모트 인식) snapshot 이 파일 id 집합과 대조해 되살린 것이고, 그것을 무시하면 남은 일을 없는 일로 읽는다. 따라서 외부 세션·사용자가 라운드 중 추가한 태스크를 흡수하면서 Dependencies·Labels·AC도 같은 snapshot에서 확인한다.
 
 ready set = 지금 스스로 착수 가능한 태스크:
 
