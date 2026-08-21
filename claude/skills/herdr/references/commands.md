@@ -5,8 +5,9 @@ concepts, recipes, and traps; this file holds the command shapes you look up rat
 `herdr <subcommand> --help` is authoritative if this drifts.
 
 ids below (`wHW`, `wHW:t2`, `wHW:p1`) are **illustrative, not real** — read live ones out of
-`pane list` / `pane current` / `workspace list` / a create response. verified against herdr 0.8.0
-on 2026-08-04.
+`pane list` / `pane current` / `workspace list` / a create response. the live shape on 0.8.2 is
+`w19` / `w19:t1` / `w19:p4`, and ids are never recycled after a close. verified against herdr 0.8.2
+on 2026-08-21.
 
 ## tab management
 
@@ -61,10 +62,15 @@ see what is on another pane's screen:
 herdr pane read wHW:p1 --source recent --lines 50
 ```
 
+`pane read` takes the pane id **positionally only** — it has no `--pane` / `--current` (it errors with
+`unknown option: --current`). resolve your own id with `pane current --current` first.
+
 - `--source visible` = current viewport
 - `--source recent` = recent scrollback as rendered in the pane (default)
 - `--source recent-unwrapped` = recent terminal text with soft wraps joined back together
-- `--source detection` = the slice herdr's own agent detector looks at; pair it with `agent explain`
+- `--source detection` = the slice herdr's own agent detector looks at; pair it with `agent explain`.
+  `pane read --help` on 0.8.2 omits it but the command still accepts it (verified 2026-08-21);
+  `agent read` documents it.
 
 `--format text|ansi`, `--ansi`, and `--raw` control how much escape sequence survives. note the CLI
 spells the third source with a hyphen (`recent-unwrapped`) while the socket API wire value is
@@ -161,7 +167,9 @@ skill body's spawn recipe covers this.
 herdr agent prompt reviewer "<task text>" --wait --timeout 600000
 ```
 
-sends the text and an encoded Enter in one atomic request, bracketed-paste aware. `--wait` settles on
+sends the text and an encoded Enter in one atomic request, bracketed-paste aware. if the agent is
+**already blocked** on an approval or question dialog the submission is refused with `agent_blocked`
+and no bytes are written — answer the dialog with `send-keys` before prompting. `--wait` settles on
 idle, done, or blocked — the same defaults as a bare `agent wait`, so don't restate them with `--until`.
 if no lifecycle change is observed within 5s of a submission from a non-working state, it returns
 `agent_prompt_stalled`; a shorter `--timeout` returns `timeout` instead. it tracks lifecycle state, not

@@ -46,17 +46,18 @@ herdr cannot classify it confidently — it is **not** evidence that the work fi
 
 plain shells still exist as panes, but herdr's sidebar agent section intentionally focuses on detected agents rather than listing every shell.
 
-**ids** — a workspace id is an opaque token like `wHW`; its tabs and panes are namespaced under it,
-`wHW:t1` and `wHW:p2` (kil9 note, verified 2026-08-04 on herdr 0.8.0 — the old positional `1` /
-`1:1` / `1-1` shapes are gone). a pane's number is scoped to its workspace, not its tab: `wHW:p2` may
-well live in `wHW:t2`. never assemble an id from parts; read whole ids out of responses.
+**ids** — a workspace id is an opaque handle like `w19`; its tabs and panes are namespaced under it,
+`w19:t1` and `w19:p4` (kil9 note, verified 2026-08-21 on herdr 0.8.2 — the old positional `1` /
+`1:1` / `1-1` shapes are gone, and the letter-pair shape `wHW` of 0.8.0 is now a number). a pane's
+number is scoped to its workspace, not its tab: `w19:p2` may well live in `w19:t2`. never assemble an
+id from parts; read whole ids out of responses.
 
 `workspace list` also carries a separate human-facing `number` (`1`, `2`, …) — that is the sidebar
 position, **not** an id. passing it where a `workspace_id` is expected fails.
 
 important: ids are for the current live session only. re-read them from `workspace list`, `tab list`,
 `pane list`, `pane current`, or create/split responses when you need a current id. do not guess that
-an older `wHW:p3` is still the same pane later. `pane move` in particular **mints a new pane id** when
+an older `w19:p3` is still the same pane later. `pane move` in particular **mints a new pane id** when
 it crosses into another workspace — continue with `.result.move_result.pane.pane_id`, not the value you
 passed in (the old one comes back as `.result.move_result.previous_pane_id` and only resolves for the
 moved process's own inherited context).
@@ -142,15 +143,20 @@ nine non-obvious traps (each burns a fresh session if you skip it). the six abou
 and submitting were re-verified 2026-08-04 against herdr 0.8.0 by actually spawning a worker; the last
 three (permissions, result retrieval, folder trust) were not re-run and carry over from 0.7.5:
 
-- **anchor with `--current`, not `$HERDR_PANE_ID`.** the `HERDR_*` env vars are captured at pane start and go **stale** when the pane is later moved — a real session had `HERDR_WORKSPACE_ID=wAJ` while it was actually sitting in `wAQ`, and every spawn using it failed. `--current` asks the server where you are right now. (herdr also reassigns pane/workspace ids as panes open and close, so never cache them across steps.)
+- **anchor with `--current`, not `$HERDR_PANE_ID`.** the `HERDR_*` env vars are captured at pane start and go **stale** when the pane is later moved — a real session had `HERDR_WORKSPACE_ID=wAJ` while it was actually sitting in `wAQ`, and every spawn using it failed. `--current` asks the server where you are right now. (pane ids are **not** recycled — measured 2026-08-21 on 0.8.2, split -> close -> split handed out `p5` then `p6` — so a stale id fails loudly rather than aiming at someone else's pane. re-read ids anyway: a pane can be closed or moved out from under you.)
 - **`agent start` needs `--kind` and an existing pane.** signature is `agent start <NAME> --kind <KIND> --pane <ID> [-- AGENT_ARGV...]`. `--workspace`, `--tab`, `--split`, `--no-focus`, and `--cwd` are all gone from it; the canonical executable comes from `--kind` (`claude`, `codex`, `agy`, …), so `-- claude ...` becomes `-- <claude's own flags>`.
 - **`agent start` right after `pane split` no longer needs a retry loop** — it waits for interactive readiness itself (`--timeout <MS>`, default 30000, max 300000) and answers with `interactive_ready: true`. this reverses the 0.7.5 advice to retry the identical command, and it is *why* the working-wait above now backfires. if it does fail, it is a real failure — retrying blind just re-burns the readiness timeout.
 - **`agent prompt` presses Enter now** (0.8.0), atomically and bracketed-paste-aware. the 0.7.5 trap — text left sitting in the input box, `--wait` then reporting `agent_prompt_stalled` as if the agent hung — is gone; that error code now means what it says, a genuine absence of any lifecycle change within 5s. `pane run` into an agent is the one that has been seen to swallow Enter (above), so prompt through the agent surface.
+- **a blocked agent refuses prompts outright** (0.8.2, from `agent prompt --help`): submission is rejected with `agent_blocked` *before any input is sent*, so a worker sitting on a permission or trust dialog cannot be nudged with `agent prompt` at all. read the dialog (`agent read`/`pane read --source visible`) and answer it with `send-keys` first. the bundled 0.8.2 skill says `agent start` likewise returns `agent_not_ready` immediately when the agent comes up blocked, while keeping the name usable for `agent read` and `agent send-keys` (not re-measured here) — that is the shape the folder-trust trap below now takes.
 - **never wait on `--until idle`.** a finished pane you have not looked at reports `done`, not `idle`, so an idle wait runs to the timeout (measured: a full 300s while the task had finished in 19s). the bare `agent wait <name> --timeout <MS>` matches idle, done, **and** blocked — which also means a permission prompt wakes you instead of hanging. `--status` is spelled `--until` now. (`done` for an unfocused worker re-confirmed on 0.8.0; note a pane can also settle straight to `idle`, which is exactly why the bare wait is the only safe form.)
 - **`agent wait --until working` is a trap on the spawn path.** see the recipe above: `agent start` returns interactive-ready, by which point a short task may already be done, and the transition never comes. keep it only for prompts submitted into a live agent, with a short timeout and `|| true`.
 - **unattended runs need `--dangerously-skip-permissions`.** a spawned claude starts in the default interactive permission mode and goes `blocked` (see `pane list` status) on the very first tool call, waiting on a "Do you want to proceed?" prompt. an already-blocked pane can be approved with `herdr pane send-keys <id> Enter` (default highlight is "1. Yes"), but every new command re-prompts, so spawn with skip from the start.
 - **retrieve the result via a file, not `pane read`.** claude's TUI collapses its final answer, so `pane read --source recent/visible/recent-unwrapped` often returns nothing usable — the pane runs on the terminal's alternate screen, and rows that scroll off it never enter herdr's host scrollback, so a bigger `--lines` cannot recover them. put "write the result to <repo>/scratchpad/<name>.md" in the task from the start and `cat` that file. **the bundled skill disagrees here** — it says to ask for file output only as a fallback after a failed read. for claude workers we ask up front on purpose: the failed read is the common case, not the exception, and discovering it afterwards costs a whole extra round trip to an agent that has already gone idle. reserve `pane read` for progress checks. note also that claude may render a *suggested* follow-up in the input box, so text sitting at the `❯` prompt is not proof that your own input landed.
 - **a fresh cwd triggers claude's folder-trust prompt.** on the first run in a directory claude has never seen, an "Is this a project you trust?" prompt appears before the task starts — `--dangerously-skip-permissions` does NOT bypass it, and herdr detects the pane as **idle** (not blocked), so the working-wait times out. confirm with `pane read --source visible`, then approve with `herdr pane send-keys <id> Enter` (default highlight is "1. Yes, I trust this folder"). already-trusted directories (existing repos) don't prompt.
+
+**pick the split direction from the pane's geometry**, not by habit: `herdr pane layout --pane <id>`
+(or `--current`) reports it — split a wide pane `right`, a narrow or tall one `down`. repeated
+same-direction splits leave columns too narrow to read.
 
 `--cwd` on the split is required in practice: without it the new pane inherits the herdr server's cwd (usually `~`), not your repo. `pane split --env KEY=VALUE` sets env for the launched shell — use it to forward `CLAUDE_CONFIG_DIR` when you run under a ccs profile.
 
@@ -166,9 +172,13 @@ this path is also the only place you control **effort**: `--effort <level>` in t
 herdr's own contract for ids, lifecycle states, spawning, and reading. it is version-locked to the
 binary in your PATH, so it cannot drift the way this file can. **this file is the measured layer on
 top of it** — the traps below are things the bundled skill does not tell you, and where the two
-disagree, prefer whichever was verified more recently and say so. (a 2026-08-04 pass reconciled them;
-the bundled skill was right about error streams, `wait-output` semantics, and atomic prompt submission,
-and this file keeps its own line on retrieving results by file.)
+disagree, prefer whichever was verified more recently and say so. (a 2026-08-04 pass reconciled them
+on 0.8.0; the bundled skill was right about error streams, `wait-output` semantics, and atomic prompt
+submission, and this file keeps its own line on retrieving results by file. 0.8.2 rewrote the bundled
+skill wholesale — new id examples, geometry-driven splits, `agent_blocked`/`agent_not_ready`, and a
+much narrower trigger clause telling an agent to use herdr only when the user names it. a 2026-08-21
+pass folded its facts in; the trigger clause is deliberately **not** adopted — when to reach for a
+pane is decided by the global rules, not by the vendor's default.)
 
 ## safety rules that cost a session when broken
 
@@ -179,15 +189,16 @@ and this file keeps its own line on retrieving results by file.)
 
 ## command groups this skill does not cover
 
-these exist on 0.8.0 and are not described anywhere above — reach for `herdr <group> --help` before
+these exist on 0.8.2 and are not described anywhere above — reach for `herdr <group> --help` before
 assuming a capability is missing:
 
 - `herdr worktree list|create|open|remove` — git worktree-backed workspaces, first-class. relevant to any parallel-worker flow that would otherwise hand-roll `git worktree add`.
 - `herdr integration install|uninstall|status` — built-in per-agent integrations (this is what an opencode pane needs before its history is readable).
 - `herdr api snapshot|schema` — the whole live session as one json document, and the bundled socket-api schema. `api snapshot` is usually cheaper than several `list` calls.
-- `herdr agent explain` — why herdr detected (or failed to detect) an agent in a pane. the first thing to run when a spawn "worked" but no agent shows up.
+- `herdr agent explain` — why herdr detected (or failed to detect) an agent in a pane. the first thing to run when a spawn "worked" but no agent shows up. `--file PATH --agent LABEL` runs the same detector over a captured transcript.
+- `herdr agent attach [--takeover]` — hand an already-running pane agent over to this session.
 - `herdr pane neighbor|edges|layout|zoom|swap|process-info` — geometry and layout queries, plus what is actually running in a pane.
-- `herdr session`, `herdr notification show`, `herdr config`, `herdr channel`.
+- `herdr session list|attach|stop|delete`, `herdr notification show`, `herdr config check|reset-keys`, `herdr channel show|set`.
 
 ## further reading
 
