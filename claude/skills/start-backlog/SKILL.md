@@ -24,7 +24,6 @@ snapshot의 `## tasks`와 `## unfinished task details`로 대상의 전체·Desc
   backlog task create "<제목>" -d "<배경·접근>" --ac "<완료 조건>" [--ac ...]
   ```
 
-  생성 직후 ID 가드를 태스크마다 1회 돌린다(`../references/backlog-basics.md` 의 '태스크 ID 발급'). `moved=` 가 나오면 그 태스크의 ID 가 바뀐 것이니 이후 보고·의존·커밋 태그에 새 번호를 쓴다.
 
   ID가 확정되면 `bash ~/.claude/skills/references/backlog-context.sh TASK-N`을 한 번 더 호출해 새 task의 상세 snapshot으로 바꾼다.
 

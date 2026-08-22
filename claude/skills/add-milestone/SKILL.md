@@ -39,11 +39,6 @@ allowed_tools: [Bash, Read, Edit, Write, Glob, Grep, AskUserQuestion, Skill]
      [--dep task-N[,task-M]] [--priority high|medium|low] [-l solo]
    ```
 
-   생성 직후 ID 가드를 **마일스톤에 1회, 태스크마다 1회** 돌린다(`../references/backlog-basics.md`
-   의 'ID 발급'). 마일스톤 가드는 태스크를 만들기 **전에** 돌린다 — 태스크가 이미 그 마일스톤을
-   참조하면 가드가 `error=refs` 로 멈춘다. `moved=` 가 나오면 ID 가 바뀐 것이니 이후 보고·의존·
-   커밋 태그에 새 번호를 쓴다(마일스톤은 `-m` 에 이름을 쓰므로 태스크 배정 명령 자체는 그대로다).
-
    태스크마다 `--ac` 1개 이상 필수, `-m` 누락 금지. 마일스톤 안팎의 순서 제약은 태스크 `--dep` 로
    표현한다(마일스톤 자체엔 의존 필드가 없다).
 

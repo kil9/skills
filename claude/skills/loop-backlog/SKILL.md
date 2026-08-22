@@ -45,7 +45,6 @@ ready set = 지금 스스로 착수 가능한 태스크:
 backlog task create "<제목>" -d "loop-backlog 자동 추가: <발견 맥락·왜 필요>" --ac "<완료 조건>" [--dep task-N] [--priority high|medium|low]
 ```
 
-생성 직후 ID 가드를 태스크마다 1회 돌린다(`../references/backlog-basics.md` 의 '태스크 ID 발급'). `moved=` 가 나오면 그 태스크의 ID 가 바뀐 것이니 이후 보고·의존·커밋 태그에 새 번호를 쓴다.
 
 인터뷰(`/add-task`)는 하지 않고 완료 조건을 스스로 도출한다.
 

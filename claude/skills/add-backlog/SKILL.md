@@ -23,6 +23,6 @@ allowed_tools: [Bash, Read, Edit, Write, Glob, Grep, AskUserQuestion, Skill]
 3. **생성.**
    - 태스크 1개면 `Skill("add-task")` 로 위임하고 종료한다(위임 사실을 보고에 남긴다).
    - 그 외에는 [`../add-milestone/SKILL.md`](../add-milestone/SKILL.md) 의 생성
-     절차(생성 명령·ID 가드 포함)를 마일스톤마다 적용한다. 태스크 없는 마일스톤은
-     `backlog milestone add` 와 ID 가드만 실행한다.
+     절차(생성 명령)를 마일스톤마다 적용한다. 태스크 없는 마일스톤은
+     `backlog milestone add` 만 실행한다.
 4. **보고.** 고른 형태와 그 근거 한 줄, 생성된 마일스톤 이름·태스크 ID·제목 목록을 알리고 끝낸다.

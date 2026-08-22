@@ -42,7 +42,6 @@ description: 새 태스크를 하나 추가한다(인터뷰로 완료 조건·�
      [--dep task-N[,task-M]] [--priority high|medium|low] [-l solo]
    ```
 
-   생성 직후 ID 가드를 태스크마다 1회 돌린다(`../references/backlog-basics.md` 의 '태스크 ID 발급'). `moved=` 가 나오면 그 태스크의 ID 가 바뀐 것이니 이후 보고·의존·커밋 태그에 새 번호를 쓴다.
 
    필드 대응: **완료 조건 → `--ac`(1개 이상 필수)**, 의존 → `--dep`(없으면 생략 = 의존 없음),
    단독실행(병렬 비안전) → `-l solo`, 우선순위 → `--priority`. 접수일(created_date)·태스크 ID·상태는

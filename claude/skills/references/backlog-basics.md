@@ -19,30 +19,25 @@ bash "${K9HOME:-$HOME/kil9conf}/bootstrap/install-backlog-md.sh"
 
 ## ID 발급 (태스크 · 마일스톤)
 
-**`backlog task create`·`draft promote` 로 태스크를, `backlog milestone add` 로 마일스톤을 만든
-직후 ID 가드를 1회 돌린다** — 여러 개를 만들었으면 각각에 대해:
+**CLI 가 주는 번호를 그대로 쓴다.** 발급 시 리모트를 훑어 번호를 피하던 ID 가드는 걷어냈다
+(2026-08-22 사용자 결정) — 예방 기계가 낳은 유지보수가 그것이 막은 사고보다 많았다(가드 자체의
+버그 수정이 다섯 건이었다). 만들기 전에 다음 번호를 알아야 하면 `backlog task list` 로 본다.
 
-```bash
-bash ~/.claude/skills/references/backlog-id-guard.sh fix TASK-N   # codex 는 ~/.codex/skills/…
-bash ~/.claude/skills/references/backlog-id-guard.sh fix m-N      # 마일스톤 (접두사로 판별한다)
-```
+**충돌은 예방하지 않고 발견해서 고친다.** 두 머신이 같은 번호를 발급하면 병합 시점에 드러나고
+(kil9conf 는 `bootstrap/verify.sh` 의 `=== backlog ===` 가 중복 ID 를 WARN 한다), 그때 한쪽을
+개명한다:
 
-`ok=<ID>` 면 그대로, `moved=<옛 ID> -> <새 ID>` 면 그것의 ID 가 바뀐 것이니 **이후 명령·
-커밋 태그·의존 지정에 새 번호를 쓴다**. 이어지는 `published=<ID>` 는 같은 파일이 GitHub 리모트에
-있다는 뜻이다. `warning=unpublished` 는 새 ID 가 아직 다른 머신에 보이지 않는다는 뜻이므로 생성
-결과에서 경고하고, 커밋·push 전에는 다른 머신이 같은 번호를 발급할 수 있다고 명시한다. 가드는
-경고만 하고 임의로 커밋·push 하지 않는다. `skip=` 이면 대상 저장소가 아니니 그냥 넘어간다.
-가드는 CLI 가 안 보는 두 곳(`backlog/archive/`, 아직 안 당겨온 리모트 브랜치)까지 훑는다 —
-그 구멍으로 다른 머신과 같은 번호를 잡으면 sync 때 rename/rename 충돌이 나고, 그때는 이미 커밋
-태그·문서가 그 번호를 참조하고 있어 수습이 비싸다(태스크 3건 + 마일스톤 m-22 두 벌이 그렇게 났다).
-만들기 전에 번호를 알아야 하면 `next` / `next milestone`.
+1. 두 후보 각각의 참조 수를 센다 — `rg -n 'task-N\b'` 로 코드 주석·테스트·문서를, `git log
+   --oneline --grep '\[task-N\]'` 로 커밋 태그를 본다.
+2. **참조가 많은 쪽에 번호를 남기고 적은 쪽을 옮긴다.** 커밋 태그는 못 고치므로 그쪽이 기준이다.
+3. 옮기는 쪽은 파일명·frontmatter 의 `id:`·backlog 안 상호참조를 함께 고치고, 무엇을 왜 옮겼는지
+   그 태스크 notes 에 남긴다(옛 번호를 가리키는 커밋 메시지가 남기 때문이다).
+4. **먼저 `git fetch` 한다.** 리모트에 이미 상대가 해소한 결과가 있으면 자기 배정을 만들지 말고
+   그것을 따른다 — 두 머신이 서로 모르고 각자 해소하면 이중 개명이 나고 되돌리는 커밋이 하나 더
+   필요하다(2026-08-11 에 실제로 났다).
 
-**`fix` 는 방금 만든 것에만 쓴다.** 이미 커밋된 것에 돌리면 가드가 `error=committed` 로 멈춘다
-(exit 1) — 판정이 '이 번호가 max 인가' 라서, 다른 머신이 더 큰 번호를 올렸기만 해도 개명 대상이
-되는데 그 개명은 커밋 태그·문서의 참조를 깨뜨린다. 그 상황에서 번호를 정말 바꿔야 하면
-`backlog task edit`·`milestone rename` 과 참조 갱신을 손으로 한다(task-314).
-마일스톤은 태스크 frontmatter 의 `milestone: m-N` 이 참조라, 그런 태스크가 이미 있으면
-가드가 개명하지 않고 `error=refs` 로 멈춘다 — 그 경우는 `backlog milestone rename` 이 맞는 도구다.
+`backlog doctor --fix` 는 이 판정에 쓰지 않는다 — 참조 스캔이 `backlog/` 안 마크다운만 봐서
+코드·커밋 태그에서 훨씬 많이 참조되는 쪽을 개명 대상으로 고르곤 한다.
 
 ## 착수 신선도
 
