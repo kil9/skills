@@ -118,6 +118,30 @@ if [ "${#hidden_ids[@]}" -gt 0 ]; then
   echo "warning: backlog task list 가 태스크 ${#hidden_ids[@]}건을 감추고 있다(아래 snapshot 의 '## hidden tasks')" >&2
 fi
 
+# ------------------------------------------------- 다시 연 태스크가 completed/ 에 남는 것
+#
+# `cleanup-backlog` 는 Done 태스크를 `backlog/completed/` 로 옮긴다. 그 뒤에 태스크를 다시 열 때
+# `backlog task edit N -s 'To Do'` 만 하면 **파일은 completed/ 에 남은 채 상태만 바뀐다** — 그러면
+# CLI 가 그 id 를 아예 못 찾고(`task view` 도 `not found` 다) 위의 감춤 검사도 `tasks/` 만 훑으므로
+# 못 잡는다. 즉 그 태스크는 어디에서도 안 보이는 채로 영구히 남는다(task-464).
+#
+# 고치는 법은 파일을 되돌리는 것뿐이라, 여기서는 상세를 싣지 않고 **경로와 복구 명령**을 낸다.
+reopened_lines=()
+if [ -d "$root/backlog/completed" ]; then
+  for file in "$root"/backlog/completed/*.md; do
+    [ -e "$file" ] || continue
+    file_status=$(sed -nE 's/^status:[[:space:]]*(.+)$/\1/p' "$file" | head -1)
+    case "$file_status" in
+      Done|done|'') continue ;;
+    esac
+    file_id=$(sed -nE 's/^id:[[:space:]]*(TASK-[0-9]+).*/\1/p' "$file" | head -1)
+    reopened_lines+=("${file_id:-(id 없음)} $file_status ${file##*/}")
+  done
+fi
+if [ "${#reopened_lines[@]}" -gt 0 ]; then
+  echo "warning: completed/ 에 Done 이 아닌 태스크 ${#reopened_lines[@]}건이 남아 있다(아래 snapshot 의 '## reopened in completed')" >&2
+fi
+
 ids=()
 group=
 while IFS= read -r line; do
@@ -188,6 +212,19 @@ if [ "${#hidden_ids[@]}" -gt 0 ]; then
   i=0
   while [ "$i" -lt "${#hidden_lines[@]}" ]; do
     printf '  %s\n' "${hidden_lines[$i]}"
+    i=$((i + 1))
+  done
+fi
+printf '\n'
+# **completed/ 에 남은 채 다시 열린 태스크.** CLI 로는 조회조차 안 되므로 상세가 아니라 복구
+# 명령을 낸다 — 파일을 `backlog/tasks/` 로 되돌려야 그때부터 목록·상세에 실린다.
+printf '## reopened in completed (%d)\n' "${#reopened_lines[@]}"
+if [ "${#reopened_lines[@]}" -gt 0 ]; then
+  printf '%s\n' '⚠ Done 이 아닌데 backlog/completed/ 에 있다 — CLI 가 못 찾는 상태다.'
+  printf '%s\n' '  고치려면 파일을 되돌린다: git mv "backlog/completed/<파일>" backlog/tasks/'
+  i=0
+  while [ "$i" -lt "${#reopened_lines[@]}" ]; do
+    printf '  %s\n' "${reopened_lines[$i]}"
     i=$((i + 1))
   done
 fi
