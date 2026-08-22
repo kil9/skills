@@ -1,0 +1,4 @@
+interface:
+  display_name: "Cleanup Memory"
+  short_description: "Audit long-term memory: keep durable policy, push traps down to repo docs, drop stale current-state"
+  default_prompt: "Use $cleanup-memory to audit the machine-local instructions: verify every claim against the current state, keep only durable policy, move worth-keeping traps into the owning repo's docs, and delete the rest."
