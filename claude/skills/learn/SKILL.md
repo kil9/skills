@@ -27,11 +27,13 @@ disable-model-invocation: true
 1. 대화를 훑어 후보를 추린다. 없으면 그렇게 보고하고 끝낸다 — 없는데 억지로 만들지 않는다.
 2. 각 후보의 목적지를 정한다:
    - **반복 절차·워크플로** → 새 스킬(`/skill-creator`) 또는 기존 스킬 SKILL.md 보강.
-   - **이 머신에서만 의미 있는 사실·사용자 선호·진행 상태** → auto-memory(컨텍스트의 memory 규칙대로).
-   - **이 repo 의 비자명한 운영 지식** → repo AGENTS.md.
-   - **머신 무관 범용 규칙, Claude Code 하네스 자체의 동작·함정** → 글로벌 `~/.claude/CLAUDE.md`
-     (실체는 `~/kil9conf/claude/CLAUDE.global.md`, 심링크). **매 세션 컨텍스트에 통째로 실리므로
-     짧게 쓴다** — 길어질 내용이면 repo AGENTS.md 나 auto-memory 가 맞다.
+   - **머신 전용 정책·사용자 선호** → auto-memory(컨텍스트의 memory 규칙대로).
+   - **함정·실측·운영 지식** → 소유 repo의 `backlog/docs/` 또는 문서 관례. AGENTS.md에는
+     검색 경로만 남긴다. 진행 상태는 해당 태스크 notes에 적는다.
+   - **repo 작업 규칙** → repo AGENTS.md.
+   - **머신 무관 범용 규칙** → 글로벌 `~/.claude/CLAUDE.md`
+     (실체는 `~/kil9conf/claude/CLAUDE.global.md`, 심링크). 규칙만 짧게 두고 근거·함정은
+     소유 repo 문서로 내린다. 길다는 이유로 다른 상시 로드 지침으로 옮기지 않는다.
 3. 후보가 여럿이거나 목적지가 애매하면 AskUserQuestion 으로 무엇을 어디에 남길지 확정한다.
 4. 확정된 것만 기록한다. 문서·스킬 편집은 zip-it 기준(정보 단가)을 지킨다.
 

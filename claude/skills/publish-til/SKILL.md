@@ -127,7 +127,7 @@ bash ~/.claude/skills/publish-til/til-verify.sh <YYYY>/<slug>   # 지원 페이�
 
 ## 6. 커밋 · 푸시 (자동)
 
-`AskUserQuestion` 없이 즉시 진행한다. 저장소의 PLAN.md 진행 상황 갱신이 필요하면 같은 커밋에 포함한다(저장소 커밋 규칙).
+`AskUserQuestion` 없이 즉시 진행한다. 연결된 backlog 태스크가 있으면 상태·AC·notes를 같은 커밋에 포함한다(저장소 커밋 규칙).
 
 ```bash
 git add <YYYY>/<slug> index.html README.md 404.html   # 지원 페이지면 p/<slug>
@@ -154,4 +154,4 @@ git push origin main
 - §0(전제 불충족), §1(슬러그 충돌), §2(소스 선택이 애매할 때), §2-1(보안 의심) 외에는 사용자에게 묻지 않는다. **슬러그와 한 줄 제목은 스스로 정한다.** §6 커밋·푸시는 자동 진행한다.
 - 이 저장소는 public 이다 — 판단이 애매하면 가장 보수적인 선택(중단·질문)을 한다.
 - 본 스킬은 새 페이지 추가 전용이다. 기존 페이지 수정·삭제는 다루지 않는다.
-- kil9conf 의 PLAN.md 는 수정하지 않는다. til 저장소의 PLAN.md 는 그 저장소 커밋 규칙에 따라 필요할 때만 갱신한다.
+- 작업 기록은 게시 대상 저장소의 backlog 규칙을 따른다. 다른 저장소의 태스크는 이번 게시와 연결된 경우에만 갱신한다.

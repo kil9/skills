@@ -69,13 +69,15 @@ global instructions fits: lowercase transliterations like `suisei-opus` are vali
 
 ## discover yourself
 
-see what panes exist and which one is focused:
+identify the pane running this command, then list its neighbors:
 
 ```bash
+herdr pane current --current
 herdr pane list
 ```
 
-the focused pane is yours. other panes are your neighbors.
+Use the id returned by `pane current --current` as your own. The UI-focused pane may belong to
+another session; focus is not evidence of ownership.
 
 list workspaces:
 
