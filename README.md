@@ -53,7 +53,7 @@ Codex 는 `~/.codex/skills/` 를 읽는다.
 | git 워크플로 | commit, cip, cipd, sync |
 | 에이전트 메타 | fable-advisor (Claude), sol-advisor (Codex), lunamax-threads·opus-threads (Codex), grill, handoff, learn, skill-creator, zip-it |
 | 에이전트 운용 | afk, herdr, kill-agents, shoot-and-forget |
-| 저장소·퍼블리시 유틸 | init-project, paste-image, publish-til, kil9-writing-style, explain-diff |
+| 저장소·퍼블리시 유틸 | init-project, paste-image, publish-til, kil9-writing-style, explain-diff, show-me (upstream humanlayer/skills, MIT, 원문 그대로) |
 | 디자인 | impeccable (upstream 4.0.4, 명시 호출 전용, 내장 이미지 생성만 사용) |
 | 개인 워크플로 | manage-gmail-inbox |
 
