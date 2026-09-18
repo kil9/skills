@@ -45,7 +45,10 @@ allowed_tools: [Bash, Read, Edit, Write, Glob, Grep]
      때문이다(2026-07-29 에 한 머신에서 고쳐 push 한 스킬을 다른 머신이 /sync 를 여러 번
      돌리고도 못 받아 스킬셋이 갈라졌다). 그 체크아웃이 dirty 면 **push 를 건너뛰고** 경고만
      한다 — 무엇을 커밋할지는 `/commit` 규칙으로 판단할 일이다. 경로를 바꾸려면
-     `SYNC_SKILL_REPOS` 로 덮어쓴다.
+     `SYNC_SKILL_REPOS` 로 덮어쓴다. **닿지 않는 체크아웃도 skip 이다**(GHEC 인증이 없는 맥의
+     `workflow` 등) — 프로브·fetch 가 실패하면 경고만 내고 다음 체크아웃으로 간다. 닿은 뒤의
+     통합 실패(발산·충돌)만 error 로 모아 마지막에 알리고 exit 1 이며, 충돌로 멈춘 rebase 는
+     스크립트가 abort 해 다음 /sync 가 'rebase in progress' 로 막히지 않게 한다.
    - **추가 워킹카피**: `~/.claude/sync-extra-repos.conf` 가 있으면 스크립트가 거기 적힌
      체크아웃도 함께 동기화한다(머신 로컬 설정, 없으면 생략). 다른 체크아웃이 라이브 설정을
      물고 있을 때(예: WT junction) 그쪽이 stale 하면 repo 의 수정이 라이브에 도달하지 못하기

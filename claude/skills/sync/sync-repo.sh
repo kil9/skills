@@ -4,6 +4,10 @@
 #   merge             — git pull --no-rebase --autostash (rebase 가 손이 많이 갈 때 폴백)
 set -euo pipefail
 
+# 인증이 없는 리모트에서 git 이 사람에게 자격증명을 물어 **행** 하는 것을 막는다. 프롬프트가
+# 뜨면 /sync 는 실패로도 skip 으로도 끝나지 않고 그냥 멈춘다 — 무인 실행에서 최악이다.
+export GIT_TERMINAL_PROMPT=0
+
 strategy="${1:-rebase}"
 case "$strategy" in
   # plain --rebase 가 아니라 =merges 인 이유: 다중 리모트 발산을 merge 로 해소한 직후
@@ -34,11 +38,12 @@ fi
 
 # 리모트 도달성 프로브. 사외 머신에서 사내 GHE 처럼 아예 안 닿는 리모트는
 # 실패가 아니라 skip 이다 — ssh 기본 타임아웃이 길어 timeout 이 있으면 감싼다.
-probe_remote() {
+probe_remote() { # probe_remote <리모트> [체크아웃 경로]
+  local target=$1 dir=${2:-.}
   if command -v timeout >/dev/null 2>&1; then
-    timeout 7 git ls-remote "$1" >/dev/null 2>&1
+    timeout 7 git -C "$dir" ls-remote "$target" >/dev/null 2>&1
   else
-    git ls-remote "$1" >/dev/null 2>&1
+    git -C "$dir" ls-remote "$target" >/dev/null 2>&1
   fi
 }
 
@@ -80,6 +85,8 @@ fi
 #
 # 한 체크아웃을 pull(+조건부 push)한다. $2 가 'skip-push-if-dirty' 면 커밋 안 된 변경이 있을 때
 # push 를 건너뛴다 — 스킬 repo 처럼 '무엇을 커밋할지' 판단이 필요한 곳에 쓴다.
+checkout_failed=()
+
 sync_checkout() {
   local dir="$1" dirty_policy="${2:-}" cbranch
   echo "--- $dir"
@@ -91,18 +98,52 @@ sync_checkout() {
     git -C "$dir" status --porcelain >&2
   fi
 
-  if ! git -C "$dir" rev-parse --abbrev-ref '@{upstream}' >/dev/null 2>&1; then
+  local upstream=""
+  if ! upstream=$(git -C "$dir" rev-parse --abbrev-ref '@{upstream}' 2>/dev/null); then
     echo "notice: $dir upstream 미설정 — pull 생략" >&2
     return 0
   fi
 
-  git -C "$dir" pull $pull_opt --autostash
+  # **도달 불가는 실패가 아니라 skip 이다.** 예전엔 pull 실패가 그대로 터져 스크립트가 거기서
+  # 끝났다 — 목록 뒤쪽 체크아웃이 통째로 안 돌고도 마지막 요약 줄이 없어 아무도 못 봤다
+  # (2026-08-27 맥: GHEC 인증이 없는 ~/work/kil9/workflow. task-487).
+  #
+  # 인증 실패와 진짜 발산·충돌을 **종료 코드나 에러 문자열로 가르지 않는다** — pull 은 둘 다
+  # rc=1 로 감싸고 문자열은 git 버전·로케일·credential helper 마다 다르다. 대신 단계를 쪼갠다:
+  # 프로브·fetch(네트워크·인증) 가 실패하면 skip, 그 둘이 성공한 뒤의 통합 실패만 진짜 충돌이다.
+  local uremote=${upstream%%/*}
+  if ! probe_remote "$uremote" "$dir"; then
+    echo "skip: $dir — $uremote 에 닿지 않는다(인증 없음·사외망 등). 닿는 머신의 /sync 가 회수한다" >&2
+    return 0
+  fi
+  if ! git -C "$dir" fetch -q "$uremote"; then
+    echo "skip: $dir — $uremote fetch 실패(인증·네트워크). 다음 /sync 가 다시 시도한다" >&2
+    return 0
+  fi
+
+  if ! git -C "$dir" pull $pull_opt --autostash; then
+    echo "error: $dir 통합 실패 — 리모트에는 닿았으니 발산·충돌이다. 그 repo 에서 직접 해소하라." >&2
+    # 충돌로 멈춘 rebase 를 그대로 두면 다음 /sync 가 'rebase in progress' 라는 다른 얼굴의
+    # 실패를 낸다. 여기서 abort 해 상태를 되돌리고(autostash 도 함께 복원된다) 사람에게 넘긴다.
+    if [ -d "$(git -C "$dir" rev-parse --git-path rebase-merge)" ] ||
+       [ -d "$(git -C "$dir" rev-parse --git-path rebase-apply)" ]; then
+      git -C "$dir" rebase --abort >/dev/null 2>&1 || true
+      echo "      진행 중이던 rebase 는 abort 했다 — 워킹트리는 pull 전 상태다." >&2
+    fi
+    checkout_failed+=("$dir(diverged)")
+    return 0
+  fi
+
   cbranch=$(git -C "$dir" symbolic-ref --short HEAD)
   if [ -n "$(git -C "$dir" log --oneline '@{upstream}..HEAD')" ]; then
     if [ -n "$dirty" ] && [ "$dirty_policy" = "skip-push-if-dirty" ]; then
       echo "  push 건너뜀(dirty): $dir — 커밋한 뒤 다시 /sync" >&2
+    elif git -C "$dir" push origin "$cbranch"; then
+      echo "pushed: $dir → origin/$cbranch"
     else
-      git -C "$dir" push origin "$cbranch" && echo "pushed: $dir → origin/$cbranch"
+      # push 거부는 발산 신호다 — 예전에는 `push && echo` 라 실패가 조용히 삼켜졌다.
+      echo "error: $dir push 거부 — origin/$cbranch 가 발산했다." >&2
+      checkout_failed+=("$dir(push)")
     fi
   fi
   echo "  $dir: $(git -C "$dir" log --oneline -1)"
@@ -147,3 +188,9 @@ if [ -f "$extra_conf" ]; then
 fi
 
 echo "sync 완료($strategy): $branch → ${pushed_remotes:-'(push 된 리모트 없음)'}"
+
+# 도달 불가로 건너뛴 것은 실패가 아니다. 닿았는데 못 합친 것만 여기 남아 종료 코드를 세운다.
+if [ ${#checkout_failed[@]} -gt 0 ]; then
+  echo "error: 체크아웃 동기화 실패: ${checkout_failed[*]}" >&2
+  exit 1
+fi

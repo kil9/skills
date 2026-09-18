@@ -8,6 +8,7 @@ cd "$repo_root"
 # 네트워크가 필요 없고 1초도 안 걸린다(task-314). ID 가드와 그 테스트는 2026-08-22 에 걷어냈다
 # (kil9conf task-441·442 — 예방 기계의 유지보수가 그것이 막은 사고보다 많았다).
 scripts=(
+  claude/skills/sync/sync-repo.sh
   claude/skills/references/backlog-context.sh
   claude/skills/references/backlog-start-guard.sh
 )
@@ -16,6 +17,7 @@ tests=(
   tests/test-backlog-start-guard.sh
   tests/test-backlog-hidden-guard.sh
   tests/test-task-252-metrics.sh
+  tests/test-sync-checkout-skip.sh
 )
 
 bash -n "${scripts[@]}" "${tests[@]}" tests/verify.sh
