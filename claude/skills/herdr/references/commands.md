@@ -5,9 +5,9 @@ concepts, recipes, and traps; this file holds the command shapes you look up rat
 `herdr <subcommand> --help` is authoritative if this drifts.
 
 ids below (`wHW`, `wHW:t2`, `wHW:p1`) are **illustrative, not real** — read live ones out of
-`pane list` / `pane current` / `workspace list` / a create response. the live shape on 0.8.2 is
-`w19` / `w19:t1` / `w19:p4`, and ids are never recycled after a close. verified against herdr 0.8.2
-on 2026-08-21.
+`pane list` / `pane current` / `workspace list` / a create response. the live shape is `w` + an
+opaque token (`w19:p4` on 0.8.2, `w1D:p4` on 0.9.1), and ids are never recycled after a close.
+verified against herdr 0.8.2 on 2026-08-21; command shapes re-checked against 0.9.1 help on 2026-09-18.
 
 ## tab management
 
@@ -69,7 +69,7 @@ herdr pane read wHW:p1 --source recent --lines 50
 - `--source recent` = recent scrollback as rendered in the pane (default)
 - `--source recent-unwrapped` = recent terminal text with soft wraps joined back together
 - `--source detection` = the slice herdr's own agent detector looks at; pair it with `agent explain`.
-  `pane read --help` on 0.8.2 omits it but the command still accepts it (verified 2026-08-21);
+  `pane read --help` omits it but the command still accepts it (verified on 0.8.2 and 0.9.1);
   `agent read` documents it.
 
 `--format text|ansi`, `--ansi`, and `--raw` control how much escape sequence survives. note the CLI
