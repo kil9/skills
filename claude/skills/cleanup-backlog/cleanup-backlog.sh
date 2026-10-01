@@ -126,7 +126,7 @@ for f in ${MOVE[@]+"${MOVE[@]}"}; do echo "  → $(basename "$f")"; done
 #
 # 판정: 남은 태스크 0건 **이고** completed/ 에 그 마일스톤 태스크가 1건 이상.
 # 뒤 조건이 핵심이다 — 양쪽 다 0 이면 태스크를 아직 안 붙인 **신규** 마일스톤이라
-# 아카이브하면 안 된다(/add-milestone 이 마일스톤을 먼저 만들고 태스크를 나중에 붙인다).
+# 아카이브하면 안 된다(/add-backlog 가 마일스톤을 먼저 만들고 태스크를 나중에 붙인다).
 # 아카이브는 CLI(`backlog milestone archive`)와 같은 동작인 단순 파일 이동이다.
 MS_DIR="backlog/milestones"
 MS_ARCHIVE="backlog/archive/milestones"
