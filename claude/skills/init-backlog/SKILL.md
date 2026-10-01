@@ -11,9 +11,7 @@ allowed_tools: [Bash, Read, Edit, Glob, Grep, AskUserQuestion]
 
 ## 절차
 
-**1. 인터뷰.** 조사로 메워지지 않는 디테일(문제 정의, 목표·비목표, 접근 방식과 근거, 작업 범위, 제약, 검증 전략)은 의문이 없어질 때까지 집요하게 `AskUserQuestion` 으로 인터뷰한다. 추측으로 채우지 않고 줄글 자유 입력도 받지 않는다.
-
-단, **계획을 태스크로 어떻게 쪼갤지(태스크 수·경계·마일스톤 묶음·우선순위·의존·단독실행)는 묻지 않는다** — 조사와 확정된 목표를 근거로 알아서 나누고 그 결과를 보고한다(`../references/backlog-basics.md` 의 '분할은 묻지 않는다').
+**1. 조사·인터뷰.** 조사로 메워지지 않는 것 중 **다르게 해석하면 다른 계획이 되는 것**(문제 정의, 목표·비목표, 접근의 갈림길, 제약, 검증 전략)은 `AskUserQuestion` 으로 묻는다. 계획을 태스크로 어떻게 쪼갤지(수·경계·마일스톤·우선순위·의존)는 묻지 않고 정한 뒤 결과로 보고한다.
 
 **2. 초기화.** `backlog/config.yml`(또는 `backlog/`)이 없으면 초기화한다. 이미 초기화돼 있으면 건너뛴다.
 
@@ -40,7 +38,7 @@ backlog doc update <docId> --content "<본문 마크다운>"
 
 `doc create` 는 본문을 받지 않으므로 생성 후 `doc update --content` 로 본문을 채운다(문서 파일을 직접 편집하지 않는다).
 
-**5. 태스크 생성.** 각 태스크를 `backlog task create` 로 만든다.
+**5. 태스크 생성.** 각 태스크를 `backlog task create` 로 만든다(형태 판단은 `/add-backlog` 와 같다).
 
 ```bash
 backlog task create "<제목>" --ac "<완료 조건>" --dep task-N --priority high -l solo -m "<마일스톤>" --plain
@@ -55,10 +53,10 @@ backlog task create "<제목>" --ac "<완료 조건>" --dep task-N --priority hi
 
 접수일(created_date)은 자동 기록되므로 따로 넣지 않는다. 태스크는 기본 `To Do` 로 생성되고, 상태 전이는 소비자 스킬이 다룬다.
 
-아직 착수하지 않을 보류 아이디어는 태스크로 만들지 말고 `/add-draft` 로 draft 에 남기도록 안내한다.
+아직 착수하지 않을 보류 아이디어는 태스크가 아니라 draft 로 남긴다(`backlog draft create`).
 
 ## 마무리
 
-생성한 태스크 목록과 doc 경로를 보고하고 **멈춘다. 구현은 시작하지 않는다**(생산자 원칙: 이 스킬은 계획 수립까지만 담당한다). 소비는 `/start-backlog`(태스크 하나)·`/loop-backlog`(자율 드레인) 몫임을 안내한다. 사용자가 이 세션에서 바로 진행하라고 명시적으로 지시할 때만 `/start-backlog` 절차로 이어간다.
+생성한 태스크 목록과 doc 경로를 보고하고 **멈춘다. 구현은 시작하지 않는다**(생산자 원칙: 이 스킬은 계획 수립까지만 담당한다). 소비는 `/start-backlog` 몫임을 안내한다. 사용자가 이 세션에서 바로 진행하라고 명시적으로 지시할 때만 `/start-backlog` 절차로 이어간다.
 
-계획에 태스크를 더 얹거나 보류 아이디어를 관리하려면 `/add-task`·`/add-draft`, 다음 착수 후보 조회는 `/next-backlog` 를 쓴다.
+계획에 태스크·아이디어를 더 얹으려면 `/add-backlog`, 다음 착수 후보 조회는 `/next-backlog` 를 쓴다.

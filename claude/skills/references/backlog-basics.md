@@ -1,8 +1,8 @@
 # backlog 스킬군 공통 전제
 
-backlog 계열 스킬(`add-draft`·`add-task`·`add-milestone`·`add-backlog`·`init-backlog`·`migrate-to-backlog`·
-`next-backlog`·`start-backlog`·`loop-backlog`)이 공유하는 전제다. 각 스킬 본문은
-자기 고유 절차만 담고 여기를 가리킨다.
+backlog 계열 스킬(`init-backlog`·`migrate-to-backlog`·`add-backlog`·`next-backlog`·`ask-backlog`·
+`start-backlog`·`cleanup-backlog`)이 공유하는 전제다. 절차가 아니라 **모델이 스스로 알 수 없는 사실**만
+둔다 — 어떻게 진행할지는 각 스킬에서도 판단에 맡긴다.
 
 ## CLI 전제
 
@@ -41,34 +41,10 @@ bash "${K9HOME:-$HOME/kil9conf}/bootstrap/install-backlog-md.sh"
 
 ## 착수 신선도
 
-`start-backlog`·`loop-backlog` 는 상태를 바꾸기 전에 이번 호출의 착수 후보를 한 번에 검사한다:
-
-```bash
-bash ~/.claude/skills/references/backlog-start-guard.sh TASK-N [TASK-M ...]  # codex 는 ~/.codex/skills/…
-```
-
-가드는 현재 upstream, 없으면 `github` → `origin` 순으로 **GitHub 리모트 하나만** 고르고 3초 안에
-fetch 한 뒤, 로컬 `HEAD` 에 없는 커밋이 후보의 backlog 파일을 건드렸는지만 수집한다. VPN 전용
-리모트는 조회하지 않는다.
-
-- `stale=TASK-N ref=... commits=...`: 다른 세션 변경일 수 있으므로 그 후보는 착수하지 않는다.
-  `$sync` 또는 pull 로 합친 뒤 태스크 상태·AC·notes 를 다시 읽어 재판정한다.
-- `fresh=TASK-N`: 이 검사 기준으로 원격 선행 변경이 없다.
-- `unknown=TASK-N reason=...`: GitHub 리모트 없음·fetch 실패·remote ref 없음이다. 경고를 한 번
-  남기되 로컬 상태로 계속한다. 네트워크 불확실성 때문에 착수 자체를 막거나 재시도 루프를 돌지 않는다.
-
-스크립트는 사실만 수집한다. Blocked 해제 여부나 지정 태스크 강행 같은 판단은 각 소비 스킬의 기존
-규칙이 맡는다.
-
-## 분할은 묻지 않는다
-
-**마일스톤·태스크를 어떻게 쪼갤지(태스크 수·경계·마일스톤으로 묶을지 여부)는 `AskUserQuestion`
-대상이 아니다.** 조사한 내용을 근거로 알아서 나누고 바로 생성한 뒤, 어떻게 나눴는지 결과로
-보고한다. 그 경계는 되돌리기 싼 결정이라(태스크는 언제든 추가·병합·삭제할 수 있다) 확인 왕복이
-더 비싸다.
-
-인터뷰는 **다르게 해석하면 다른 작업이 되는** 것으로 한정한다 — 목표·완료 조건·비목표, 접근
-방식의 갈림길, 외부 제약. 여기서 추측하면 결과물 자체가 틀린다.
+`backlog-start-guard.sh TASK-N [...]` 는 GitHub 리모트 하나만 3초 안에 fetch 해, 로컬 `HEAD` 에 없는 커밋이
+후보의 backlog 파일을 건드렸는지만 본다(VPN 전용 리모트는 안 본다). `stale=` 은 다른 세션의 변경일 수
+있으니 pull 후 다시 읽고, `unknown=`(리모트 없음·fetch 실패)은 경고만 하고 로컬 상태로 진행한다 —
+네트워크 불확실성으로 착수를 막지 않는다.
 
 ## 조회 규칙
 
