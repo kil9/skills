@@ -228,4 +228,5 @@ assuming a capability is missing:
 - recipes for the other branches — run a server, run tests, watch or coordinate with another pane: [`references/recipes.md`](references/recipes.md)
 - spawning an `agy` agent instead of claude: [`references/agy-spawn.md`](references/agy-spawn.md)
 - which commands print json vs text, and where ids live in the response: [`references/output-shapes.md`](references/output-shapes.md)
+- worker panes for `/start-backlog` parallel runs (worktree workers, result files, coaching): [`references/backlog-pane-worker.md`](references/backlog-pane-worker.md)
 - full command reference: [`references/commands.md`](references/commands.md)

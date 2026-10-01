@@ -19,12 +19,10 @@ assert_smaller() {
 assert_smaller 129 claude/skills/next-backlog/SKILL.md
 # TASK-226가 추가한 착수 신선도 가드까지 포함한 upstream 기준선이다.
 assert_smaller 109 claude/skills/start-backlog/SKILL.md
-assert_smaller 66 claude/skills/loop-backlog/SKILL.md
 
 for path in \
   claude/skills/next-backlog/SKILL.md \
-  claude/skills/start-backlog/SKILL.md \
-  claude/skills/loop-backlog/SKILL.md; do
+  claude/skills/start-backlog/SKILL.md; do
   grep -q 'backlog-context.sh' "$path" || fail "$path must use backlog-context"
   if grep -Eq 'backlog (milestone list|task list|task view) --plain' "$path"; then
     fail "$path has an inline backlog collector"

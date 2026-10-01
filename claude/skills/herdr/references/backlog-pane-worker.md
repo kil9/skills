@@ -1,7 +1,7 @@
 # herdr pane 워커 모드 (배관 상세)
 
-`parallel-worktree.md` 의 opt-in 경로 전용이다. 사용자가 명시적으로 herdr pane 을 지시했을 때만 읽는다 —
-기본 경로(팀/서브에이전트)로 도는 대부분의 실행에서는 필요 없다. 트리거 조건은 `parallel-worktree.md` 본문에 있다.
+`/start-backlog` 가 병렬 워커를 herdr pane 으로 띄울 때의 배관이다(`../../references/parallel-worktree.md` 의 pane 변형). 사용자가 명시적으로 herdr pane 을 지시했을 때만 쓴다 —
+기본 경로(팀/서브에이전트)로 도는 대부분의 실행에서는 필요 없다.
 
 태스크 선별·프롬프트 내용·머지 로직은 동일하고 워커 실행 배관만 바뀐다:
 

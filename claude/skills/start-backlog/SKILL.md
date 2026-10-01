@@ -1,102 +1,60 @@
 ---
-description: 저장소의 backlog 태스크를 우선순위 순으로 구현·검증·커밋한다. "태스크 시작 / 이거 구현해줘 / 백로그 진행해줘" 라고 할 때. 후보만 추리는 것은 /next-backlog, 자율 드레인은 /loop-backlog 다.
-allowed_tools: [Bash, Read, Edit, Write, Glob, Grep, AskUserQuestion, Skill]
+description: 저장소의 backlog 태스크를 구현·검증·커밋한다 — 하나든, 지정한 것만이든, 남은 것 전부든. "태스크 시작 / 이거 구현해줘 / 백로그 진행해줘 / 백로그 다 해줘 / 남은 태스크 전부 / 병렬로 돌려줘" 라고 할 때. 후보만 추리는 것은 /next-backlog 다.
+allowed_tools: [Bash, Read, Edit, Write, Glob, Grep, AskUserQuestion, Agent, SendMessage, TaskCreate, TaskList, TaskGet, TaskOutput, TaskStop, TaskUpdate, Skill]
 ---
 
-백로그를 우선순위·의존 순서대로 끝까지 진행한다. 항목마다 **구현 → 검증 → 커밋** 으로 완결하며, 검증을 통과하지 않으면 커밋하지 않고, 커밋하지 않으면 다음 항목으로 넘어가지 않는다.
+backlog 를 작업 목록이자 진행 기록으로 삼아 태스크를 끝낸다. **어떻게 할지는 판단에 맡긴다** — 몇 개를
+잡을지, 순차로 할지 병렬로 할지, 서브에이전트·worktree 를 쓸지, 어디까지 조사하고 무엇을 물을지.
+이 문서는 절차가 아니라 지켜야 할 불변식과 쓸 수 있는 도구 목록이다. 공통 전제(CLI 전용·`--plain`·
+상태 4종·ID 충돌)는 [`../references/backlog-basics.md`](../references/backlog-basics.md).
 
-## 0. 전제 · snapshot
+## 범위
 
-`bash ~/.claude/skills/references/backlog-context.sh`를 **한 번만** 호출한다. exit 0이면 그 snapshot만 읽어 §1-§6을 수행하고 목록·상세를 따로 조회하지 않는다. exit 2는 backlog 가 없는 것이니 `/init-backlog`(옛 `PLAN.md` 만 있으면 `/migrate-to-backlog`)을 안내하고 중단, exit 3은 CLI 설치 안내, 다른 non-zero는 오류 보고 후 중단이다. 공통 전제는 [`../references/backlog-basics.md`](../references/backlog-basics.md)를 따른다.
+호출 인자와 사용자 말에서 읽는다.
 
-## 1. 대상 선정
+- **인자 없음 / "진행해줘"**: In Progress 가 있으면 그것부터, 없으면 의존이 풀린 To Do 중 가장 급한 것.
+- **번호 지정**: 그 태스크만. Done 이면 알리고, 의존 미해소·Blocked 면 사정을 말하고 어떻게 할지 묻는다.
+- **작업 서술**: `backlog task create` 로 등록한 뒤 바로 진행한다(AC 는 검증 가능한 문장으로).
+- **"다 해줘 / 남은 것 전부"**: 스스로 진행할 수 있는 것이 없을 때까지 드레인한다(아래 '드레인').
 
-snapshot의 `## tasks`와 `## unfinished task details`로 대상의 전체·Description·AC·의존·notes를 읽고, 호출 인자에 따라 정한다. draft는 자동 제외된다.
+## 불변식
 
-- **인자 없음**: backlog 에서 직접 고른다. 선정 우선순위:
-  - **In Progress** 태스크가 있으면 최우선으로 이어서 진행한다.
-  - 없으면 **To Do** 중 의존(dependencies)이 모두 Done 인 것을 priority 높은 순, 같으면 생성 순(created_date)으로 고른다. 의존이 안 풀린 To Do 는 제외한다.
-  - **Blocked** 는 건너뛴다. 단 막힘 사유가 해소된 것이 확인되면 `backlog task edit <id> -s "To Do"` 로 되돌려 포함한다.
-- **태스크 번호 지정**(`7`, `task-7`, `T-7` 등, 여러 개 가능): 지정된 태스크만 지정 순서대로 진행한다. 이미 Done 이면 알리고 제외한다. 의존 미해소·Blocked 상태면 그 사실을 알리고 `AskUserQuestion` 으로 진행 방식(의존/막힘 먼저 해소, 그대로 강행, 제외)을 확인한다.
-- **작업 내용 서술**(번호가 아닌 구체적 작업 지시): 그 작업을 태스크로 등록한 뒤 바로 그 태스크를 진행한다. /add-task 수준의 사전 인터뷰는 생략하되 AC 는 검증 가능한 문장으로 채운다(판단이 필요한 모호점은 §2-1 에서 해소):
+- **현황은 `bash ~/.claude/skills/references/backlog-context.sh [TASK-N ...]` 로 읽는다.** 목록·마일스톤·
+  미완료 상세를 한 번에 주고, `backlog task list` 가 조용히 감춘 태스크를 `## hidden tasks` 로 되살린다 —
+  목록만 보면 남은 일을 없는 일로 읽는다. exit 2 는 backlog 없음(`/init-backlog`, 옛 PLAN 이면
+  `/migrate-to-backlog`), exit 3 은 CLI 없음.
+- **착수 신선도**: 상태를 바꾸기 전에 `bash ~/.claude/skills/references/backlog-start-guard.sh TASK-N [...]`
+  로 다른 세션이 그 태스크를 이미 건드렸는지 본다. `stale=` 이면 pull 후 다시 읽고, `unknown=` 이면
+  경고만 하고 진행한다.
+- 착수하면 `-s "In Progress"`. **AC 를 실제로 확인한 항목만 `--check-ac N`** 하고, 전부 체크되기 전엔
+  Done 으로 바꾸지 않는다. Done 전이 때 `--notes` 에 무엇을·왜·검증 결과를 남긴다.
+- **코드 변경과 그 태스크 파일 변경을 같은 커밋에** 담고 메시지에 `[task-N]` 을 넣는다(`/commit` 규칙).
+  태스크마다 커밋을 나눈다.
+- **Blocked 는 사람 개입 없이 못 나아갈 때만**이고 notes 첫 줄이 사유다. 재시도로 풀릴 실패는 To Do 에
+  두고 `--append-notes` 로 로그만 남긴다.
+- 되돌리기 어렵거나 결과를 크게 바꾸는 갈림길은 추측으로 밀지 않는다. 사용자가 있으면 묻고, 없거나
+  드레인 중이면 `-s Blocked --notes "결정 필요: <질문>"` 으로 미루고 다음으로 간다.
+- 여러 태스크에 걸치는 설계 결정은 `backlog decision create "<제목>"` 후 파일 본문(Context·Decision·
+  Consequences)을 채워 관련 커밋에 넣는다.
 
-  ```
-  backlog task create "<제목>" -d "<배경·접근>" --ac "<완료 조건>" [--ac ...]
-  ```
+## 드레인
 
+- 하다가 발견한 **실제로 필요한** 선행·후속은 `backlog task create ... -d "<발견 맥락>" --ac ...` 로 만들어
+  이어서 집는다. "있으면 좋은" 개선과 외부 조건(미출시·상대 응답 대기)에 막힌 후속은 draft 다
+  (`backlog draft create` 에는 `--ac` 가 없다 — 완료 조건은 `-d` 에 녹인다).
+- **빈 조회 한 번으로 끝내지 않는다.** 할 것이 없어 보이면 현황을 한 번 더 읽고, 그래도 없을 때 끝낸다 —
+  옆 세션이 방금 추가했거나 목록이 감췄을 수 있다.
+- 새 태스크만 늘고 Done 이 몇 라운드째 0 이면 수렴하지 않는 것이니 멈추고 보고한다.
 
-  ID가 확정되면 `bash ~/.claude/skills/references/backlog-context.sh TASK-N`을 한 번 더 호출해 새 task의 상세 snapshot으로 바꾼다.
+## 병렬로 갈 때
 
-대상을 확정한 뒤 §2 로 들어가기 전에 후보 ID 전부를 공통 전제의 **착수 신선도** 가드로 한 번에
-검사한다. `stale=` 후보는 상태를 바꾸지 않고 제외하며, `unknown=` 은 경고 후 계속한다.
+판단해서 쓴다. 쓰기로 했다면 worktree 배관(워커 수정 범위·RESULT 회수·ff-merge 순서)은
+[`../references/parallel-worktree.md`](../references/parallel-worktree.md) 를 따른다. 머지 전 검증에는
+블랙박스 검증자 서브에이전트와 `review-logic`·`review-security`·`review-performance`·`review-cleancode`
+에이전트를 쓸 수 있다. 사용자가 herdr pane 을 지시했으면 `/herdr` 스킬의 `references/backlog-pane-worker.md`.
 
-## 2. 항목별 루프
+## 끝맺음
 
-한 태스크씩 아래를 완결한다. 여러 태스크를 섞지 않는다.
-
-### 2-1. 착수 준비
-
-태스크의 Description·Acceptance Criteria·의존을 읽고, 관련 파일(정의·참조·테스트·설정)을 먼저 읽는다. 태스크에 명시되지 않아 판단이 필요한 사항 중 **되돌리기 어렵거나 결과를 크게 바꾸는 것**(설계 방향, 라이브러리·API 선택, 범위 경계, 에러 처리 정책 등)은 구현 전에 `AskUserQuestion` 으로 해소한다 — 추측으로 밀지 않는다. 되돌리기 쉬운 사소한 선택(네이밍, 로그 문구 등)은 묻지 말고 정한 뒤 결과에 밝힌다. 이미 태스크에 명시됐거나 판단 요소가 없으면 묻지 않고 바로 구현한다. 착수 직전 상태를 In Progress 로 바꾼다:
-
-```
-backlog task edit <id> -s "In Progress"
-```
-
-### 2-2. 구현
-
-작고 안전한 변경을 반복한다. 새 코드에는 테스트를 함께 작성하고, 버그 수정이면 회귀 테스트를 먼저 작성(실패 확인 후 수정)한다. `--no-verify` 등 안전하지 않은 우회는 쓰지 않는다.
-
-### 2-3. 검증 (AC 기계화)
-
-완료 조건은 태스크의 Acceptance Criteria 다. **AC 항목을 실제로 확인할 때마다** 그 항목을 체크한다(N 은 1-based 인덱스, 여러 개면 반복):
-
-```
-backlog task edit <id> --check-ac N
-```
-
-테스트 전부 통과·빌드 성공을 포함해 **AC 전 항목 체크 완료가 커밋 전제**다. 하나라도 통과하지 못하면 커밋하지 않고 2-2 로 돌아가 수정 후 재검증한다. 통과 못 한 채 다음 태스크로 넘어가지 않는다. 사람 개입·외부 요인 해소 없이는 진행 불가한 경우만 Blocked 로 처리한다(§4).
-
-### 2-4. 완료·커밋
-
-AC 전 항목 체크를 마쳤으면 Done 전이 + 구현 요약을 notes 에 기록한다:
-
-```
-backlog task edit <id> -s Done --notes "<무엇을·왜·검증 결과>"
-```
-
-그다음 `/commit` 규칙으로 커밋한다. 이때 **코드 변경과 `backlog/tasks/` 의 해당 태스크 파일 변경(상태·notes·AC 체크)을 같은 커밋에 담는다**. 커밋 없이 다음 항목으로 넘어가지 않는다.
-
-## 3. 설계 결정 기록
-
-루프 중 중요한 설계 결정을 내리면 backlog decision 으로 남긴다:
-
-```
-backlog decision create "<제목>"
-```
-
-생성된 `backlog/decisions/` 파일을 열어 본문을 채운다(생성 명령은 제목만 받으므로 본문은 파일 편집으로 채운다). 템플릿의 Context 에는 배경과 검토한 대안, Decision 에는 내린 결정, Consequences 에는 이유·트레이드오프·영향을 적는다(날짜는 frontmatter 에 자동 기록). 결정 파일도 관련 커밋에 포함한다.
-
-## 4. Blocked 처리
-
-- 사람 개입 없이는 진행 불가일 때만 Blocked 로 전이하고 notes 첫 줄에 사유를 적는다:
-
-```
-backlog task edit <id> -s Blocked --notes "<사유 첫 줄>
-..."
-```
-
-- 재실행으로 풀릴 일시적 실패는 **To Do 로 유지**하고 실패 로그 요약을 notes 에 append 한다:
-
-```
-backlog task edit <id> --append-notes "<실패 로그 요약>"
-```
-
-## 5. 세션 위생
-
-backlog 데이터(상태·AC·notes)가 파일에 영속되므로 세션 리셋 후에도 재개 가능한 진실원본이다. 태스크 몇 개를 소화해 컨텍스트가 비대해졌으면 **커밋 직후 태스크 경계**에서 `/clear` 후 재진입해도 손실이 없다. 늘어진 세션으로 품질을 떨어뜨리는 것보다 낫다.
-
-## 6. 완료 보고
-
-모든 대상을 소진한 뒤 요약해 알린다: 완료한 태스크 목록, Blocked 로 남긴 태스크와 각 사유, 기록한 설계 결정, 추가 확인이 필요한 사항.
-
-Done 태스크가 7개 이상 쌓였으면 `Skill("cleanup-backlog")` 를 실행해 완료 태스크를 정리(completed 폴더로 이동)하고, 그 결과(정책·이동 건수·커밋)를 완료 보고에 **한 줄로** 덧붙인다. 사용자에게 수동 실행을 권고하지 않는다.
+완료·Blocked(사유)·새로 만든 태스크·draft·결정을 보고한다. Done 이 많이 쌓였으면
+`Skill("cleanup-backlog")` 로 정리해도 된다. 태스크 파일이 진행 기록이라 커밋 경계에서 세션을 끊고
+다시 불러도 이어진다.
