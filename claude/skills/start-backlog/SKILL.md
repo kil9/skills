@@ -1,5 +1,5 @@
 ---
-description: 저장소의 backlog 태스크를 구현·검증·커밋한다 — 하나든, 지정한 것만이든, 남은 것 전부든. "태스크 시작 / 이거 구현해줘 / 백로그 진행해줘 / 백로그 다 해줘 / 남은 태스크 전부 / 병렬로 돌려줘" 라고 할 때. 후보만 추리는 것은 /next-backlog 다.
+description: 저장소의 backlog 태스크를 구현·검증·커밋한다 — 하나든, 지정한 것만이든, 남은 것 전부든. "태스크 시작 / 이거 구현해줘 / 백로그 진행해줘 / 백로그 다 해줘 / 남은 태스크 전부 / all / 병렬로 돌려줘" 라고 할 때. 후보만 추리는 것은 /next-backlog 다.
 allowed_tools: [Bash, Read, Edit, Write, Glob, Grep, AskUserQuestion, Agent, SendMessage, TaskCreate, TaskList, TaskGet, TaskOutput, TaskStop, TaskUpdate, Skill]
 ---
 
@@ -15,7 +15,7 @@ backlog 를 작업 목록이자 진행 기록으로 삼아 태스크를 끝낸�
 - **인자 없음 / "진행해줘"**: In Progress 가 있으면 그것부터, 없으면 의존이 풀린 To Do 중 가장 급한 것.
 - **번호 지정**: 그 태스크만. Done 이면 알리고, 의존 미해소·Blocked 면 사정을 말하고 어떻게 할지 묻는다.
 - **작업 서술**: `backlog task create` 로 등록한 뒤 바로 진행한다(AC 는 검증 가능한 문장으로).
-- **"다 해줘 / 남은 것 전부"**: 스스로 진행할 수 있는 것이 없을 때까지 드레인한다(아래 '드레인').
+- **`all` / "다 해줘 / 남은 것 전부"**: 스스로 진행할 수 있는 것이 없을 때까지 드레인한다(아래 '드레인').
 
 ## 불변식
 
