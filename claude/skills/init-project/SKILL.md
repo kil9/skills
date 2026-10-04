@@ -1,9 +1,9 @@
 ---
-description: 저장소를 분석해 README.md·AGENTS.md 를 쓰고 CLAUDE.md 심링크를 건다. "프로젝트 초기화 / init project / 문서 만들어줘" 라고 할 때. 작업 계획은 /init-backlog 몫이다.
+description: 저장소를 분석해 README.md·AGENTS.md 를 쓴다(CLAUDE.md 는 만들지 않는다). "프로젝트 초기화 / init project / 문서 만들어줘" 라고 할 때. 작업 계획은 /init-backlog 몫이다.
 allowed_tools: [Bash, Read, Edit, Write, Glob, Grep]
 ---
 
-현재 저장소를 분석하여 README.md, AGENTS.md 를 신규 작성하고 CLAUDE.md 심링크를 만든다.
+현재 저장소를 분석하여 README.md, AGENTS.md 를 신규 작성한다.
 $ARGUMENTS 가 있으면 프로젝트 설명 힌트로 사용한다.
 
 **작업 계획(태스크)은 이 스킬이 만들지 않는다** — `/init-backlog` 몫이다(§작업 계획 참조).
@@ -59,16 +59,15 @@ AI 에이전트가 이 저장소에서 작업하는 데 필요한 모든 정보�
 - 위 인터뷰에서 파악한 개발 단계·다음 마일스톤을 사용자에게 요약해 주고, 계획 수립은
   **`/init-backlog` 로 이어가도록 안내한다**(이 스킬이 대신 호출하지 않는다).
 
-## CLAUDE.md (심볼릭 링크)
+## CLAUDE.md 는 만들지 않는다
 
-스킬 마지막 단계에서 수행한다. `CLAUDE.md` 를 `AGENTS.md` 로 향하는 **심볼릭 링크**로 생성한다 (일반 텍스트 파일이 아니다).
+Claude Code 는 v2.1.277 부터 작업 디렉터리와 그 상위에 `CLAUDE.md`·`.claude/CLAUDE.md`·`CLAUDE.local.md` 가
+**하나도 없을 때** 루트 `AGENTS.md` 를 직접 읽는다. 그래서 지침은 AGENTS.md 하나로 두고 CLAUDE.md 는 만들지 않는다
+(예전 규약이던 `CLAUDE.md -> AGENTS.md` 심링크도 걸지 않는다).
 
-- `CLAUDE.md` 가 이미 존재하면 (일반 파일이든 심볼릭 링크든) 건너뛴다.
-- 존재하지 않으면 아래 명령으로 생성한다.
-
-```bash
-ln -s AGENTS.md CLAUDE.md
-```
+- `CLAUDE.md` 가 `AGENTS.md` 로 향하는 심링크로 이미 있으면 지운다(`git rm CLAUDE.md`).
+- 일반 파일인 `CLAUDE.md` 나 `CLAUDE.local.md` 가 있으면 그것 때문에 AGENTS.md 가 로드되지 않는다. 내용을
+  AGENTS.md 로 합치고 지울지 사용자에게 확인한다(임의로 지우지 않는다).
 
 ## 완료 보고
 
