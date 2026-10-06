@@ -1,1 +1,0 @@
-../../../claude/skills/references/backlog-git-guard-lib.sh

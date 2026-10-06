@@ -1,1 +1,0 @@
-../../../claude/skills/init-backlog/backlog-config-standard.sh

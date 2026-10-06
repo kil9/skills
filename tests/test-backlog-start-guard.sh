@@ -77,11 +77,7 @@ git -C "$local_repo" remote remove github
 output=$(cd "$local_repo" && bash "$guard" TASK-1)
 assert_contains "$output" 'unknown=TASK-1 reason=no-github-remote'
 
-for skill in \
-  "$repo_root/claude/skills/start-backlog/SKILL.md" \
-  "$repo_root/codex/skills/start-backlog/SKILL.md" \
-  "$repo_root/codex/skills/loop-backlog/SKILL.md"; do
-  grep -q '착수 신선도' "$skill" || fail "startup guard missing from $skill"
-done
+skill="$repo_root/claude/skills/start-backlog/SKILL.md"
+grep -q '착수 신선도' "$skill" || fail "startup guard missing from $skill"
 
 echo 'ok: backlog start guard'

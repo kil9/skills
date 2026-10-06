@@ -1,1 +1,0 @@
-../../../claude/skills/cleanup-backlog/cleanup-backlog.sh

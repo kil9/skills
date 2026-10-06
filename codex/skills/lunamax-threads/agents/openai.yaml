@@ -1,6 +1,0 @@
-interface:
-  display_name: "Luna Max Threads"
-  short_description: "Delegate quota-efficient bounded packets to Luna max"
-  default_prompt: "Use $lunamax-threads when quota efficiency matters and the packet can wait; retain Sol orchestration and verification."
-policy:
-  allow_implicit_invocation: false

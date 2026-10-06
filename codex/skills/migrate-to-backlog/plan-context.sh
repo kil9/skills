@@ -1,1 +1,0 @@
-../../../claude/skills/migrate-to-backlog/plan-context.sh

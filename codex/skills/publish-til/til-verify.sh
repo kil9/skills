@@ -1,1 +1,0 @@
-../../../claude/skills/publish-til/til-verify.sh

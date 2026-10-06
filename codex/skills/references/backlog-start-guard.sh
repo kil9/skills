@@ -1,1 +1,0 @@
-../../../claude/skills/references/backlog-start-guard.sh

@@ -1,1 +1,0 @@
-../../../claude/skills/sync/sync-repo.sh

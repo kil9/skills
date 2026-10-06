@@ -1,6 +1,6 @@
 #!/bin/bash
 # backlog 스킬군 공유: backlog/config.yml 을 이 저장소군의 표준으로 맞춘다. 멱등.
-# 소비: /init-backlog, /migrate-to-backlog (미러는 이 파일로의 상대 심링크)
+# 소비: /init-backlog, /migrate-to-backlog
 # 사용법: backlog-config-standard.sh [<config.yml 경로>]   (기본: backlog/config.yml)
 #
 # 표준의 근거:

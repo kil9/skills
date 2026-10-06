@@ -28,9 +28,6 @@ for path in \
     fail "$path has an inline backlog collector"
   fi
 done
-[ "$(readlink codex/skills/references/backlog-context.sh)" = \
-  ../../../claude/skills/references/backlog-context.sh ] \
-  || fail 'Codex backlog-context mirror'
 
 printf '%s\n' 'AGENT_ROUND_TRIPS: next=2+U->1 start=1+U->1 loop=1+U->1'
 echo 'PASS: task-252 public metrics'
