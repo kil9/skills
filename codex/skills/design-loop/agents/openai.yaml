@@ -1,4 +1,0 @@
-interface:
-  display_name: "Design Loop"
-  short_description: "Score and refine a UI until it reaches award-level quality"
-  default_prompt: "Use $design-loop to score and refine this UI until it reaches award-level quality."
