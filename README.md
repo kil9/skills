@@ -30,7 +30,7 @@ done
 | backlog 워크플로 | add-backlog, ask-backlog, cleanup-backlog, init-backlog, migrate-to-backlog, next-backlog, start-backlog |
 | git 워크플로 | commit, cip, cipd, sync |
 | 에이전트 메타 | fable-advisor, grill, handoff, learn, skill-creator, zip-it |
-| 에이전트 운용 | afk, herdr, kill-agents, shoot-and-forget |
+| 에이전트 운용 | afk, herdr, kill-agents |
 | 저장소·퍼블리시 유틸 | init-project, paste-image, publish-til, explain-diff, show-me (upstream humanlayer/skills, MIT, 원문 그대로) |
 | 글쓰기 | kil9-writing-style (kil9 말투), korean-polish (한국어 윤문: daleseo/korean-skills·epoko77-ai/im-not-ai·nomadamas/k-skill 합성, MIT) |
 | 디자인 | impeccable (upstream 4.0.4, 명시 호출 전용, 내장 이미지 생성만 사용), design-loop (수상작 기준 채점·개선 반복, 고치는 손은 impeccable) |
