@@ -1,5 +1,5 @@
 ---
-description: 저장소의 backlog 태스크를 구현·검증·커밋한다 — 하나든, 지정한 것만이든, 남은 것 전부든. "태스크 시작 / 이거 구현해줘 / 백로그 진행해줘 / 백로그 다 해줘 / 남은 태스크 전부 / loop / all / 병렬로 돌려줘" 라고 할 때. 후보만 추리는 것은 /next-backlog 다.
+description: 저장소의 backlog 태스크를 구현·검증·커밋한다 — 하나든, 지정한 것만이든, 남은 것 전부든. "태스크 시작 / 이거 구현해줘 / 백로그 진행해줘 / 백로그 다 해줘 / 남은 태스크 전부 / loop / all / para / parallel / 병렬로 돌려줘" 라고 할 때. 후보만 추리는 것은 /next-backlog 다.
 allowed_tools: [Bash, Read, Edit, Write, Glob, Grep, AskUserQuestion, Agent, SendMessage, TaskCreate, TaskList, TaskGet, TaskOutput, TaskStop, TaskUpdate, Skill]
 ---
 
@@ -17,6 +17,9 @@ backlog 를 작업 목록이자 진행 기록으로 삼아 태스크를 끝낸�
 - **작업 서술**: `backlog task create` 로 등록한 뒤 바로 진행한다(AC 는 검증 가능한 문장으로).
 - **`loop` / `all` / "다 해줘 / 남은 것 전부"**: 라운드를 돌며 스스로 진행할 수 있는 것이 없을 때까지
   드레인한다(아래 '루프'). 옛 `/loop-backlog` 가 이것이다.
+- **`para` / `parallel` / "병렬로"**: 다른 범위 인자와 함께 쓰는 수식어다(`all para`, `TASK-3 TASK-5 para`).
+  토큰을 더 쓰더라도 전체 실행시간을 줄이라는 뜻이라 서브에이전트를 평소보다 적극적으로 쓴다(아래
+  '병렬로 갈 때'). 단독으로 오면 인자 없음과 같은 범위에 적용한다.
 
 ## 불변식
 
@@ -57,7 +60,12 @@ backlog 를 작업 목록이자 진행 기록으로 삼아 태스크를 끝낸�
 
 ## 병렬로 갈 때
 
-판단해서 쓴다. 쓰기로 했다면 worktree 배관(워커 수정 범위·RESULT 회수·ff-merge 순서)은
+판단해서 쓴다. `para` 가 붙으면 판단 기준을 "토큰 절약"에서 "벽시계 시간 단축"으로 옮긴다 — 서로
+독립인 태스크가 둘 이상이면 병렬을 기본으로 놓고, 한 태스크 안에서도 조사·검증처럼 나눌 수 있는 일은
+서브에이전트로 펼친다. 그래도 강제는 아니다: 같은 파일을 고치거나 의존이 강해 머지 충돌·재작업이 시간을
+더 잡아먹을 것이면 순차로 가고, 그 이유를 끝맺음 보고에 한 줄 남긴다.
+
+쓰기로 했다면 worktree 배관(워커 수정 범위·RESULT 회수·ff-merge 순서)은
 [`../references/parallel-worktree.md`](../references/parallel-worktree.md) 를 따른다. 머지 전 검증에는
 블랙박스 검증자 서브에이전트와 `review-logic`·`review-security`·`review-performance`·`review-cleancode`
 에이전트를 쓸 수 있다. 사용자가 herdr pane 을 지시했으면 `/herdr` 스킬의 `references/backlog-pane-worker.md`.
