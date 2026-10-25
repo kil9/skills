@@ -100,7 +100,7 @@ allowed_tools: [Read, Grep, Glob, Bash, Edit, Write, AskUserQuestion]
 - **파일**이면 직접 고치고(Edit) 바뀐 곳을 요약한다.
 - **짧은 글**(라벨, 1-5문장): 고친 문장 + 바꾼 곳마다 한 줄 이유(패턴 ID).
 - **긴 글**:
-  1. 진단 요약: S1 N건 · S2 M건, 두드러진 패턴 3-6개
+  1. 진단 요약: 방향(압축/팽창/병행, 병행이면 문단별), S1 N건 · S2 M건, 두드러진 패턴 3-6개
   2. 고친 본문
   3. 주요 변경(패턴 ID별 한 줄)
   4. 검증 한 줄: `의미 보존 6/6 · 변경률 약 N%`
@@ -121,5 +121,6 @@ allowed_tools: [Read, Grep, Glob, Bash, Edit, Write, AskUserQuestion]
 ## 출처
 
 daleseo/korean-skills(humanizer·style-guide·grammar-checker), epoko77-ai/im-not-ai(humanize-korean),
-nomadamas/k-skill(korean-humanizer)을 합쳤다. 모두 MIT. 무엇을 가져오고 무엇을 버렸는지, 라이선스
+nomadamas/k-skill(korean-humanizer)을 합치고, 방향 진단은 eiaserinnys/seosoyoung-revision-skill 에서
+가져왔다. 모두 MIT. 무엇을 가져오고 무엇을 버렸는지, 라이선스
 고지는 [sources.md](references/sources.md).
