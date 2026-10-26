@@ -18,13 +18,15 @@ case "$strategy" in
   *) echo "usage: sync-repo.sh [rebase|merge]" >&2; exit 1 ;;
 esac
 
-# 머신 로컬 skip 목록: 이 장비에서 아예 손대지 않을 리모트. 사외 장비에서 사내 GHE(ghec)를
-# 매번 프로브하고 타임아웃을 기다리는 대신 시도 자체를 안 한다. 머신마다 다르니 추적하지 않는다.
-# 설정: ~/.claude/sync-skip-remotes.conf — 한 줄에 패턴 하나('#' 주석 허용). 리모트 이름과
-# 정확히 같거나 그 리모트 URL 에 부분 문자열로 들어 있으면 skip 이다(예: 'naver.ghe.com').
+# 사내 리모트는 **기본으로 건너뛴다.** 장비 대부분이 사외라, 사내 GHE 를 매번 프로브하고
+# 타임아웃(리모트당 최대 7초)을 기다리는 대신 시도 자체를 안 한다. 패턴은 리모트 이름과 정확히
+# 같거나 그 리모트 URL 에 부분 문자열로 들어 있으면 걸린다.
+# 사내 장비는 머신 로컬 ~/.claude/sync-skip-remotes.conf 로 이 기본값을 **통째로 대체**한다 —
+# 한 줄에 패턴 하나('#' 주석 허용), 빈 파일이면 아무것도 건너뛰지 않는다. 추적하지 않는다.
 skip_conf="${SYNC_SKIP_REMOTES_CONF:-$HOME/.claude/sync-skip-remotes.conf}"
-skip_patterns=()
+skip_patterns=(naver.ghe.com oss.navercorp.com)
 if [ -f "$skip_conf" ]; then
+  skip_patterns=()
   while IFS= read -r line || [ -n "$line" ]; do
     line="${line%%#*}"
     line="$(echo "$line" | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')"
@@ -58,7 +60,7 @@ fi
 # 커밋 안 된 수정사항은 --autostash 가 pull 전후로 stash/복원한다.
 if upstream=$(git rev-parse --abbrev-ref '@{upstream}' 2>/dev/null); then
   if remote_skipped "${upstream%%/*}"; then
-    echo "skip: ${upstream%%/*} — 이 장비의 skip 목록($skip_conf)에 있다. pull 생략" >&2
+    echo "skip: ${upstream%%/*} — 사내 리모트라 건너뛴다(사내 장비면 $skip_conf 로 해제). pull 생략" >&2
   else
     git pull $pull_opt --autostash
   fi
@@ -84,7 +86,7 @@ push_all_remotes() { # push_all_remotes <체크아웃 경로> <브랜치>
   local dir=$1 br=$2 remote diverged
   push_failed=()
   for remote in $(git -C "$dir" remote); do
-    # skip 목록은 조용히 넘긴다 — 이 장비에선 원래 안 닿는 게 정상이라 매번 경고할 일이 아니다.
+    # skip 대상은 조용히 넘긴다 — 사외 장비에선 원래 안 닿는 게 정상이라 매번 경고할 일이 아니다.
     remote_skipped "$remote" "$dir" && continue
     if ! probe_remote "$remote" "$dir"; then
       echo "skip: $remote — 도달 불가(사외망 등). 닿는 머신에서의 /sync 가 회수한다" >&2
@@ -156,7 +158,7 @@ sync_checkout() {
   # 프로브·fetch(네트워크·인증) 가 실패하면 skip, 그 둘이 성공한 뒤의 통합 실패만 진짜 충돌이다.
   local uremote=${upstream%%/*}
   if remote_skipped "$uremote" "$dir"; then
-    echo "skip: $dir — upstream $uremote 이 이 장비의 skip 목록에 있다" >&2
+    echo "skip: $dir — upstream $uremote 이 사내 리모트라 건너뛴다(사내 장비면 $skip_conf 로 해제)" >&2
     return 0
   fi
   if ! probe_remote "$uremote" "$dir"; then
