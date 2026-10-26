@@ -47,34 +47,45 @@ probe_remote() { # probe_remote <리모트> [체크아웃 경로]
   fi
 }
 
-failed=()
-for remote in $remotes; do
-  if ! probe_remote "$remote"; then
-    echo "skip: $remote — 도달 불가(사외망 등). 닿는 머신에서의 /sync 가 회수한다" >&2
-    continue
-  fi
-
-  # 발산 감지: 리모트에 로컬에 없는 커밋이 있으면 push 가 어차피 거부된다 — 원인을 먼저 밝힌다.
-  # (upstream 은 위 pull 이 이미 흡수했으므로 주로 upstream 아닌 리모트에서 걸린다.)
-  if git fetch -q "$remote" "$branch" 2>/dev/null; then
-    diverged=$(git rev-list --count "$branch..FETCH_HEAD" 2>/dev/null || echo 0)
-    if [ "$diverged" -gt 0 ]; then
-      echo "warn: $remote/$branch 에 로컬에 없는 커밋 ${diverged}개 — 발산 상태다." >&2
-      echo "      그 커밋을 살리려면: 'git pull --no-rebase $remote $branch' 로 병합 후 다시 /sync." >&2
-      echo "      (rebase 로 풀지 말 것 — 다른 리모트에 이미 push 된 커밋이 재작성돼 발산이 리모트 간에 핑퐁친다)" >&2
-      echo "      버려도 되는 커밋이면(오염된 미러 등): 'git push --force-with-lease $remote $branch'." >&2
-      failed+=("$remote(diverged)")
+# 한 체크아웃의 브랜치를 그 체크아웃의 **모든 리모트**에 push 한다. 실패한 리모트는 배열
+# push_failed 에 담는다. 메인 repo 와 다른 체크아웃이 이 함수를 같이 쓴다 — 예전엔 다른
+# 체크아웃은 origin 으로만 push 해서 ghec 미러가 조용히 21커밋까지 밀렸다(2026-10-26).
+push_all_remotes() { # push_all_remotes <체크아웃 경로> <브랜치>
+  local dir=$1 br=$2 remote diverged
+  push_failed=()
+  for remote in $(git -C "$dir" remote); do
+    if ! probe_remote "$remote" "$dir"; then
+      echo "skip: $remote — 도달 불가(사외망 등). 닿는 머신에서의 /sync 가 회수한다" >&2
       continue
     fi
-  fi
 
-  if git push "$remote" "$branch"; then
-    echo "pushed: $remote/$branch"
-    pushed_remotes="${pushed_remotes:+$pushed_remotes }$remote"
-  else
-    failed+=("$remote")
-  fi
-done
+    # 발산 감지: 리모트에 로컬에 없는 커밋이 있으면 push 가 어차피 거부된다 — 원인을 먼저 밝힌다.
+    # (upstream 은 앞선 pull 이 이미 흡수했으므로 주로 upstream 아닌 리모트에서 걸린다.)
+    if git -C "$dir" fetch -q "$remote" "$br" 2>/dev/null; then
+      diverged=$(git -C "$dir" rev-list --count "$br..FETCH_HEAD" 2>/dev/null || echo 0)
+      if [ "$diverged" -gt 0 ]; then
+        echo "warn: $remote/$br 에 로컬에 없는 커밋 ${diverged}개 — 발산 상태다." >&2
+        echo "      그 커밋을 살리려면: 'git -C $dir pull --no-rebase $remote $br' 로 병합 후 다시 /sync." >&2
+        echo "      (rebase 로 풀지 말 것 — 다른 리모트에 이미 push 된 커밋이 재작성돼 발산이 리모트 간에 핑퐁친다)" >&2
+        echo "      버려도 되는 커밋이면(오염된 미러 등): 'git -C $dir push --force-with-lease $remote $br'." >&2
+        push_failed+=("$remote(diverged)")
+        continue
+      fi
+    fi
+
+    if git -C "$dir" push -q "$remote" "$br"; then
+      if [ "$dir" = . ]; then echo "pushed: $remote/$br"; else echo "pushed: $dir → $remote/$br"; fi
+      pushed_remotes="${pushed_remotes:+$pushed_remotes }$remote"
+    else
+      push_failed+=("$remote")
+    fi
+  done
+}
+
+pushed_remotes=""
+push_all_remotes . "$branch"
+# ${a[@]+...} 꼴은 macOS bash 3.2 의 set -u 가 빈 배열을 unbound 로 죽이는 것을 피한다.
+failed=(${push_failed[@]+"${push_failed[@]}"})
 
 if [ ${#failed[@]} -gt 0 ]; then
   echo "error: push 실패: ${failed[*]}" >&2
@@ -135,16 +146,18 @@ sync_checkout() {
   fi
 
   cbranch=$(git -C "$dir" symbolic-ref --short HEAD)
-  if [ -n "$(git -C "$dir" log --oneline '@{upstream}..HEAD')" ]; then
-    if [ -n "$dirty" ] && [ "$dirty_policy" = "skip-push-if-dirty" ]; then
-      echo "  push 건너뜀(dirty): $dir — 커밋한 뒤 다시 /sync" >&2
-    elif git -C "$dir" push origin "$cbranch"; then
-      echo "pushed: $dir → origin/$cbranch"
-    else
-      # push 거부는 발산 신호다 — 예전에는 `push && echo` 라 실패가 조용히 삼켜졌다.
-      echo "error: $dir push 거부 — origin/$cbranch 가 발산했다." >&2
-      checkout_failed+=("$dir(push)")
-    fi
+  # upstream 만이 아니라 모든 리모트를 본다 — upstream 이 최신이어도 미러(ghec)는 뒤처질 수 있다.
+  if [ -n "$dirty" ] && [ "$dirty_policy" = "skip-push-if-dirty" ]; then
+    echo "  push 건너뜀(dirty): $dir — 커밋한 뒤 다시 /sync" >&2
+  else
+    # pushed_remotes 는 메인 repo 요약용이라 여기서 덮이지 않게 보존한다.
+    local saved_pushed=$pushed_remotes r
+    push_all_remotes "$dir" "$cbranch"
+    pushed_remotes=$saved_pushed
+    for r in ${push_failed[@]+"${push_failed[@]}"}; do
+      echo "error: $dir push 실패 — $r" >&2
+      checkout_failed+=("$dir($r)")
+    done
   fi
   echo "  $dir: $(git -C "$dir" log --oneline -1)"
 }
