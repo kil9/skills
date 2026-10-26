@@ -38,6 +38,11 @@ allowed_tools: [Bash, Read, Edit, Write, Glob, Grep]
      닿는 머신의 /sync 가 회수하므로 그대로 진행한다. 발산 리모트는 스크립트가 경고와 해소
      명령을 출력한다. **발산 해소를 rebase 로 대신하지 말 것** — 다른 리모트에 이미 push 된
      커밋이 재작성돼 발산이 리모트 간에 핑퐁친다(그래서 기본 pull 도 `--rebase=merges` 다).
+   - **장비별 skip 목록**: `~/.claude/sync-skip-remotes.conf`(머신 로컬, 없으면 생략)에 적힌
+     리모트는 프로브조차 하지 않는다 — 한 줄에 패턴 하나, 리모트 이름과 같거나 URL 에 들어
+     있으면 skip. 사외 장비에서 사내 GHE 타임아웃(리모트당 최대 7초)을 매번 기다리지 않기
+     위해서다. 사외 장비는 `naver.ghe.com` 한 줄이면 ghec 리모트와 workflow 체크아웃이 통째로
+     빠진다. 회사 PC 에는 만들지 않는다.
    - **스킬 repo 는 현재 repo 가 무엇이든 항상 함께 동기화한다** — `~/work/skills` 와
      `~/work/skills-naver`·`~/work/kil9/workflow`(회사 머신 한정)를 pull 하고 **모든 리모트**(ghec 미러 포함)에 push 한다. 없는 경로는 조용히 넘어가고,
      지금 그 repo 안에서 돌렸으면 중복 처리하지 않는다. 머신 로컬 conf 에 맡기지 않는 이유는

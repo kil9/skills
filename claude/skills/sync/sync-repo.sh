@@ -18,6 +18,32 @@ case "$strategy" in
   *) echo "usage: sync-repo.sh [rebase|merge]" >&2; exit 1 ;;
 esac
 
+# 머신 로컬 skip 목록: 이 장비에서 아예 손대지 않을 리모트. 사외 장비에서 사내 GHE(ghec)를
+# 매번 프로브하고 타임아웃을 기다리는 대신 시도 자체를 안 한다. 머신마다 다르니 추적하지 않는다.
+# 설정: ~/.claude/sync-skip-remotes.conf — 한 줄에 패턴 하나('#' 주석 허용). 리모트 이름과
+# 정확히 같거나 그 리모트 URL 에 부분 문자열로 들어 있으면 skip 이다(예: 'naver.ghe.com').
+skip_conf="${SYNC_SKIP_REMOTES_CONF:-$HOME/.claude/sync-skip-remotes.conf}"
+skip_patterns=()
+if [ -f "$skip_conf" ]; then
+  while IFS= read -r line || [ -n "$line" ]; do
+    line="${line%%#*}"
+    line="$(echo "$line" | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')"
+    [ -n "$line" ] && skip_patterns+=("$line")
+  done < "$skip_conf"
+fi
+
+remote_skipped() { # remote_skipped <리모트> [체크아웃 경로]
+  local name=$1 dir=${2:-.} url pat
+  [ ${#skip_patterns[@]} -eq 0 ] && return 1
+  url=$(git -C "$dir" remote get-url "$name" 2>/dev/null || echo "")
+  for pat in "${skip_patterns[@]}"; do
+    if [ "$name" = "$pat" ] || { [ -n "$url" ] && [[ "$url" == *"$pat"* ]]; }; then
+      return 0
+    fi
+  done
+  return 1
+}
+
 branch=$(git symbolic-ref --short HEAD 2>/dev/null) || {
   echo "error: detached HEAD — 동기화할 브랜치가 없다" >&2
   exit 1
@@ -30,8 +56,12 @@ if [ -z "$remotes" ]; then
 fi
 
 # 커밋 안 된 수정사항은 --autostash 가 pull 전후로 stash/복원한다.
-if git rev-parse --abbrev-ref '@{upstream}' >/dev/null 2>&1; then
-  git pull $pull_opt --autostash
+if upstream=$(git rev-parse --abbrev-ref '@{upstream}' 2>/dev/null); then
+  if remote_skipped "${upstream%%/*}"; then
+    echo "skip: ${upstream%%/*} — 이 장비의 skip 목록($skip_conf)에 있다. pull 생략" >&2
+  else
+    git pull $pull_opt --autostash
+  fi
 else
   echo "notice: upstream 미설정 — pull 생략" >&2
 fi
@@ -54,6 +84,8 @@ push_all_remotes() { # push_all_remotes <체크아웃 경로> <브랜치>
   local dir=$1 br=$2 remote diverged
   push_failed=()
   for remote in $(git -C "$dir" remote); do
+    # skip 목록은 조용히 넘긴다 — 이 장비에선 원래 안 닿는 게 정상이라 매번 경고할 일이 아니다.
+    remote_skipped "$remote" "$dir" && continue
     if ! probe_remote "$remote" "$dir"; then
       echo "skip: $remote — 도달 불가(사외망 등). 닿는 머신에서의 /sync 가 회수한다" >&2
       continue
@@ -123,6 +155,10 @@ sync_checkout() {
   # rc=1 로 감싸고 문자열은 git 버전·로케일·credential helper 마다 다르다. 대신 단계를 쪼갠다:
   # 프로브·fetch(네트워크·인증) 가 실패하면 skip, 그 둘이 성공한 뒤의 통합 실패만 진짜 충돌이다.
   local uremote=${upstream%%/*}
+  if remote_skipped "$uremote" "$dir"; then
+    echo "skip: $dir — upstream $uremote 이 이 장비의 skip 목록에 있다" >&2
+    return 0
+  fi
   if ! probe_remote "$uremote" "$dir"; then
     echo "skip: $dir — $uremote 에 닿지 않는다(인증 없음·사외망 등). 닿는 머신의 /sync 가 회수한다" >&2
     return 0
