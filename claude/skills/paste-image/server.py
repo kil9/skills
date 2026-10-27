@@ -144,13 +144,15 @@ PASTE_HTML = """<!DOCTYPE html>
       if (savedPath) {
         pathText.textContent = savedPath;
         pathbox.hidden = false;
-        const again = PERSIST ? ' 계속 붙여넣을 수 있습니다.' : ' 이 탭을 닫아도 됩니다.';
         const copied = await copyText(savedPath);
         setStatus(copied
-          ? '업로드 완료 — 원격 경로를 클립보드에 복사했습니다. 챗창에 붙여넣으세요.' + again
-          : '업로드 완료 — 아래 경로를 복사해 챗창에 붙여넣으세요.' + again, 'ok');
+          ? '업로드 완료 — 원격 경로를 클립보드에 복사했습니다. 챗창에 붙여넣으세요.'
+          : '업로드 완료 — 아래 경로를 복사해 챗창에 붙여넣으세요.', 'ok');
+        // 복사에 실패하면 사용자가 경로를 직접 긁어 가야 하므로 창을 남긴다.
+        if (copied) scheduleClose();
       } else {
         setStatus('업로드 완료 — 이 탭을 닫아도 됩니다.', 'ok');
+        scheduleClose();
       }
       cancelBtn.hidden = true;
       if (PERSIST) busy = false;
@@ -163,6 +165,18 @@ PASTE_HTML = """<!DOCTYPE html>
       cancelBtn.hidden = true;
       busy = false;
     }
+  }
+
+  // 한 창에 여러 장을 붙일 일이 없어 업로드 후 창을 닫는다. 브라우저가 window.close() 를
+  // 막으면(스크립트가 연 창이 아니고 history 가 2개 이상) 직접 닫으라고 안내만 남긴다.
+  const CLOSE_DELAY_MS = 2000;
+  function scheduleClose() {
+    const base = statusEl.textContent;
+    statusEl.textContent = base + ' (2초 후 창을 닫습니다)';
+    setTimeout(() => {
+      window.close();
+      setTimeout(() => { statusEl.textContent = base + ' 창을 자동으로 닫지 못했습니다. 직접 닫으세요.'; }, 300);
+    }, CLOSE_DELAY_MS);
   }
 
   cancelBtn.addEventListener('click', () => { if (controller) controller.abort(); });
