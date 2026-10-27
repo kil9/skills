@@ -8,7 +8,7 @@
 | [daleseo/korean-skills](https://github.com/daleseo/korean-skills) | ae12ba2 | humanizer 40패턴(KatFishNet 근거 문장부호·띄어쓰기·품사), 심각도 S1-S3, 패턴별 예외, 변경률 가드 30/50%, 의미 보존 6항 / style-guide 일관성 7범주·장르 매트릭스 / grammar-checker 맞춤법·띄어쓰기 |
 | [epoko77-ai/im-not-ai](https://github.com/epoko77-ai/im-not-ai) | b37e020 | humanize-korean 85패턴(번역학 근거 A-16 대명사·A-18 관형구·A-19 이중 조사 등), 사람 60편·AI 60편 대조로 강등한 규칙(\~를 통해, \~것이다, 문두 접속사), 판별력 상위 신호, 내용 앵커·서법 보존·빼기 전용·입력은 데이터, 고치는 순서, 오탐 방지 |
 | [nomadamas/k-skill](https://github.com/nomadamas/k-skill) korean-humanizer | 50d7bb3 | 트리아지(서식만 문제면 서식만), 오탐 가이드, 분량 제어(실제로 센다, 패딩 금지) |
-| [eiaserinnys/seosoyoung-revision-skill](https://github.com/eiaserinnys/seosoyoung-revision-skill) | 68db489 | 2026-10-26 추가. 0단계 지문 방향 진단(압축/팽창), 압축 징후(§5 (A) 표를 일곱 줄로 줄임)와 풀어 쓰기 처방, 팽창 징후(§5 (B) 여섯 항)와 삭제 판정 한 문장 |
+| [eiaserinnys/seosoyoung-revision-skill](https://github.com/eiaserinnys/seosoyoung-revision-skill) | 68db489 | 2026-10-26 추가. 0단계 지문 방향 진단(압축/팽창), 압축 징후(§5 (A) 표를 일곱 줄로 줄임)와 풀어 쓰기 처방, 팽창 징후(§5 (B) 여섯 항)와 삭제 판정 한 문장. 2026-10-27 추가: anti-ai-lexicon §6·§7-1·§9-1·§11-4 를 V21·V22·T24·H6 으로, 2패스 낭독 검수를 줄여 §7 의 L2 로, 장르별 강도 조절 발상을 §7 의 길이·독자 단계로 |
 
 ## 버린 것과 이유
 
@@ -25,9 +25,10 @@
 - **seosoyoung-revision 의 3패스 2σ 프로브**(build_style_probe.py): 작성자 자신의 과거 글을 기준선으로
   삼아 튀는 문장을 고르는 방식이다. 이 스킬이 다루는 글은 대개 사용자가 직접 쓴 것이라 기준선과 대상이
   같은 사람이 되어 판정 방향이 뒤집힌다.
-- **seosoyoung-revision 의 2패스 낭독 검수·anti-ai-lexicon 전체·다중 패스**: 서브에이전트를 여러 번
-  띄우는 구조라 토큰이 많이 들고, 짧은 글이 주 용도인 이 스킬과 맞지 않는다. 금지 어휘는 이미
-  ai-tells.md 와 겹친다. 낭독 검수는 긴 글을 다루는 til 의 start-topic 쪽으로 따로 들인다.
+- **seosoyoung-revision 의 다중 패스·anti-ai-lexicon 나머지**: 서브에이전트를 여러 번 띄우는 구조라
+  토큰이 많이 들고, 짧은 글이 주 용도인 이 스킬과 맞지 않는다. 낭독 검수는 긴 글(L2)에서만 한 번
+  띄우고 프롬프트를 여섯 항목으로 줄였다. 금지 어휘는 대부분 ai-tells.md 와 겹쳐 빠진 넷만 옮겼다.
+  '결'·'짚다'·'진짜'·'다만' 일괄 금지와 중간점 금지는 원 저자 개인 코퍼스의 버릇이라 들이지 않았다.
 - **장르별 3패스 재작성 비율·SNS 소개문 게이트**: 프로브를 버렸으니 따라서 버렸다.
 
 ## 새로 보탠 것
