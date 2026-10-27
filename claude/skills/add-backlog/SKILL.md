@@ -5,7 +5,7 @@ allowed_tools: [Bash, Read, Edit, Write, Glob, Grep, AskUserQuestion, Skill]
 
 등록할 것: `$ARGUMENTS`
 
-구현·커밋은 하지 않는다 — 등록만 한다. 공통 전제(CLI 전용·`--plain`·상태 4종)는
+구현은 하지 않는다 — 등록하고 그 등록만 커밋한다. 공통 전제(CLI 전용·`--plain`·상태 4종)는
 [`../references/backlog-basics.md`](../references/backlog-basics.md). `backlog/` 가 없으면
 `/init-backlog` 를 안내한다.
 
@@ -39,6 +39,18 @@ allowed_tools: [Bash, Read, Edit, Write, Glob, Grep, AskUserQuestion, Skill]
 - **기존 draft 승격** → `backlog draft promote <draft-id>` 후 `backlog task edit <id> --ac ...` 로 AC 를
   최소 1개 채운다(draft 엔 AC 가 없다).
 
+## 커밋
+
+등록이 끝나면 **이번에 만들거나 고친 backlog 파일만** 커밋한다.
+
+- `git check-ignore -q backlog/` 가 성공하면(backlog 가 gitignore 대상) 커밋하지 않고 그 사실만 보고한다.
+  git 저장소가 아닐 때도 같다.
+- 만진 파일만 경로로 add 한다(`git add -A`·`commit -a` 금지 — 옆 세션의 backlog 변경을 쓸어담는다).
+  만든 파일 경로는 CLI 출력이나 `git status --porcelain backlog/` 로 확인하고, 내가 안 만든 변경은 뺀다.
+- 메시지는 `backlog: [task-N] <제목> 등록` 형식. 여럿이면 태그를 나란히(`[task-3] [task-4]`), draft·
+  마일스톤만이면 태그 없이 `backlog: <제목> draft 등록` 처럼 쓴다.
+- push 는 하지 않는다.
+
 ## 보고
 
-고른 형태와 근거 한 줄, 만든 마일스톤·태스크·draft 의 ID·제목.
+고른 형태와 근거 한 줄, 만든 마일스톤·태스크·draft 의 ID·제목, 커밋 해시(gitignore 로 건너뛰었으면 그 사실).
