@@ -27,7 +27,7 @@ done
 
 | 분류 | 스킬 |
 |---|---|
-| backlog 워크플로 | add-backlog, ask-backlog, cleanup-backlog, init-backlog, migrate-to-backlog, next-backlog, start-backlog |
+| backlog 워크플로 | add-backlog, ask-backlog, cleanup-backlog, init-backlog, migrate-to-backlog, next-backlog, start-backlog (짧은 별칭: abl·nbl·slb, 사용자 직접 호출 전용) |
 | git 워크플로 | commit, cip, cipd, sync |
 | 에이전트 메타 | fable-advisor, grill, handoff, learn, skill-creator, zip-it |
 | 에이전트 운용 | afk, herdr, kill-agents |
