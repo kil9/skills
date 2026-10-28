@@ -68,7 +68,7 @@ backlog 를 작업 목록이자 진행 기록으로 삼아 태스크를 끝낸�
 쓰기로 했다면 worktree 배관(워커 수정 범위·RESULT 회수·ff-merge 순서)은
 [`../references/parallel-worktree.md`](../references/parallel-worktree.md) 를 따른다. 머지 전 검증에는
 블랙박스 검증자 서브에이전트와 `review-logic`·`review-security`·`review-performance`·`review-cleancode`
-에이전트를 쓸 수 있다. 사용자가 herdr pane 을 지시했으면 `/herdr` 스킬의 `references/backlog-pane-worker.md`.
+에이전트를 쓸 수 있다. 사용자가 herdr pane 을 지시했으면 `~/.claude/skills/herdr/references/backlog-pane-worker.md`.
 
 ## 끝맺음
 

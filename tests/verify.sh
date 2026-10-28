@@ -18,6 +18,7 @@ tests=(
   tests/test-backlog-hidden-guard.sh
   tests/test-task-252-metrics.sh
   tests/test-sync-checkout-skip.sh
+  tests/check-skill-refs.sh
 )
 
 bash -n "${scripts[@]}" "${tests[@]}" tests/verify.sh
