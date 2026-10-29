@@ -11,6 +11,7 @@ scripts=(
   claude/skills/sync/sync-repo.sh
   claude/skills/references/backlog-context.sh
   claude/skills/references/backlog-start-guard.sh
+  claude/skills/references/backlog-find.sh
   claude/skills/cleanup-backlog/cleanup-backlog.sh
 )
 tests=(
@@ -18,6 +19,7 @@ tests=(
   tests/test-backlog-start-guard.sh
   tests/test-backlog-hidden-guard.sh
   tests/test-cleanup-backlog.sh
+  tests/test-backlog-find.sh
   tests/test-task-252-metrics.sh
   tests/test-sync-checkout-skip.sh
   tests/check-skill-refs.sh

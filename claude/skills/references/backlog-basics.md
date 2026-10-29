@@ -50,6 +50,11 @@ bash "${K9HOME:-$HOME/kil9conf}/bootstrap/install-backlog-md.sh"
 
 - 조회 명령에는 **항상 `--plain`** 을 붙인다.
 - `board`·`browser` 등 인터랙티브 명령은 실행하지 않는다 — TUI 가 떠서 세션이 붙잡힌다.
+- **과거 작업·문서를 찾을 때는 `backlog search` 대신
+  `bash ~/.claude/skills/references/backlog-find.sh <단어> [...]`** 를 쓴다. `backlog search`(1.55.3)는
+  활성 태스크·docs·decisions 만 색인해 archive·drafts 를 못 찾고, 퍼지 매칭이라 짧은 한글 쿼리는 무관한
+  결과로 찬다. backlog-find 는 `backlog/` 전체를 고정 문자열·단어 AND 로 찾아 한 줄에
+  `폴더·ID·상태·제목·경로` 를 낸다(보드 → 문서 → archive 순).
 - CLI 옵션이 낯설면 `backlog <command> --help` 로 확인한다.
 - `task list --plain` 출력은 상태별 그룹으로 나오고 각 줄은 `[PRIORITY] TASK-N - 제목` 형식이다
   (priority 미설정이면 앞의 대괄호가 없다). draft·milestone 은 여기 안 나온다.
