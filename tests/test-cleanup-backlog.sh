@@ -52,6 +52,7 @@ out=$(cd "$fixture" && bash "$cleanup" --dry-run)
 assert_contains "$out" "Done=3  이동=3"
 assert_contains "$out" "⇒ m-1"
 assert_contains "$out" "⇒ m-3"
+assert_contains "$out" "옛 backlog/completed/ 에 1건"
 case $out in *"⇒ m-2"* | *"⇒ m-4"*) fail "m-2·m-4 는 아카이브 대상이 아니다: $out" ;; esac
 [ ! -e "$fixture/backlog/archive" ] || fail "dry-run 이 archive 디렉터리를 만들었다"
 

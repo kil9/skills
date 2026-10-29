@@ -113,6 +113,11 @@ echo "정책=$MODE  오늘=$TODAY  Done=$total  이동=${#MOVE[@]}  보드잔류
 # 날짜를 폴백으로 정한 태스크는 반드시 드러낸다 — 조용히 넘어가면 그 태스크가 왜 안 움직이는지
 # (또는 왜 움직였는지) 알 길이 없다.
 [ -n "$fallbacks" ] && printf '%s' "$fallbacks"
+# 옛 completed/ 가 남았으면 옮기는 법만 알린다. 직접 옮기지 않는 이유: 정리 커밋에 수백 건 rename 이
+# 섞이고, `doctor --fix` 는 중복 ID 개명까지 한 번에 해 사람이 미리보기를 봐야 한다(kil9conf task-549).
+legacy_n=0
+[ -d "$LEGACY_DONE_DIR" ] && legacy_n=$(find "$LEGACY_DONE_DIR" -maxdepth 1 -name 'task-*.md' | wc -l | tr -d ' ')
+[ "$legacy_n" -eq 0 ] || echo "  i 옛 $LEGACY_DONE_DIR/ 에 ${legacy_n}건 — 'backlog doctor' 미리보기에 중복 ID 가 없으면 'backlog doctor --fix' 로 archive/tasks 에 옮긴다"
 # 배열 전개는 전부 `${arr[@]+"${arr[@]}"}` 형태를 지킨다 — bash 4.4 미만은 `set -u` 아래 빈 배열의
 # `"${arr[@]}"` 를 unbound 로 보고 죽는다. 맥 기본 /bin/bash 가 3.2 라 거기서 실제로 터졌다
 # (2026-08-04: MS_MOVE 가 비어 194행에서 죽었고, git mv 는 이미 끝났는데 커밋은 안 된 채로
