@@ -1,8 +1,12 @@
 #!/usr/bin/env bash
-# cleanup-backlog.sh — backlog 의 완료(Done) 태스크를 backlog/completed/ 로 비대화형 정리한다.
+# cleanup-backlog.sh — backlog 의 완료(Done) 태스크를 backlog/archive/tasks/ 로 비대화형 정리한다.
 #
 # 배경: `backlog cleanup` 은 age 플래그가 없는 대화형 전용이라 자동화가 안 된다. 이 스크립트는 같은
-# 동작(완료 태스크를 completed 폴더로 이동)을 스크립트로 대체해 정책·기준을 인자로 받는다.
+# 동작(완료 태스크를 archive 폴더로 이동)을 스크립트로 대체해 정책·기준을 인자로 받는다.
+#
+# backlog.md 1.54.0 이 정리 대상을 backlog/completed/ 에서 backlog/archive/tasks/ 로 바꿨다(completed
+# 흐름 폐지). `backlog task archive <id>` 는 파일을 내용 그대로 옮기기만 하므로(1.55.3 실측) git mv 로
+# 같은 결과를 낸다. 옛 completed/ 는 CLI 가 archived 로 계속 읽고 `backlog doctor --fix` 가 옮긴다.
 #
 # 기본 정책(--all): Done 을 전부 git mv 로 이동한다(완료 시각과 무관하게 클린 슬레이트).
 # --today 를 주면 오늘(로컬 날짜) 완료분만 보드에 남긴다. updated_date 는 backlog 이 UTC 로 기록하므로
@@ -39,9 +43,9 @@ REPO_ROOT="$(git rev-parse --show-toplevel 2>/dev/null || true)"
 cd "$REPO_ROOT"
 
 TASKS_DIR="backlog/tasks"
-DONE_DIR="backlog/completed"
+DONE_DIR="backlog/archive/tasks"
+LEGACY_DONE_DIR="backlog/completed"   # 1.54 이전 정리분. 새로 쓰지 않고 완료 수를 셀 때만 본다.
 [ -d "$TASKS_DIR" ] || { echo "backlog/tasks 없음 (backlog repo 아님)" >&2; exit 2; }
-mkdir -p "$DONE_DIR"
 
 # frontmatter 한 줄 값 추출(항상 exit 0; 없으면 빈 문자열). 앞뒤 따옴표 제거.
 fm() { sed -n "s/^$1:[[:space:]]*//p" "$2" | head -1 | sed "s/^[\"']//; s/[\"']$//"; }
@@ -118,13 +122,13 @@ for f in ${MOVE[@]+"${MOVE[@]}"}; do echo "  → $(basename "$f")"; done
 
 # ── 다 끝난 마일스톤 아카이브 ────────────────────────────────────────────────
 #
-# 마일스톤 카운터(`backlog milestone list`)는 backlog/tasks/ 에 있는 태스크만 센다.
-# 그래서 위에서 완료 태스크를 completed/ 로 옮기는 순간 그 마일스톤은 0/0 이 되어
+# 마일스톤 카운터(`backlog milestone list`)는 backlog/tasks/ 에 있는 태스크만 센다(1.55.3 에서도
+# archive 된 태스크는 세지 않는다). 그래서 위에서 완료 태스크를 옮기는 순간 그 마일스톤은 0/0 이 되어
 # **끝난 것과 아직 시작 안 한 것이 보드에서 똑같이 보인다**(2026-07-27 실제로 m-7·m-9·
 # m-10 이 '껍데기 마일스톤'으로 오인됐다 — 셋 다 완료 태스크 8·7·3건을 가진 완료분이었다).
 # 태스크 정리가 만든 문제이므로 같은 자리에서 함께 처리한다.
 #
-# 판정: 남은 태스크 0건 **이고** completed/ 에 그 마일스톤 태스크가 1건 이상.
+# 판정: 남은 태스크 0건 **이고** archive/tasks/(+옛 completed/)에 그 마일스톤 태스크가 1건 이상.
 # 뒤 조건이 핵심이다 — 양쪽 다 0 이면 태스크를 아직 안 붙인 **신규** 마일스톤이라
 # 아카이브하면 안 된다(/add-backlog 가 마일스톤을 먼저 만들고 태스크를 나중에 붙인다).
 # 아카이브는 CLI(`backlog milestone archive`)와 같은 동작인 단순 파일 이동이다.
@@ -153,9 +157,9 @@ if [ -d "$MS_DIR" ]; then
     [ -n "$mid" ] || mid="$(basename "$msf" | sed 's/ .*//')"
     left="$(count_ms "$TASKS_DIR" "$mid" "$moving_list")"
     [ "$left" -eq 0 ] || continue
-    # completed/ 에 이미 있는 것 + 이번에 옮겨질 것. 뒤엣것을 빼먹으면 첫 정리에서
-    # 막 끝난 마일스톤이 '완료 0건' 으로 보여 영영 아카이브되지 않는다.
-    done_n="$(count_ms "$DONE_DIR" "$mid" "")"
+    # archive/tasks·옛 completed/ 에 이미 있는 것 + 이번에 옮겨질 것. 뒤엣것을 빼먹으면 첫
+    # 정리에서 막 끝난 마일스톤이 '완료 0건' 으로 보여 영영 아카이브되지 않는다.
+    done_n=$(( $(count_ms "$DONE_DIR" "$mid" "") + $(count_ms "$LEGACY_DONE_DIR" "$mid" "") ))
     for mf in "${MOVE[@]-}"; do
       [ -n "$mf" ] || continue
       if [ "$(fm milestone "$mf")" = "$mid" ]; then done_n=$((done_n+1)); fi
@@ -171,6 +175,7 @@ if [ "${#MOVE[@]}" -eq 0 ] && [ "${#MS_MOVE[@]}" -eq 0 ]; then
 fi
 if [ "$DRY" -eq 1 ]; then echo "(dry-run: 실제 이동/커밋 안 함)"; exit 0; fi
 
+[ "${#MOVE[@]}" -gt 0 ] && mkdir -p "$DONE_DIR"
 for f in ${MOVE[@]+"${MOVE[@]}"}; do git mv "$f" "$DONE_DIR/$(basename "$f")"; done
 if [ "${#MS_MOVE[@]}" -gt 0 ]; then
   mkdir -p "$MS_ARCHIVE"
@@ -188,7 +193,7 @@ for f in ${MS_MOVE[@]+"${MS_MOVE[@]}"}; do
   COMMIT_PATHS+=("$f" "$MS_ARCHIVE/$(basename "$f")")
 done
 
-subject="backlog: 완료 태스크 ${#MOVE[@]}건 completed 폴더로 정리"
+subject="backlog: 완료 태스크 ${#MOVE[@]}건 archive 로 정리"
 if [ "${#MS_MOVE[@]}" -gt 0 ]; then
   subject="$subject · 완료 마일스톤 ${#MS_MOVE[@]}건 아카이브"
 fi
