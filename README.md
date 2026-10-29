@@ -32,7 +32,7 @@ done
 |---|---|
 | backlog 워크플로 | add-backlog, ask-backlog, cleanup-backlog, init-backlog, migrate-to-backlog, next-backlog, start-backlog (짧은 별칭: ab·nb·sb, 사용자 직접 호출 전용) |
 | git 워크플로 | commit, cip, cipd, sync |
-| 에이전트 메타 | fable-advisor, grill, handoff, learn, review-loop, skill-creator, wrap (세션을 닫기 전 기록, learn 의 범위를 포함), zip-it |
+| 에이전트 메타 | fable-advisor, grill, handoff, review-loop, skill-creator, wrap (세션을 닫기 전 기록, 옛 learn 을 흡수), zip-it |
 | 에이전트 운용 | afk (기본은 묻지 않고 진행, `grill`·afk-grill 이면 출문 전에 한 번에 묻기), herdr, kill-agents |
 | 저장소·퍼블리시 유틸 | init-project, paste-image, publish-til, explain-diff, show-me (upstream humanlayer/skills, MIT, 원문 그대로) |
 | 글쓰기 | kil9-writing-style (kil9 말투), korean-polish (한국어 윤문: daleseo/korean-skills·epoko77-ai/im-not-ai·nomadamas/k-skill 합성, MIT) |
