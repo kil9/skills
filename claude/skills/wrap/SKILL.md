@@ -1,11 +1,11 @@
 ---
-name: wrap-up
+name: wrap
 description: 세션을 닫기 전에, 새 세션이 맥락을 몰라 같은 트러블슈팅을 다시 겪지 않도록 이번 세션에서 알게 된 것·진행 상태·남은 일을 backlog·repo 문서·메모리에 기록하고 커밋한다. "세션 닫기 전에 기록해줘 / 세션 정리하고 끝낼게 / wrap up" 이라고 할 때. 사용자에게 하는 보고는 /im-back, 지정한 다음 에이전트용 임시 인계 문서는 /handoff 다.
 argument-hint: "(선택) 특히 남길 것이나 다음 세션이 이어갈 방향"
 allowed_tools: [Bash, Read, Edit, Write, Glob, Grep, AskUserQuestion, Skill]
 ---
 
-# Wrap-up — 세션을 닫기 전에 남길 것을 남긴다
+# Wrap — 세션을 닫기 전에 남길 것을 남긴다
 
 세션을 닫으면 대화·scratchpad·머릿속 판단이 함께 사라진다. 다음 세션은 repo·backlog·메모리만 보고
 시작한다. 목적은 하나다: **다음 세션이 그것만 보고 이어가게** 하는 것, 특히 이번 세션이 겪은

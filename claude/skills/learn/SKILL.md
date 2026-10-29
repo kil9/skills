@@ -15,7 +15,7 @@ disable-model-invocation: true
 
 > **쌓인 것을 정리하는 것은 `/cleanup-memory` 다.** 이 스킬은 새로 배운 것을 *추가*하고, 그쪽은 이미
 > 쌓인 것을 감사해 낡은 현재값을 걷어내고 함정을 repo doc 으로 내린다. 세션을 닫기 전에 진행 상태·
-> 남은 일까지 함께 남기는 것은 `/wrap-up` 이다(이 스킬의 범위를 포함한다).
+> 남은 일까지 함께 남기는 것은 `/wrap` 이다(이 스킬의 범위를 포함한다).
 
 무엇을 남기고 어디에 어떻게 쓰는지는 [`../references/persist-learnings.md`](../references/persist-learnings.md)
 가 정본이다.
