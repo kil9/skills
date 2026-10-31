@@ -202,6 +202,7 @@ new server feature.
 ## safety rules that cost a session when broken
 
 - never `herdr server stop` from inside an active session, and never kill the main herdr process — it takes every pane's processes with it. use a named test session for experiments that need their own server.
+- never (re)launch the herdr app or server straight from a Claude Bash tool shell — `open` included. the new process inherits `CLAUDECODE=1` and `CLAUDE_CODE_CHILD_SESSION=1`, every pane shell inherits them from it, and every claude started there treats itself as a child session and stops saving its transcript ("Transcript saving is off — inherited CLAUDE_CODE_CHILD_SESSION marker"; measured 2026-10-31 after `open ~/Applications/Herdr.app` during install). ask the user to launch it from Dock/Finder, or strip the markers: `env -u CLAUDECODE -u CLAUDE_CODE_CHILD_SESSION open ~/Applications/Herdr.app`. to diagnose, `ps eww -o command= -p <herdr pid> | tr ' ' '\n' | grep ^CLAUDE`; the fix is a full quit and relaunch, which closes every pane.
 - do not close workspaces, tabs, or panes you did not create.
 - `--no-focus` for background work; the user's focus is theirs.
 - omitting a target does not mean "me" — it can resolve to the UI-focused pane, which may belong to the user or another client. use `--current`, an explicit id, or a live agent name.
