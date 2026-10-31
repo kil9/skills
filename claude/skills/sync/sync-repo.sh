@@ -217,12 +217,27 @@ sync_checkout() {
 # 누락되고, 그 누락은 증상이 없어 오래 간다 — 2026-07-29 에 nuc14 에서 스킬을 고쳐 push 했는데
 # 다른 머신이 /sync 를 여러 번 돌리고도 못 받아 스킬셋이 갈라졌다(kil9conf task-242).
 # 없는 경로는 조용히 넘어간다(skills-naver·workflow 는 회사 머신에만 있다).
+# 기본 경로는 $HOME/work 만 보지 않고, 이 스크립트가 든 skills repo 의 상위 디렉터리도 본다 —
+# Windows Git Bash 는 HOME 이 체크아웃 상위(/d/work)라 $HOME/work/... 가 없는 경로가 되어 스킬 repo
+# 가 경고 없이 통째로 빠졌다(2026-11-01 실측). 같은 repo 는 toplevel 로 한 번만 처리한다.
 self_top=$(git rev-parse --show-toplevel 2>/dev/null || echo "")
-for skill_repo in ${SYNC_SKILL_REPOS:-"$HOME/work/skills" "$HOME/work/skills-naver" "$HOME/work/kil9/workflow"}; do
+if [ -n "${SYNC_SKILL_REPOS:-}" ]; then
+  read -r -a skill_repos <<< "$SYNC_SKILL_REPOS"
+else
+  skill_repos=()
+  script_top=$(git -C "$(cd "$(dirname "$0")" && pwd -P)" rev-parse --show-toplevel 2>/dev/null || echo "")
+  for base in ${script_top:+"$(dirname "$script_top")"} "$HOME/work"; do
+    skill_repos+=("$base/skills" "$base/skills-naver" "$base/kil9/workflow")
+  done
+fi
+seen_tops=" $self_top "
+for skill_repo in "${skill_repos[@]}"; do
   [ -d "$skill_repo" ] || continue
   git -C "$skill_repo" rev-parse --git-dir >/dev/null 2>&1 || continue
-  # 지금 그 repo 안에서 /sync 를 돌렸다면 위에서 이미 처리했다.
-  [ "$(git -C "$skill_repo" rev-parse --show-toplevel)" = "$self_top" ] && continue
+  # 지금 그 repo 안에서 /sync 를 돌렸거나 다른 후보 경로로 이미 처리했다.
+  top=$(git -C "$skill_repo" rev-parse --show-toplevel)
+  case "$seen_tops" in *" $top "*) continue ;; esac
+  seen_tops="$seen_tops$top "
   sync_checkout "$skill_repo" skip-push-if-dirty
 done
 
