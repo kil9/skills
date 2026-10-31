@@ -78,10 +78,19 @@ case "$out" in
   *"체크아웃 동기화 실패"*"reachable"*) ;;
   *) echo "FAIL: 발산·충돌을 알리지 않았다"; echo "$out"; exit 1 ;;
 esac
-# 충돌로 멈춘 rebase 를 남기면 다음 /sync 가 다른 얼굴의 실패를 낸다.
-if [ -d "$(git -C "$fixture/reachable" rev-parse --git-path rebase-merge)" ] ||
-   [ -d "$(git -C "$fixture/reachable" rev-parse --git-path rebase-apply)" ]; then
-  echo "FAIL: 진행 중인 rebase 가 남았다"; exit 1
-fi
+# 충돌로 멈춘 rebase 를 남기면 다음 /sync 가 다른 얼굴의 실패를 낸다. --git-path 는 체크아웃
+# 기준 상대 경로라 그 체크아웃 안에서 판정한다(예전 검사는 cwd 기준이라 늘 통과했다. task-568).
+for kind in rebase-merge rebase-apply; do
+  if (cd "$fixture/reachable" && [ -d "$(git rev-parse --git-path "$kind")" ]); then
+    echo "FAIL: 진행 중인 rebase($kind)가 남았다"; exit 1
+  fi
+done
+# abort 뒤엔 브랜치 위의 pull 전 상태여야 한다 — detached HEAD·충돌 파일이 남으면 안 된다.
+git -C "$fixture/reachable" symbolic-ref -q HEAD >/dev/null ||
+  { echo "FAIL: abort 뒤 HEAD 가 브랜치에 있지 않다"; exit 1; }
+[ "$(git -C "$fixture/reachable" log -1 --format=%s)" = local-change ] ||
+  { echo "FAIL: abort 뒤 HEAD 가 pull 전 로컬 커밋이 아니다"; exit 1; }
+[ -z "$(git -C "$fixture/reachable" status --porcelain)" ] ||
+  { echo "FAIL: abort 뒤 워킹트리에 변경이 남았다"; git -C "$fixture/reachable" status --porcelain; exit 1; }
 
 echo "ok: test-sync-checkout-skip"

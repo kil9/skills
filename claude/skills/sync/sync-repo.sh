@@ -132,6 +132,20 @@ fi
 # push 를 건너뛴다 — 스킬 repo 처럼 '무엇을 커밋할지' 판단이 필요한 곳에 쓴다.
 checkout_failed=()
 
+# <체크아웃> 에 멈춘 rebase 가 있는가. --git-path 는 '.git/rebase-merge' 같은 **상대 경로**를 내고
+# 그 기준은 -C 의 디렉터리다. 그대로 [ -d ] 에 넘기면 스크립트 cwd(메인 repo) 기준으로 판정해
+# 다른 체크아웃의 rebase 를 못 찾는다 — abort 를 건너뛰어 HEAD (no branch)·UU 가 남았다
+# (2026-10-31 ~/work/skills, kil9conf task-568). 그래서 상대 경로면 <체크아웃> 을 앞에 붙인다.
+rebase_in_progress() { # rebase_in_progress <체크아웃 경로>
+  local dir=$1 kind p
+  for kind in rebase-merge rebase-apply; do
+    p=$(git -C "$dir" rev-parse --git-path "$kind")
+    case $p in /*) ;; *) p="$dir/$p" ;; esac
+    [ -d "$p" ] && return 0
+  done
+  return 1
+}
+
 sync_checkout() {
   local dir="$1" dirty_policy="${2:-}" cbranch
   echo "--- $dir"
@@ -174,8 +188,7 @@ sync_checkout() {
     echo "error: $dir 통합 실패 — 리모트에는 닿았으니 발산·충돌이다. 그 repo 에서 직접 해소하라." >&2
     # 충돌로 멈춘 rebase 를 그대로 두면 다음 /sync 가 'rebase in progress' 라는 다른 얼굴의
     # 실패를 낸다. 여기서 abort 해 상태를 되돌리고(autostash 도 함께 복원된다) 사람에게 넘긴다.
-    if [ -d "$(git -C "$dir" rev-parse --git-path rebase-merge)" ] ||
-       [ -d "$(git -C "$dir" rev-parse --git-path rebase-apply)" ]; then
+    if rebase_in_progress "$dir"; then
       git -C "$dir" rebase --abort >/dev/null 2>&1 || true
       echo "      진행 중이던 rebase 는 abort 했다 — 워킹트리는 pull 전 상태다." >&2
     fi
