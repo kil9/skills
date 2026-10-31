@@ -18,6 +18,7 @@ This skill gives you the tools and permission to create design that earns to be 
 - If native image generation is unavailable or its included quota is exhausted, stop image generation and report it instead of switching billing paths.
 - Impeccable hooks are not installed in this setup. Do not enable or install them unless the user explicitly changes this policy.
 - Anonymous choice telemetry is disabled in the bundled script.
+- Before any design decision, read `~/.claude/skills/kil9-design-style/SKILL.md` §2. Its confirmed preferences (density first, no decoration, restrained color, no metaphor worlds, clear hierarchy) are a user-pinned brief: they beat the concept roll, and a rolled object or ritual world informs composition only, never a metaphor in labels, structure, or ornament. When the user states a design like or dislike, record it in that skill's §5 log.
 - Version 4.0.4 is pinned in the managed skills repository. Never run `npx impeccable install` or `npx impeccable update`; upgrades require a fresh audit and an explicit repository change.
 
 Core principles:
