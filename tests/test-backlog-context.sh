@@ -108,4 +108,17 @@ set -e
 [ "$status" -eq 3 ] || fail "missing CLI status=$status"
 grep -q 'backlog CLI 없음' <<< "$output" || fail "missing CLI message"
 
+# Windows 셸이 PWD 를 D:\x\y 로 넘겨도 루트 탐색이 끝나야 한다(예전엔 무한 루프).
+# Linux 에선 bash 가 맞지 않는 PWD 를 버리므로 이 구간이 그냥 통과한다.
+winpath() { if command -v cygpath >/dev/null 2>&1; then cygpath -w "$1"; else printf '%s' "${1//\//\\}"; fi; }
+mkdir -p "$fixture/empty"
+set +e
+output=$(cd "$fixture/empty" && PWD=$(winpath "$fixture/empty") PATH="$fixture/bin:$PATH" timeout 20 "$script" 2>&1)
+status=$?
+set -e
+[ "$status" -eq 2 ] || fail "windows PWD without backlog status=$status"
+output=$(cd "$fixture/repo/backlog" && PWD=$(winpath "$fixture/repo/backlog") PATH="$fixture/bin:$PATH" \
+  BACKLOG_LOG="$log" timeout 20 "$script" 2>&1) || fail "windows PWD inside backlog failed"
+grep -q '^## tasks' <<< "$output" || fail "windows PWD inside backlog output"
+
 echo "PASS: backlog-context"

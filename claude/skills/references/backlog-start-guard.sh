@@ -14,15 +14,18 @@ usage() {
 
 [ "$#" -ge 1 ] || usage
 
-root=$PWD
-while [ "$root" != / ]; do
-  [ -d "$root/backlog" ] && break
-  root=$(dirname "$root")
+# Windows 셸이 넘긴 PWD(D:\x\y)는 dirname 이 '.' 에서 멈춰 무한 루프였다 — 구분자를 '/' 로
+# 바꾸고, 더 줄지 않으면(D: 나 /) 끝낸다.
+root=${PWD//\\//}
+while [ ! -d "$root/backlog" ]; do
+  case $root in */*) parent=${root%/*} ;; *) parent=$root ;; esac
+  [ -n "$parent" ] || parent=/
+  if [ "$parent" = "$root" ]; then
+    echo "skip=no-backlog"
+    exit 0
+  fi
+  root=$parent
 done
-if [ "$root" = / ]; then
-  echo "skip=no-backlog"
-  exit 0
-fi
 if ! git -C "$root" rev-parse --git-dir >/dev/null 2>&1; then
   echo "skip=no-git"
   exit 0

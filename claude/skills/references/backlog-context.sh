@@ -10,17 +10,20 @@
 set -euo pipefail
 
 find_backlog_root() {
-  local dir
-  dir=$PWD
-  while [ "$dir" != / ]; do
+  local dir parent
+  # Windows 셸이 넘긴 PWD(D:\x\y)는 '/' 가 없어 ${dir%/*} 가 줄지 않아 무한 루프였다 —
+  # 구분자를 '/' 로 바꾸고, 더 줄지 않으면(D: 나 /) 끝낸다.
+  dir=${PWD//\\//}
+  while :; do
     if [ -d "$dir/backlog" ] || [ -f "$dir/backlog/config.yml" ]; then
       printf '%s\n' "$dir"
       return 0
     fi
-    dir=${dir%/*}
-    [ -n "$dir" ] || dir=/
+    case $dir in */*) parent=${dir%/*} ;; *) return 1 ;; esac
+    [ -n "$parent" ] || parent=/
+    [ "$parent" != "$dir" ] || return 1
+    dir=$parent
   done
-  return 1
 }
 
 usage() {
