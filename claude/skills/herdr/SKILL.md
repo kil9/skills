@@ -1,11 +1,15 @@
 ---
 name: herdr
-description: Control herdr from inside it: workspaces, tabs, panes, spawning agents, reading output, waiting on state. Use when running inside herdr (HERDR_ENV=1).
+description: Control herdr from inside it: workspaces, tabs, panes, spawning agents, reading output, waiting on state. Use when running inside herdr — the herdr TUI (HERDR_ENV=1) or the Herdr app / herdr-core (HC_TERMINAL_SOCKET set, no HERDR_ENV).
 ---
 
 # herdr — agent skill
 
-before using this skill, check that `HERDR_ENV=1`. if it is not set to `1`, say you are not running inside a herdr-managed pane and stop. do not inspect or control the focused herdr pane from outside herdr.
+before using this skill, check which herdr you are in — by env, never by which binaries are on PATH (a machine can have both installed):
+
+- `HERDR_ENV=1` → the herdr TUI. everything below applies.
+- `HC_TERMINAL_SOCKET` set and no `HERDR_ENV` → the **Herdr app** (herdr-core). a different system: read [the app section](#herdr-app-herdr-core--a-different-system) and do not use the `herdr` cli at all.
+- neither → say you are not running inside herdr and stop. do not inspect or control the focused herdr pane from outside herdr.
 
 you are running inside herdr, a terminal-native agent multiplexer. herdr gives you workspaces, tabs, and panes — each pane is a real terminal with its own shell, agent, server, or log stream — and you can control all of it from the cli.
 
@@ -22,6 +26,31 @@ this means you can:
 the `herdr` binary is available in your PATH. its workspace, tab, pane, and wait commands talk to the running herdr instance over a local unix socket.
 
 if you need the raw protocol or full api reference, read the [socket api docs](https://herdr.dev/docs/socket-api/).
+
+## herdr app (herdr-core) — a different system
+
+the Herdr app runs its terminals in herdr-core (`hc`); the window is driven by `herdr-app`. its terminals carry `HC_TERMINAL_SOCKET` and `HC_TERMINAL_ID` (your address, e.g. `t29` — not a pane id) and **no** `HERDR_ENV`/`HERDR_PANE_ID`. if the herdr TUI is also installed, `herdr agent list` inside an app terminal answers from the TUI server and shows unrelated panes — a convincing wrong answer (measured 2026-10-31, hc 0.1.15). use only:
+
+- `hc --skill` and `herdr-app --skill` — the version-locked manuals. read them first.
+- `hc ls` / `hc get <t>` / `hc read <t>` / `hc send <t>` / `hc wait <t>` — terminals and agents (the app's equivalent of `agent list`/`pane read`/`agent prompt`/`wait`).
+- `herdr-app ls` / `herdr-app do <command>` / `herdr-app commands` — spaces, tabs, focus.
+
+spawn a claude in a new space and hand it a task (measured 2026-10-31 on Windows; the steps are the traps):
+
+```sh
+out="$(herdr-app do space.new --name <label> --folder <dir> --argv '["claude","--dangerously-skip-permissions"]')"
+t=<.terminal from $out>                              # also .space
+hc wait "$t" --timeout 60                            # until the agent reports idle
+hc get "$t"                                          # .status.state must be "idle"
+env -u HC_TERMINAL_ID hc send --if idle "$t" "<task>"
+```
+
+- **do not use `space.new --task`/`tab.new --task` for a real task.** it was typed before claude finished booting and only the first sentence arrived.
+- **`hc send` from inside a terminal wraps the text as `<hc from="tNN">…</hc>`**, and the receiver's hc manual tells it to treat that as another agent's message, not its user's. that is right for delegating to a child; when relaying the user's own request, strip the sender with `env -u HC_TERMINAL_ID`.
+- **a fresh folder stops at claude's trust prompt**: `hc get` status is `null` and `hc wait` returns `reason: timeout`. the default highlight in this prompt is now **"No, exit"** — Enter quits claude. find it with `hc read <t> --lines 60 | grep 'trust this folder'` and hand it to the user.
+- new spaces take focus; there is no `--no-focus`. reselect your own space with `herdr-app do space.select --id <id>`, which you can read from `hc get "$HC_TERMINAL_ID"` → `labels["herdr.space"]`.
+- on Windows the argv goes through a shell when `claude` is a profile alias: `["pwsh","-NoLogo","-NoExit","-Command","claude --dangerously-skip-permissions"]`, folders as `D:\…` paths.
+- close only spaces you made: `herdr-app do space.close --id <id> --confirmed true`.
 
 ## concepts
 
