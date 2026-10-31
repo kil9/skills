@@ -33,12 +33,17 @@ open_port=$(cat "$fixture/port")
 # 닫힌 포트: 잠깐 열었다 닫은 번호.
 closed_port=$(python3 -c 'import socket; s=socket.socket(); s.bind(("127.0.0.1",0)); print(s.getsockname()[1])')
 
-# nc 없는 PATH: 스크립트가 쓰는 도구만 링크한다.
-nonc="$fixture/bin"
-mkdir -p "$nonc"
-for t in bash git seq sleep cat sed; do
-  ln -s "$(command -v "$t")" "$nonc/$t"
-done
+# nc 없는 PATH: 스크립트가 쓰는 도구만 링크한다. 이 머신에 nc 가 원래 없으면(Windows Git Bash)
+# PATH 를 그대로 쓴다 — Git Bash 의 ln -s 는 복사라 옮긴 bash.exe 가 msys DLL 을 못 찾아 127 로 죽는다.
+if command -v nc >/dev/null 2>&1; then
+  nonc="$fixture/bin"
+  mkdir -p "$nonc"
+  for t in bash git seq sleep cat sed; do
+    ln -s "$(command -v "$t")" "$nonc/$t"
+  done
+else
+  nonc=$PATH
+fi
 
 fail=0
 check() { # check <설명> <기대 rc> <PATH> <url>
