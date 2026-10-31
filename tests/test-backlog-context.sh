@@ -110,15 +110,22 @@ grep -q 'backlog CLI 없음' <<< "$output" || fail "missing CLI message"
 
 # Windows 셸이 PWD 를 D:\x\y 로 넘겨도 루트 탐색이 끝나야 한다(예전엔 무한 루프).
 # Linux 에선 bash 가 맞지 않는 PWD 를 버리므로 이 구간이 그냥 통과한다.
+# 맥에는 timeout(coreutils)이 없다 — 없으면 127 로 빠져 테스트가 엉뚱하게 실패했다. perl alarm 으로 대신한다.
+with_timeout() { # with_timeout <초> <명령...>
+  if command -v timeout >/dev/null 2>&1; then timeout "$@"
+  elif command -v gtimeout >/dev/null 2>&1; then gtimeout "$@"
+  else perl -e 'alarm shift; exec @ARGV or exit 127' "$@"
+  fi
+}
 winpath() { if command -v cygpath >/dev/null 2>&1; then cygpath -w "$1"; else printf '%s' "${1//\//\\}"; fi; }
 mkdir -p "$fixture/empty"
 set +e
-output=$(cd "$fixture/empty" && PWD=$(winpath "$fixture/empty") PATH="$fixture/bin:$PATH" timeout 20 "$script" 2>&1)
+output=$(cd "$fixture/empty" && PWD=$(winpath "$fixture/empty") PATH="$fixture/bin:$PATH" with_timeout 20 "$script" 2>&1)
 status=$?
 set -e
 [ "$status" -eq 2 ] || fail "windows PWD without backlog status=$status"
 output=$(cd "$fixture/repo/backlog" && PWD=$(winpath "$fixture/repo/backlog") PATH="$fixture/bin:$PATH" \
-  BACKLOG_LOG="$log" timeout 20 "$script" 2>&1) || fail "windows PWD inside backlog failed"
+  BACKLOG_LOG="$log" with_timeout 20 "$script" 2>&1) || fail "windows PWD inside backlog failed"
 grep -q '^## tasks' <<< "$output" || fail "windows PWD inside backlog output"
 
 echo "PASS: backlog-context"
