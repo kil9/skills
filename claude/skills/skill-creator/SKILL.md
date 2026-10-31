@@ -1,6 +1,5 @@
 ---
-description: 스킬을 잘 작성·수정하기 위한 참조 자료. 스킬을 예측 가능하게 만드는 어휘와 원칙을 담는다.
-disable-model-invocation: true
+description: kil9 스킬 repo(skills·skills-naver·workflow·gadgets)의 스킬을 만들거나 고치기 전에 읽는 작성 원칙 — 호출 형태 선택, description 쓰는 법, 정보 위계, 분할·가지치기, 실패 양상. 스킬 eval·벤치마크 실행은 anthropic-skills:skill-creator 몫이다.
 ---
 
 스킬은 확률적(stochastic) 시스템에서 결정성(determinism)을 끌어내기 위해 존재한다. **예측 가능성** — 에이전트가 매 실행마다 같은 *출력*을 내는 것이 아니라 같은 *과정*을 밟는 것 — 이 근원적 미덕이며, 아래의 모든 레버는 이를 위해 복무한다.

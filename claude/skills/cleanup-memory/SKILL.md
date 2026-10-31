@@ -1,8 +1,7 @@
 ---
 name: cleanup-memory
-description: 장기 메모리를 감사해 낡은 '현재값'을 걷어내고, 남길 정책과 repo 로 내릴 함정을 가른다.
+description: 장기 메모리(auto-memory)를 감사해 낡은 '현재값'을 걷어내고, 남길 정책과 repo 로 내릴 함정을 가른다. "메모리 정리 / 메모리 감사 / cleanup memory" 라고 할 때. 사용자가 요청하지 않았으면 자율 호출은 삼간다.
 allowed_tools: [Bash, Read, Edit, Write, Glob, Grep, AskUserQuestion, Skill]
-disable-model-invocation: true
 ---
 
 # Cleanup Memory — 장기 메모리 감사

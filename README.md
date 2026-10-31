@@ -30,11 +30,11 @@ done
 
 | 분류 | 스킬 |
 |---|---|
-| backlog 워크플로 | add-backlog, ask-backlog, cleanup-backlog, init-backlog, migrate-to-backlog, next-backlog, start-backlog (짧은 별칭: ab·nb·sb, 사용자 직접 호출 전용) |
+| backlog 워크플로 | add-backlog, ask-backlog, cleanup-backlog, init-backlog, migrate-to-backlog, next-backlog, start-backlog (짧은 별칭: ab·nb·sb — 프롬프트 끝에 적어도 불리도록 모델 호출을 열어 둠) |
 | git 워크플로 | commit, cip, cipd, sync |
-| 에이전트 메타 | fable-advisor, grill, handoff, review-loop, skill-creator, wrap (세션을 닫기 전 기록, 옛 learn 을 흡수), zip-it |
+| 에이전트 메타 | fable-advisor, grill, review-loop, skill-creator, wrap (세션을 닫기 전 기록, 옛 learn 을 흡수), zip-it |
 | 에이전트 운용 | afk (기본은 묻지 않고 진행, `grill`·afk-grill 이면 출문 전에 한 번에 묻기), herdr, kill-agents |
-| 저장소·퍼블리시 유틸 | init-project, paste-image, publish-til, explain-diff, show-me (upstream humanlayer/skills, MIT, 원문 그대로) |
+| 저장소·퍼블리시 유틸 | init-project, paste-image, publish-til |
 | 글쓰기 | kil9-writing-style (kil9 말투), korean-polish (한국어 윤문: daleseo/korean-skills·epoko77-ai/im-not-ai·nomadamas/k-skill 합성, MIT) |
 | 디자인 | impeccable (upstream 4.0.4, 명시 호출 전용, 내장 이미지 생성만 사용), design-loop (수상작 기준 채점·개선 반복, 고치는 손은 impeccable), kil9-design-style (kil9 화면 취향의 정본·기록장 — 위 둘이 먼저 읽는다) |
 | 개인 워크플로 | manage-gmail-inbox |

@@ -1,6 +1,6 @@
 ---
 name: wrap
-description: 세션을 닫기 전에, 새 세션이 맥락을 몰라 같은 트러블슈팅을 다시 겪지 않도록 이번 세션에서 알게 된 것·진행 상태·남은 일을 backlog·repo 문서·스킬·메모리에 기록하고 커밋한다. "세션 닫기 전에 기록해줘 / 세션 정리하고 끝낼게 / wrap up / 이거 다음 세션도 알게 남겨둬" 라고 할 때. 사용자에게 하는 보고는 /im-back, 지정한 다음 에이전트용 임시 인계 문서는 /handoff, 사용자가 읽을 공개 TIL 은 /publish-til 이다.
+description: 세션을 닫기 전에, 새 세션이 맥락을 몰라 같은 트러블슈팅을 다시 겪지 않도록 이번 세션에서 알게 된 것·진행 상태·남은 일을 backlog·repo 문서·스킬·메모리에 기록하고 커밋한다. "세션 닫기 전에 기록해줘 / 세션 정리하고 끝낼게 / wrap up / 이거 다음 세션도 알게 남겨둬" 라고 할 때. 사용자가 읽을 공개 TIL 은 /publish-til 이다.
 argument-hint: "(선택) 특히 남길 것, 또는 그것만 남길 학습 하나"
 allowed_tools: [Bash, Read, Edit, Write, Glob, Grep, AskUserQuestion, Skill]
 ---
