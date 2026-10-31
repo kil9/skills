@@ -8,6 +8,27 @@
 set -euo pipefail
 export GIT_TERMINAL_PROMPT=0
 
+# tcp_probe <host> <port> : 4초 안에 TCP 로 붙으면 0.
+# nc 를 쓰지 않는다. Windows Git Bash 에는 nc 가 없어 SSH 리모트가 전부 '도달 불가' 로 빠졌고
+# (2026-10-29 회사 PC 실측, kil9conf task-544), 맥의 nc 는 -w 가 접속 대기에 안 걸려 응답 없는
+# 주소에서 75초를 기다렸다(2026-10-31 실측). bash 의 /dev/tcp 를 백그라운드로 열고, timeout(1)
+# 이 없는 셸(맥 기본)도 있어 4초 감시는 직접 한다.
+tcp_probe() {
+  local host=$1 port=$2 pid i
+  (exec 3<>"/dev/tcp/$host/$port") 2>/dev/null &
+  pid=$!
+  for i in $(seq 1 40); do
+    if ! kill -0 "$pid" 2>/dev/null; then
+      wait "$pid"
+      return
+    fi
+    sleep 0.1
+  done
+  kill "$pid" 2>/dev/null || true
+  wait "$pid" 2>/dev/null || true
+  return 1
+}
+
 # 도달 불가 리모트에 push 를 시도해 100초씩 멈추지 않기 위한 사전 체크.
 remote_reachable() {
   local url=$1 scheme hostport host port
@@ -21,11 +42,11 @@ remote_reachable() {
       hostport=${url#ssh://}; hostport=${hostport%%/*}; hostport=${hostport#*@}
       host=${hostport%%:*}; port=${hostport##*:}
       [ "$port" = "$host" ] && port=22
-      nc -z -w4 "$host" "$port" >/dev/null 2>&1
+      tcp_probe "$host" "$port"
       ;;
     *:*)
       host=${url%%:*}; host=${host#*@}
-      nc -z -w4 "$host" 22 >/dev/null 2>&1
+      tcp_probe "$host" 22
       ;;
     *)
       return 0  # 로컬 경로 등은 체크 생략
@@ -65,6 +86,9 @@ $(echo "$remotes" | grep -vx origin || true)"
   [ "$ok" -gt 0 ] || return 1
   [ "$bad" -eq 0 ] || return 2
 }
+
+# 테스트가 함수만 불러 쓸 수 있게 한다(tests/test-cip-push-probe.sh).
+if [ "${CIP_PUSH_SOURCE_ONLY:-}" = 1 ]; then return 0; fi
 
 branch=$(git symbolic-ref --short HEAD 2>/dev/null) || {
   echo "error: detached HEAD — 대상 브랜치가 없다" >&2
