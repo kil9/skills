@@ -1,0 +1,106 @@
+---
+name: roll20-sync
+description: 저장소의 마크다운 원본을 Roll20 게임의 핸드아웃·캐릭터(소개·GM 메모·시트 값·특수 능력 같은 반복 줄)로 만들고 고친다(동기화). "롤20 핸드아웃/캐릭터 만들어줘 / 고쳐줘 / 올려줘 / 롤20에 반영해줘", 또는 롤20 핸드아웃·캐릭터를 읽어 와야 할 때.
+---
+
+# roll20-sync
+
+Claude in Chrome 으로 **로그인된 Roll20 게임 화면**을 열고, 페이지 컨텍스트에서 JS(`r20h.js`)를
+실행해 핸드아웃과 캐릭터를 만들고 고친다. 화면 클릭이 아니라 롤20 클라이언트 객체(`window.Campaign`)를
+직접 쓰므로 수십 개도 한 번에 끝난다. 비공식 경로라 롤20 업데이트로 깨질 수 있다. 깨지면
+`R20H.ready()` 오류나 되읽기 불일치로 드러난다.
+
+## 원본 디렉터리
+
+```
+<dir>/roll20.json          {"campaign_id": 12345678, "handouts": {"<key>": "<id>"}, "characters": {"<key>": "<id>"}}
+<dir>/handouts/<key>.md    핸드아웃 하나. 파일 이름(확장자 뺀 것)이 key
+<dir>/characters/<key>.md  캐릭터 하나
+```
+
+frontmatter 는 YAML 이다. 본문은 마크다운이고 HTML 로 바뀌어 핸드아웃 `notes`, 캐릭터 `bio` 가 된다.
+`<!-- gm -->` 줄 아래는 GM 메모(`gmnotes`)다. 이 줄이 없으면 GM 메모는 비운다.
+
+```markdown
+---
+name: 아드릭
+visible_to: all              # gm | all | [플레이어 표시 이름, …]  — 저널에서 보이는 사람
+controlled_by: [앨리스]      # 캐릭터만. 같은 형식 — 시트를 고칠 수 있는 사람
+avatar: https://…            # 선택. 공개로 받을 수 있는 URL 이어야 한다
+archived: false              # 선택
+sheet:                       # 캐릭터만. 시트 속성 이름: 값
+  alias: 그림자
+  heritage: 아크로스
+  hunt: 2
+  repeating_ability:         # 반복 섹션: 줄마다 필드 맵, name 필드로 짝짓는다
+    - name: 특수능력 이름
+      description: 설명
+---
+소개(bio) 본문
+
+<!-- gm -->
+GM 메모
+```
+
+- 롤20 쪽 대상은 **`roll20.json` 의 id 로만** 짝짓는다. 롤20은 이름 중복이 흔해서(복제하면 같은 이름이
+  생긴다) 이름으로 짝지으면 엉뚱한 것을 덮는다. id 가 없는 key 는 새로 만들되, 같은 이름이 이미 있으면
+  만들지 않고 오류로 돌려준다. 그때는 사용자에게 어느 것을 쓸지 물어 id 를 적는다.
+- `sheet` 에 적은 속성만 덮어쓴다. 적지 않은 속성(스트레스·XP·물품 체크처럼 플레이 중에 바뀌는 값)은
+  건드리지 않는다. 플레이 중에 바뀌는 값을 `sheet` 에 적으면 동기화할 때마다 원본 값으로 되돌아간다.
+- 반복 줄은 같은 섹션 안에서 `name` 필드가 같은 줄을 고치고, 없으면 새로 만든다. 원본에 없는 줄은 지우지
+  않는다. 줄 이름을 바꾸면 새 줄이 생기고 옛 줄은 남는다.
+- 시트 속성 이름은 시트마다 다르다. 모르면 기존 캐릭터를 `R20H.read(id, 'character')` 로 읽어
+  `attribs` 의 키를 본다.
+- 게임 ID 는 게임 화면 URL(`/editor/setcampaign/<id>`)이나 페이지의 `window.campaign_id` 로 안다.
+
+## 단계
+
+1. **대상 확인** — 원본 디렉터리와 `roll20.json` 을 찾는다(없으면 만든다). 이번에 반영할 key 를 정한다.
+   완료 기준: 반영할 `.md` 목록과 게임 ID 가 정해졌다.
+2. **페이로드 생성** — `uv run ~/.claude/skills/roll20-sync/r20h.py build <dir> [key ...]`.
+   `<dir>/.r20h-payload.js` 가 생긴다. 저장소에 커밋하지 않도록 `.gitignore` 에 넣는다.
+   완료 기준: 출력에 반영 대상이 빠짐없이 나온다.
+3. **공개 범위 확인** — 플레이어에게 새로 보이게 되거나 조종권이 넘어가는 것(`visible_to`·`controlled_by`
+   가 gm 이 아니고, 신규이거나 지금 롤20에서 GM 전용인 것)이 있으면 실행 전에 AskUserQuestion 으로 한 번
+   묻는다. 비밀 카드처럼 남이 보면 안 되는 글이 엉뚱한 사람에게 열리는 사고를 막는다.
+4. **실행** — Chrome 도구로:
+   - `navigate` 로 `https://app.roll20.net/editor/setcampaign/<게임 ID>` 를 연다(탭 그룹이 없으면 만들어 준다).
+     사용자가 열어 둔 탭은 이 세션의 탭 그룹 밖이라 조작할 수 없다. 내 탭을 따로 열면 된다(같은 계정으로
+     두 탭을 열어도 문제없었다).
+   - `.r20h-payload.js` 내용을 그대로 `javascript_tool` 로 실행한다. 반환값은
+     `{handouts: [...], characters: [...]}` 결과다.
+   - 결과를 스크래치패드에 JSON 으로 저장한다.
+   완료 기준: 모든 key 의 action 이 `created`/`updated` 이거나, 오류가 있으면 그 이유를 알고 있다.
+5. **기록** — `uv run …/r20h.py record <dir> <result.json>` 으로 새 id 를 `roll20.json` 에 적고,
+   `roll20.json` 과 바뀐 `.md` 를 커밋한다. 다 쓴 탭은 닫는다.
+   완료 기준: 신규 key 가 전부 `roll20.json` 에 id 로 들어가 커밋됐다.
+
+## 읽기·삭제
+
+- 읽기: `r20h.js` 를 실행한 뒤 `R20H.list(kind)`(목록), `await R20H.read(id, kind)`(본문·GM 메모 해독,
+  캐릭터는 `attribs` 까지), `R20H.players()`(플레이어 id·표시 이름). `kind` 는 `'handout'`(기본) 또는
+  `'character'`.
+- 삭제: 사용자가 그 대상을 지우라고 했을 때만, 이름과 id 를 보여 확인받은 뒤 `R20H.remove(id, kind)` 하고
+  `roll20.json` 에서도 뺀다. 원본 `.md` 를 지웠다고 롤20 쪽을 자동으로 지우지 않는다.
+
+## 알아낸 것(2026-11-02 실측)
+
+- **외부에서 부를 수 있는 API 가 없다.** HAR 을 떠 보면 저장은 HTTP 요청으로 남지 않고 페이지 로드 때 맺은
+  실시간 연결로 간다. Pro 의 Mod(API) 스크립트는 롤20 서버 샌드박스에서 돌고 외부 네트워크가 막혀 저장소
+  데이터를 직접 못 가져간다. 그래서 이 경로를 쓴다.
+- 핸드아웃 `notes`·`gmnotes`, 캐릭터 `bio`·`gmnotes` 는 속성이 아니라 blob 이다. `m.get('notes')` 는
+  타임스탬프만 준다. 쓰기는 `m.updateBlobs({...})`, 읽기는 `m._getLatestBlob(field, cb)`. 이름·공개 범위는
+  `m.save({...})`. 새로고침 뒤 되읽어 서버 반영을 확인했다.
+- 롤20 편집기로 저장한 본문은 `escape()` 인코딩(`%3Cp%3E%uD55C…`)으로, 우리가 쓴 것은 평문 HTML 로
+  남는다. 둘 다 화면에 정상으로 렌더링된다. `R20H.read` 가 해독해 준다.
+- `inplayerjournals`·`controlledby` 는 `''`(GM 만), `'all'`, 또는 플레이어 id 쉼표 목록이다.
+- 캐릭터 시트 속성(`c.attribs`)은 처음엔 비어 있다. `c.attribs.fetch(c.attribs)` 로 불러와야 보인다.
+- **시트 워커(파생값 계산)는 시트 창이 열려 있을 때만 돈다.** 그래서 `applySheet` 가 먼저
+  `c.view.showDialog()` 로 시트를 연다. 열린 채로 `hunt`·`study` 를 쓰면 `insight` 가 따라 바뀌는 것을
+  확인했다(Blades in the Dark 시트 v3.11).
+- 반복 줄은 `repeating_<섹션>_<rowid>_<필드>` 속성이다. rowid 는 20자 push-id 형식으로 새로 만들어
+  쓰면 시트에 줄로 나타난다.
+- 같은 시트에서 `playbook` 에 'Cutter' 를 써 넣어도 플레이북 기본 능력·물품이 자동으로 채워지지는 않았다.
+  필요한 능력은 `repeating_ability` 로 직접 넣는다.
+- 이미지(`avatar`, 본문 `<img>`)는 플레이어 브라우저가 직접 받으므로 **공개 URL** 이어야 한다. private
+  GitHub 저장소의 raw URL 은 안 보인다.
