@@ -84,7 +84,18 @@ window.R20H = (() => {
     // 시트를 열어 둬야 시트 워커(파생값 계산)가 돈다.
     c.view.showDialog();
     for (let i = 0; i < 20 && (await loadAttribs(c)).length === 0; i++) await sleep(500);
+    // 플레이북 이름을 바꾸면 시트 워커가 기본 능력·물품·지인을 채우고 행동 점수·설명을 초기값으로 덮는다.
+    // 그래서 플레이북을 먼저 쓰고 자동 채움이 끝난 뒤 나머지를 쓴다.
+    if ('playbook' in sheet) {
+      const a = c.attribs.find((x) => x.get('name') === 'playbook');
+      if (!a || a.get('current') !== String(sheet.playbook)) {
+        setAttr(c, 'playbook', sheet.playbook);
+        await sleep(5000);
+        await loadAttribs(c);
+      }
+    }
     for (const [k, v] of Object.entries(sheet)) {
+      if (k === 'playbook') continue;
       if (!Array.isArray(v)) { setAttr(c, k, v); continue; }
       const prefix = `${k}_`;
       for (const row of v) {
