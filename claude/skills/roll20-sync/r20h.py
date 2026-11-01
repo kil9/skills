@@ -139,6 +139,26 @@ def read_meta(path: pathlib.Path) -> dict:
     return yaml.safe_load(text[4:].partition("\n---\n")[0]) or {}
 
 
+TOKEN_CACHE = pathlib.Path.home() / ".cache/roll20-sync/tokens"
+
+
+def token_image(cmeta: dict, cdir: pathlib.Path, key: str):
+    """캐릭터 토큰 그림. token 이 경로면 그것, auto 면 avatar 에서 얼굴을 찾아 만든 원형 토큰, 없으면 avatar."""
+    tok, avatar = cmeta.get("token"), cmeta.get("avatar")
+    if tok is None or tok is False:
+        return avatar
+    if str(tok) not in ("auto", "auto-round", "auto-square"):
+        return tok
+    if not avatar or re.match(r"^https?:", str(avatar)):
+        sys.exit(f"characters/{key}.md: token: auto 는 저장소 안 avatar 가 있어야 한다")
+    style = "square" if str(tok) == "auto-square" else "round"
+    src = (cdir / str(avatar)).resolve()
+    TOKEN_CACHE.mkdir(parents=True, exist_ok=True)
+    subprocess.run(["uv", "run", "-q", str(pathlib.Path(__file__).with_name("make_token.py")), str(src),
+                    "--out", str(TOKEN_CACHE), "--style", style], check=True)
+    return TOKEN_CACHE / (f"{src.stem}-token-round.png" if style == "round" else f"{src.stem}-token.jpg")
+
+
 def parse_page(path: pathlib.Path, d: pathlib.Path, cfg: dict, assets: Assets) -> dict:
     meta = read_meta(path)
     for k in ("name", "width", "height"):
@@ -163,11 +183,15 @@ def parse_page(path: pathlib.Path, d: pathlib.Path, cfg: dict, assets: Assets) -
             if not cid:
                 sys.exit(f"{path}: 캐릭터 {ck} 가 아직 롤20에 없다 — 먼저 characters/{ck}.md 를 반영한다")
             cmeta = read_meta(d / "characters" / f"{ck}.md")
-            img = t.get("image") or cmeta.get("avatar")
-            if not img:
-                sys.exit(f"{path}: 토큰 {ck} 의 그림이 없다(image 또는 캐릭터 avatar)")
+            if t.get("image"):
+                imgsrc = assets.resolve(str(t["image"]), here)
+            else:
+                img = token_image(cmeta, d / "characters", ck)
+                if not img:
+                    sys.exit(f"{path}: 토큰 {ck} 의 그림이 없다(image, 캐릭터 token 또는 avatar)")
+                imgsrc = assets.resolve(str(img), d / "characters")
             g.update(gkey=ck, character=cid, name=t.get("name") or str(cmeta.get("sheet", {}).get("name") or cmeta.get("name")),
-                     imgsrc=assets.resolve(str(img), here if t.get("image") else d / "characters"))
+                     imgsrc=imgsrc)
             for k in ("bar1", "bar1_max"):
                 if k in t:
                     g[k] = t[k]

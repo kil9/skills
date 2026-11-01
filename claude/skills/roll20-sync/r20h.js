@@ -220,9 +220,9 @@ window.R20H = (() => {
           else {
             gr = p.thegraphics.create({ ...ga, left: g.left, top: g.top });
             await sleep(800);
-            // 캐릭터 토큰을 처음 놓을 때 그 토큰을 캐릭터의 기본 토큰(저널에서 끌어다 놓을 때 쓰이는 것)으로도 저장한다.
-            if (c) await c.saveDefaultToken(gr.toJSON());
           }
+          // 캐릭터 토큰은 매번 캐릭터의 기본 토큰(저널에서 끌어다 놓을 때 쓰이는 것)으로도 저장해 그림을 맞춘다.
+          if (c) await c.saveDefaultToken(gr.toJSON());
           out.graphics[g.gkey] = gr.id;
         }
       } catch (e) {
