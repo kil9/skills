@@ -105,8 +105,17 @@ window.R20H = (() => {
         const nameAttr = c.attribs.find((a) => a.get('name').startsWith(prefix) && a.get('name').endsWith('_name') && a.get('current') === String(row.name));
         const id = nameAttr ? nameAttr.get('name').slice(prefix.length, -'_name'.length) : rowId();
         for (const [f, fv] of Object.entries(row)) setAttr(c, `${prefix}${id}_${f}`, fv);
+        // 자동 채움이 다시 돌면 autogen 표시가 붙은 줄을 지우고 새로 만든다. 손댄 줄은 표시를 떼어 지킨다.
+        const auto = c.attribs.find((a) => a.get('name') === `${prefix}${id}_autogen`);
+        if (auto && auto.get('current')) auto.save({ current: '' });
       }
     }
+    // 자동 채움은 changed_attributes(시트 화면에서 사람이 바꾼 속성 목록)에 없는 값을 초기값으로 덮는다.
+    // 스크립트로 쓴 값은 이 목록에 안 올라가므로 직접 올린다.
+    const scalars = Object.keys(sheet).filter((k) => k !== 'playbook' && !Array.isArray(sheet[k]));
+    const ca = c.attribs.find((a) => a.get('name') === 'changed_attributes');
+    const merged = [...new Set([...((ca && ca.get('current')) || '').split(','), ...scalars])].filter(Boolean).join(',');
+    setAttr(c, 'changed_attributes', merged);
     await sleep(2500);
     const bad = Object.entries(sheet).filter(([k, v]) => !Array.isArray(v))
       .filter(([k, v]) => { const a = c.attribs.find((x) => x.get('name') === k); return !a || a.get('current') !== String(v); })
