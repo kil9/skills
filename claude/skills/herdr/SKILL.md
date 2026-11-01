@@ -51,6 +51,7 @@ env -u HC_TERMINAL_ID hc send --if idle "$t" "<task>"
 - new spaces take focus; there is no `--no-focus`. reselect your own space with `herdr-app do space.select --id <id>`, which you can read from `hc get "$HC_TERMINAL_ID"` → `labels["herdr.space"]`.
 - on Windows the argv goes through a shell when `claude` is a profile alias: `["pwsh","-NoLogo","-NoExit","-Command","claude --dangerously-skip-permissions"]`, folders as `D:\…` paths.
 - close only spaces you made: `herdr-app do space.close --id <id> --confirmed true`.
+- **from Git Bash, export `MSYS_NO_PATHCONV=1` before passing a remote path** (`--folder /home/...`): MSYS rewrites it to `C:/Program Files/Git/home/...` and the remote fails with `cannot start "/usr/bin/zsh": No such file or directory` — the missing thing is the cwd, not zsh (measured 2026-11-01, kil9conf doc-38 §7).
 
 ## concepts
 
