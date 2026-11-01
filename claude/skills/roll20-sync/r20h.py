@@ -1,6 +1,6 @@
 # /// script
 # requires-python = ">=3.10"
-# dependencies = ["markdown", "pyyaml"]
+# dependencies = ["markdown", "pyyaml", "pillow"]
 # ///
 """Roll20 원본 디렉터리 <-> 페이지 JS 페이로드.
 
@@ -10,6 +10,7 @@
 DIR 구조는 SKILL.md 의 '원본 디렉터리' 절을 본다.
 """
 import hashlib
+import io
 import json
 import pathlib
 import re
@@ -56,8 +57,8 @@ class Assets:
             sys.exit(f"{src}: 로컬 그림을 쓰려면 roll20.json 에 assets 설정이 필요하다")
         if not src.is_file():
             sys.exit(f"그림 파일 없음: {src}")
-        data = src.read_bytes()
-        name = f"i/{hashlib.sha256(data).hexdigest()[:20]}{src.suffix.lower()}"
+        data, ext = public_copy(src)
+        name = f"i/{hashlib.sha256(data).hexdigest()[:20]}{ext}"
         url = self.base + name
         dst = self.dir / name
         if not dst.exists():
@@ -85,6 +86,21 @@ class Assets:
                 return
             time.sleep(5)
         sys.exit(f"그림 주소가 아직 안 열린다: {', '.join(pending)}")
+
+
+def public_copy(src: pathlib.Path) -> tuple[bytes, str]:
+    """밖에 올릴 사본. 저장소엔 PNG 원본을 두고 공개 사본만 JPG 품질 90 으로 줄인다(2MB PNG → 330KB 안팎).
+    투명도를 쓰는 그림(원형 토큰 등)은 PNG 그대로, 이미 JPG 인 것은 다시 압축하지 않는다."""
+    from PIL import Image
+    data = src.read_bytes()
+    if src.suffix.lower() in (".jpg", ".jpeg"):
+        return data, ".jpg"
+    with Image.open(io.BytesIO(data)) as im:
+        if im.mode in ("RGBA", "LA", "PA", "P") and im.convert("RGBA").getchannel("A").getextrema()[0] < 255:
+            return data, src.suffix.lower()
+        buf = io.BytesIO()
+        im.convert("RGB").save(buf, "JPEG", quality=90, subsampling=0)
+        return buf.getvalue(), ".jpg"
 
 
 def ok(url: str) -> bool:

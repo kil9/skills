@@ -87,7 +87,7 @@ def main():
             sq = sq.resize((a.size, a.size), Image.LANCZOS)
         print(f"{p.name}\t{how}\tface={x},{y},{fw}x{fh}\tcrop={box}")
         if a.style in ("square", "both"):
-            sq.save(out / f"{p.stem}-token.jpg", quality=90)
+            sq.save(out / f"{p.stem}-token.jpg", quality=90, subsampling=0)
         if a.style in ("round", "both"):
             round_token(sq).save(out / f"{p.stem}-token-round.png")
 
