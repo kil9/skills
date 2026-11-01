@@ -1,7 +1,6 @@
 ---
-description: 커밋·push 와 배포를 함께 끝낸다. /cip 의 전체 흐름(커밋, push, worktree 모드 rebase·ff-merge·정리)과 이 repo 의 배포를 수행하되, 둘의 순서는 배포 방식을 실행 시점에 파악해 에이전트가 정한다.
+description: 커밋·push 와 배포를 함께 끝낸다. /cip 의 전체 흐름(커밋, push, worktree 모드 rebase·ff-merge·정리)과 이 repo 의 배포를 수행하되, 둘의 순서는 배포 방식을 실행 시점에 파악해 에이전트가 정한다. 사용자가 프롬프트에 `/cipd` 를 적었거나(문장 끝 포함) "커밋 푸시 배포해줘" 라고 직접 요청했을 때 부른다. 자율 호출은 삼간다.
 allowed_tools: [Bash, Read, Edit, Write, Glob, Grep]
-disable-model-invocation: true
 ---
 
 `/cip` 에 **배포**를 더한 스킬이다. `$ARGUMENTS` 는 `/cip` 과 동일하게 해석한다(일반 모드=커밋 메시지 힌트, worktree 모드=대상 브랜치 override).

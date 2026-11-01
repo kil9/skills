@@ -1,7 +1,6 @@
 ---
-description: 커밋 후 push까지 자동 실행한다. worktree에서 호출하면 대상 브랜치(기본 main/master)에 rebase merge 후 push, 그리고 worktree·브랜치까지 정리한다.
+description: 커밋 후 push까지 자동 실행한다. worktree에서 호출하면 대상 브랜치(기본 main/master)에 rebase merge 후 push, 그리고 worktree·브랜치까지 정리한다. 사용자가 프롬프트에 `/cip` 를 적었거나(문장 끝 포함) "커밋 푸시해줘" 라고 직접 요청했을 때 부른다. 자율 호출은 삼간다.
 allowed_tools: [Bash, Read, Edit, Write, Glob, Grep]
-disable-model-invocation: true
 ---
 
 커밋한 뒤 push 한다. `$ARGUMENTS` 는 일반 모드에선 커밋 메시지 힌트, worktree 모드에선 대상 브랜치 override.
