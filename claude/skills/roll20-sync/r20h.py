@@ -129,6 +129,64 @@ def parse(path: pathlib.Path, body_field: str, assets: Assets) -> dict:
     return item
 
 
+CELL = 70  # 롤20 한 칸 = 70px
+
+
+def read_meta(path: pathlib.Path) -> dict:
+    text = path.read_text(encoding="utf-8")
+    if not text.startswith("---\n"):
+        return {}
+    return yaml.safe_load(text[4:].partition("\n---\n")[0]) or {}
+
+
+def parse_page(path: pathlib.Path, d: pathlib.Path, cfg: dict, assets: Assets) -> dict:
+    meta = read_meta(path)
+    for k in ("name", "width", "height"):
+        if k not in meta:
+            sys.exit(f"{path}: frontmatter 에 {k} 가 없다")
+    here = path.parent
+    w, h = int(meta["width"]), int(meta["height"])
+    known = cfg.get("pages", {}).get(path.stem, {})
+    gids = known.get("graphics", {})
+    graphics = []
+    if meta.get("map"):
+        graphics.append({"gkey": "map", "layer": "map", "imgsrc": assets.resolve(str(meta["map"]), here),
+                         "left": w * CELL / 2, "top": h * CELL / 2, "width": w * CELL, "height": h * CELL})
+    for t in meta.get("tokens") or []:
+        size = float(t.get("size", 1))
+        x, y = t.get("at", [0, 0])
+        g = {"layer": t.get("layer", "objects"), "width": size * CELL, "height": size * CELL,
+             "left": x * CELL + size * CELL / 2, "top": y * CELL + size * CELL / 2}
+        if t.get("character"):
+            ck = str(t["character"])
+            cid = cfg.get("characters", {}).get(ck)
+            if not cid:
+                sys.exit(f"{path}: 캐릭터 {ck} 가 아직 롤20에 없다 — 먼저 characters/{ck}.md 를 반영한다")
+            cmeta = read_meta(d / "characters" / f"{ck}.md")
+            img = t.get("image") or cmeta.get("avatar")
+            if not img:
+                sys.exit(f"{path}: 토큰 {ck} 의 그림이 없다(image 또는 캐릭터 avatar)")
+            g.update(gkey=ck, character=cid, name=t.get("name") or str(cmeta.get("sheet", {}).get("name") or cmeta.get("name")),
+                     imgsrc=assets.resolve(str(img), here if t.get("image") else d / "characters"))
+            for k in ("bar1", "bar1_max"):
+                if k in t:
+                    g[k] = t[k]
+        else:
+            if not (t.get("image") and t.get("name")):
+                sys.exit(f"{path}: 캐릭터 없는 토큰에는 image 와 name 이 필요하다")
+            g.update(gkey=str(t["name"]), name=str(t["name"]), imgsrc=assets.resolve(str(t["image"]), here))
+        graphics.append(g)
+    for g in graphics:
+        if g["gkey"] in gids:
+            g["id"] = gids[g["gkey"]]
+    item = {"key": path.stem, "name": str(meta["name"]), "width": w, "height": h, "graphics": graphics}
+    if "showgrid" in meta:
+        item["showgrid"] = bool(meta["showgrid"])
+    if known.get("id"):
+        item["id"] = known["id"]
+    return item
+
+
 def load_cfg(d: pathlib.Path) -> dict:
     p = d / "roll20.json"
     if not p.exists():
@@ -156,6 +214,17 @@ def build(d: pathlib.Path, keys: list[str]) -> None:
         if items:
             payload = json.dumps(items, ensure_ascii=False)
             calls.append(f"{json.dumps(folder)}: await R20H.upsert({json.dumps(cfg['campaign_id'])}, '{kind}', {payload})")
+    pages = []
+    for p in sorted((d / "pages").glob("*.md")):
+        if keys and p.stem not in keys:
+            continue
+        seen.add(p.stem)
+        it = parse_page(p, d, cfg, assets)
+        pages.append(it)
+        summary.append(f"pages/{it['key']}" + ("" if "id" in it else "(신규)"))
+    if pages:
+        payload = json.dumps(pages, ensure_ascii=False)
+        calls.append(f"\"pages\": await R20H.upsertPages({json.dumps(cfg['campaign_id'])}, {payload})")
     if missing := set(keys) - seen:
         sys.exit(f"원본 파일 없음: {', '.join(sorted(missing))}")
     if not calls:
@@ -173,7 +242,9 @@ def record(d: pathlib.Path, result_path: str) -> None:
     for folder, rs in results.items():
         ids = cfg.setdefault(folder, {})
         for r in rs:
-            if r.get("id") and r.get("action") in ("created", "updated", "error"):
+            if folder == "pages" and r.get("id"):
+                ids[r["key"]] = {"id": r["id"], "graphics": {**ids.get(r["key"], {}).get("graphics", {}), **r.get("graphics", {})}}
+            elif r.get("id") and r.get("action") in ("created", "updated", "error"):
                 ids[r["key"]] = r["id"]  # 시트 값 불일치 같은 오류여도 만들어진 id 는 남긴다
             if r.get("action") == "error":
                 errs += 1

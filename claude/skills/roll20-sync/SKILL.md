@@ -1,6 +1,6 @@
 ---
 name: roll20-sync
-description: 저장소의 마크다운 원본을 Roll20 게임의 핸드아웃·캐릭터(소개·GM 메모·시트 값·특수 능력 같은 반복 줄)로 만들고 고친다(동기화). "롤20 핸드아웃/캐릭터 만들어줘 / 고쳐줘 / 올려줘 / 롤20에 반영해줘", 또는 롤20 핸드아웃·캐릭터를 읽어 와야 할 때.
+description: 저장소의 마크다운 원본을 Roll20 게임의 핸드아웃·캐릭터(소개·GM 메모·시트 값·반복 줄)·맵 페이지(맵 그림·토큰·시트 연결)로 만들고 고친다(동기화). "롤20 핸드아웃/캐릭터/맵 만들어줘 / 토큰 놓아줘 / 고쳐줘 / 롤20에 반영해줘", 또는 롤20 쪽 내용을 읽어 와야 할 때.
 ---
 
 # roll20-sync
@@ -16,6 +16,7 @@ Claude in Chrome 으로 **로그인된 Roll20 게임 화면**을 열고, 페이�
 <dir>/roll20.json          {"campaign_id": 12345678, "handouts": {"<key>": "<id>"}, "characters": {"<key>": "<id>"}}
 <dir>/handouts/<key>.md    핸드아웃 하나. 파일 이름(확장자 뺀 것)이 key
 <dir>/characters/<key>.md  캐릭터 하나
+<dir>/pages/<key>.md       맵 페이지 하나(아래 '페이지')
 ```
 
 frontmatter 는 YAML 이다. 본문은 마크다운이고 HTML 로 바뀌어 핸드아웃 `notes`, 캐릭터 `bio` 가 된다.
@@ -53,6 +54,37 @@ GM 메모
   `attribs` 의 키를 본다.
 - 게임 ID 는 게임 화면 URL(`/editor/setcampaign/<id>`)이나 페이지의 `window.campaign_id` 로 안다.
 
+## 페이지
+
+```markdown
+---
+name: 하틀리 연구소 정문
+width: 20                    # 칸 수(1칸 = 70px)
+height: 15
+showgrid: true
+map: ../../assets/x.jpg      # 페이지 전체를 덮는 맵 레이어 그림
+tokens:
+  - character: seresi-sample # characters/ 의 key. 먼저 반영돼 roll20.json 에 id 가 있어야 한다
+    at: [5, 5]               # 왼쪽 위 칸 좌표(0부터)
+    size: 1                  # 칸 수, 기본 1
+    bar1: stress             # 선택. 막대 1에 연결할 시트 속성
+    bar1_max: 9
+  - name: 리피터              # 캐릭터 없는 소품은 name 과 image 가 필요하다
+    image: ../../assets/y.jpg
+    at: [12, 6]
+    size: 2
+    layer: gmlayer           # objects(기본) | gmlayer | map
+---
+```
+
+- 캐릭터 토큰 그림은 `image` 가 없으면 그 캐릭터의 `avatar` 를 쓴다. 토큰은 `represents` 로 캐릭터와 이어지고 이름이 보인다.
+- 캐릭터 토큰을 처음 놓을 때 그 토큰을 캐릭터의 기본 토큰(저널에서 끌어다 놓을 때 쓰이는 것)으로도 저장한다.
+- **위치는 처음 놓을 때만 쓴다.** 플레이 중에 옮긴 토큰을 동기화가 되돌리지 않는다. 그림·크기·레이어·연결은 매번 맞춘다.
+- `roll20.json` 의 `pages` 는 `{key: {"id": 페이지 id, "graphics": {map | 캐릭터 key | 소품 name: 그래픽 id}}}` 다.
+  원본에서 토큰을 빼도 롤20 쪽 토큰은 지우지 않는다.
+- 페이지 그래픽은 그 페이지를 GM 화면에 띄워야 불러와진다. `upsertPages` 가 GM 화면만 옮겼다가 원래 페이지로 돌아온다.
+  플레이어 리본(`playerpageid`, 플레이어가 보는 페이지)은 바꾸지 않는다 — 플레이어를 옮기는 일은 사용자가 할 때만 한다.
+
 ## 그림
 
 `avatar` 나 본문의 `![](경로)` 에 저장소 안 그림 경로를 적으면, `build` 가 그 파일을 공개 그림 저장소에 내용 해시 이름
@@ -77,7 +109,7 @@ private 저장소 주소는 못 쓴다. 공개 저장소에 올라간 그림은 
      사용자가 열어 둔 탭은 이 세션의 탭 그룹 밖이라 조작할 수 없다. 내 탭을 따로 열면 된다(같은 계정으로
      두 탭을 열어도 문제없었다).
    - `.r20h-payload.js` 내용을 그대로 `javascript_tool` 로 실행한다. 반환값은
-     `{handouts: [...], characters: [...]}` 결과다.
+     `{handouts: [...], characters: [...], pages: [...]}` 결과다.
    - 결과를 스크래치패드에 JSON 으로 저장한다.
    완료 기준: 모든 key 의 action 이 `created`/`updated` 이거나, 오류가 있으면 그 이유를 알고 있다.
 5. **기록** — `uv run …/r20h.py record <dir> <result.json>` 으로 새 id 를 `roll20.json` 에 적고,

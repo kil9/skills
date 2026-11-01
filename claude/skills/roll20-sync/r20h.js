@@ -173,6 +173,68 @@ window.R20H = (() => {
     return results;
   }
 
+  // 페이지(맵)와 그 위의 그래픽(맵 그림·토큰).
+  // items: [{key, id?, name, width, height, showgrid?, graphics: [{gkey, id?, layer, imgsrc, left, top, width, height,
+  //          name?, character?(캐릭터 id), bar1?(연결할 시트 속성 이름), bar1_max?}]}]
+  // 반환: [{key, id, action, graphics: {gkey: id}, error?}]
+  // 그래픽 위치(left/top)는 처음 놓을 때만 쓴다 — 플레이 중에 옮긴 토큰을 되돌리지 않는다.
+  // page.thegraphics 는 그 페이지를 GM 화면에 띄워야 생긴다. switchPageById 는 GM 자신의 화면만 바꾸고
+  // 플레이어 리본(playerpageid)은 건드리지 않는다. 끝나면 원래 보던 페이지로 돌아간다.
+  async function upsertPages(expectedCampaignId, items) {
+    await ready();
+    if (String(window.campaign_id) !== String(expectedCampaignId)) {
+      throw new Error(`열린 게임(${window.campaign_id})이 대상(${expectedCampaignId})과 다르다 — 아무것도 쓰지 않음`);
+    }
+    const back = Campaign.activePage() && Campaign.activePage().id;
+    const results = [];
+    for (const it of items) {
+      const out = { key: it.key, graphics: {} };
+      try {
+        const attrs = { name: it.name, width: it.width, height: it.height };
+        if (it.showgrid !== undefined) attrs.showgrid = it.showgrid;
+        let p = it.id && Campaign.pages.get(it.id);
+        if (it.id && !p) throw new Error('roll20.json 의 페이지 id 가 게임에 없다(롤20에서 지워졌나?)');
+        out.action = p ? 'updated' : 'created';
+        if (p) p.save(attrs); else { p = Campaign.pages.create(attrs); await sleep(1500); }
+        out.id = p.id;
+        await Campaign.switchPageById(p.id);
+        for (let i = 0; i < 20 && !p.thegraphics; i++) await sleep(500);
+        if (!p.thegraphics) throw new Error('페이지 그래픽을 불러오지 못했다');
+        for (const g of it.graphics) {
+          const ga = { layer: g.layer, imgsrc: g.imgsrc, width: g.width, height: g.height, name: g.name || '' };
+          let c = null;
+          if (g.character) {
+            c = Campaign.characters.get(g.character);
+            if (!c) throw new Error(`${g.gkey}: 캐릭터 id 가 게임에 없다`);
+            ga.represents = c.id;
+            ga.showname = true;
+            if (g.bar1) {
+              await loadAttribs(c);
+              const a = c.attribs.find((x) => x.get('name') === g.bar1);
+              if (!a) throw new Error(`${g.gkey}: 시트 속성 ${g.bar1} 이 없다`);
+              Object.assign(ga, { bar1_link: a.id, bar1_value: a.get('current'), bar1_max: g.bar1_max ?? a.get('max') ?? '' });
+            }
+          }
+          let gr = g.id && p.thegraphics.get(g.id);
+          if (gr) gr.save(ga);
+          else {
+            gr = p.thegraphics.create({ ...ga, left: g.left, top: g.top });
+            await sleep(800);
+            // 캐릭터 토큰을 처음 놓을 때 그 토큰을 캐릭터의 기본 토큰(저널에서 끌어다 놓을 때 쓰이는 것)으로도 저장한다.
+            if (c) await c.saveDefaultToken(gr.toJSON());
+          }
+          out.graphics[g.gkey] = gr.id;
+        }
+      } catch (e) {
+        out.action = 'error';
+        out.error = e.message;
+      }
+      results.push(out);
+    }
+    if (back) await Campaign.switchPageById(back);
+    return results;
+  }
+
   function remove(id, kind = 'handout') {
     const m = KINDS[kind].coll().get(id);
     if (!m) return false;
@@ -180,5 +242,5 @@ window.R20H = (() => {
     return true;
   }
 
-  return { ready, players, list, read, upsert, remove };
+  return { ready, players, list, read, upsert, upsertPages, remove };
 })();
