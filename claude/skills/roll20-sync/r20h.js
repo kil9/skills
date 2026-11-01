@@ -81,9 +81,12 @@ window.R20H = (() => {
   // sheet: {attr: value, repeating_<section>: [{name, ...fields}]}
   // 반복 줄은 같은 섹션 안에서 name 필드가 같은 줄을 고치고, 없으면 새 줄을 만든다. 원본에 없는 줄은 건드리지 않는다.
   async function applySheet(c, sheet) {
-    // 시트를 열어 둬야 시트 워커(파생값 계산)가 돈다.
+    // 시트를 열어 둬야 시트 워커(파생값 계산)가 돈다. 단 속성을 다 불러오기 전에 열면 시트가 빈 캐릭터로
+    // 여기고 초기화(기본 물품 중복 생성, 행동 점수를 플레이북 초기값으로 되돌림)를 다시 돌린다. 반드시 먼저 불러온다.
+    for (let i = 0; i < 6 && (await loadAttribs(c)).length === 0; i++) await sleep(500);
     c.view.showDialog();
-    for (let i = 0; i < 20 && (await loadAttribs(c)).length === 0; i++) await sleep(500);
+    await sleep(3000);
+    await loadAttribs(c);
     // 플레이북 이름을 바꾸면 시트 워커가 기본 능력·물품·지인을 채우고 행동 점수·설명을 초기값으로 덮는다.
     // 그래서 플레이북을 먼저 쓰고 자동 채움이 끝난 뒤 나머지를 쓴다.
     if ('playbook' in sheet) {

@@ -26,7 +26,7 @@ frontmatter 는 YAML 이다. 본문은 마크다운이고 HTML 로 바뀌어 핸
 name: 아드릭
 visible_to: all              # gm | all | [플레이어 표시 이름, …]  — 저널에서 보이는 사람
 controlled_by: [앨리스]      # 캐릭터만. 같은 형식 — 시트를 고칠 수 있는 사람
-avatar: https://…            # 선택. 공개로 받을 수 있는 URL 이어야 한다
+avatar: ../../assets/x.jpg   # 선택. 이 파일 기준 상대 경로(아래 '그림') 또는 공개 URL
 archived: false              # 선택
 sheet:                       # 캐릭터만. 시트 속성 이름: 값
   alias: 그림자
@@ -52,6 +52,15 @@ GM 메모
 - 시트 속성 이름은 시트마다 다르다. 모르면 기존 캐릭터를 `R20H.read(id, 'character')` 로 읽어
   `attribs` 의 키를 본다.
 - 게임 ID 는 게임 화면 URL(`/editor/setcampaign/<id>`)이나 페이지의 `window.campaign_id` 로 안다.
+
+## 그림
+
+`avatar` 나 본문의 `![](경로)` 에 저장소 안 그림 경로를 적으면, `build` 가 그 파일을 공개 그림 저장소에 내용 해시 이름
+(`i/<sha256 앞 20자>.jpg`)으로 넣고 커밋·push 한 뒤 공개 주소가 열릴 때까지 기다렸다가 그 주소로 바꿔 넣는다.
+같은 그림은 같은 주소, 그림을 고치면 새 주소가 된다. 설정은 `roll20.json` 의
+`"assets": {"dir": "<그림 저장소 로컬 클론>", "base_url": "<공개 주소>"}`. 플레이어 브라우저가 그림을 직접 받으므로
+private 저장소 주소는 못 쓴다. 공개 저장소에 올라간 그림은 누구나 볼 수 있다 — 공개되면 안 되는 그림(공개 전
+비밀 카드)은 공개할 때 원본에 넣는다.
 
 ## 단계
 
@@ -95,6 +104,10 @@ GM 메모
   남는다. 둘 다 화면에 정상으로 렌더링된다. `R20H.read` 가 해독해 준다.
 - `inplayerjournals`·`controlledby` 는 `''`(GM 만), `'all'`, 또는 플레이어 id 쉼표 목록이다.
 - 캐릭터 시트 속성(`c.attribs`)은 처음엔 비어 있다. `c.attribs.fetch(c.attribs)` 로 불러와야 보인다.
+- **시트 창은 반드시 `c.attribs.fetch()` 로 속성을 다 불러온 뒤에 연다.** 새 탭에서 불러오기 전에
+  `c.view.showDialog()` 하면 시트가 빈 캐릭터로 여겨 초기화를 다시 돌린다 — 기본 물품 16줄과 빈 자동 표시 줄이
+  한 벌 더 생기고 행동 점수가 플레이북 초기값으로 돌아갔다(복구: 같은 이름 줄 중 하나만 남기고 원본 재반영).
+  `applySheet` 가 이 순서를 지킨다. 사용자가 롤20 화면에서 시트를 여는 것은 문제없다.
 - **시트 워커(파생값 계산)는 시트 창이 열려 있을 때만 돈다.** 그래서 `applySheet` 가 먼저
   `c.view.showDialog()` 로 시트를 연다. 열린 채로 `hunt`·`study` 를 쓰면 `insight` 가 따라 바뀌는 것을
   확인했다(Blades in the Dark 시트 v3.11).
