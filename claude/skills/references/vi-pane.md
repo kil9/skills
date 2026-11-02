@@ -33,6 +33,7 @@ VI_PANE=$(hc run --bg --rm --no-notify --label herdr.space="$SPACE" --label herd
 ```
 
 - 닫기: `hc kill "$VI_PANE"`. `--rm` 이라 앱에서 pane 도 빠진다. 이미 닫혔으면(`not_found`) 에러를 무시한다.
+  `hc send "$VI_PANE" ":q"` 로 닫으려 하지 않는다 — send 는 붙여넣기라 `:q` 가 버퍼에 글자로 들어간다.
 - **편집기는 `$ED` 절대경로로 넘긴다.** `hc run` 은 셸을 거치지 않아 `alias vi='nvim'`(kil9conf
   `rc/aliases`)이 먹지 않고 `/usr/bin/vi`(vim)가 뜬다. hc 터미널의 PATH 에는 `~/.local/bin` 도 없어
   이름만 `nvim` 으로 주면 `/usr/bin/nvim`(구버전)이 뜬다(2026-11-02 실측).
