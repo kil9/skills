@@ -27,13 +27,16 @@ SPACE=$(hc get "$HC_TERMINAL_ID" | jq -r '.labels["herdr.space"]')
 TAB=$(hc get "$HC_TERMINAL_ID" | jq -r '.labels["herdr.tab"]')
 ED=$(command -v nvim || command -v vi)
 VI_PANE=$(hc run --bg --rm --no-notify --label herdr.space="$SPACE" --label herdr.tab="$TAB" --cwd "$(pwd)" \
-  "'$ED' '/abs/path/doc.md'; exec \"\${SHELL:-sh}\" -i" | jq -r .address)  # 편집용: 결과를 회수한다
+  "sleep 1; '$ED' '/abs/path/doc.md'; exec \"\${SHELL:-sh}\" -i" | jq -r .address)  # 편집용: 결과를 회수한다
 VI_PANE=$(hc run --bg --rm --no-notify --label herdr.space="$SPACE" --label herdr.tab="$TAB" --cwd "$(pwd)" \
-  "$ED" -o /abs/1.md /abs/2.md | jq -r .address)                            # 보기용: :q 로 pane 이 닫힌다
+  "sleep 1; '$ED' -o /abs/1.md /abs/2.md" | jq -r .address)                # 보기용: :q 로 pane 이 닫힌다
 ```
 
 - 닫기: `hc kill "$VI_PANE"`. `--rm` 이라 앱에서 pane 도 빠진다. 이미 닫혔으면(`not_found`) 에러를 무시한다.
   `hc send "$VI_PANE" ":q"` 로 닫으려 하지 않는다 — send 는 붙여넣기라 `:q` 가 버퍼에 글자로 들어간다.
+- **편집기를 `sleep 1` 뒤에 띄운다.** 앱이 pane 크기를 정하기 전에 뜬 nvim 은 크기를 잘못 잡아 줄과
+  상태줄이 겹쳐 반복되는 깨진 화면이 되고, `ctrl+l` 로도 안 돌아온다(2026-11-02 실측, 두 번째 띄울 때 발생).
+  확인은 `hc read <pane>` 에 본문 첫 줄이 보이는지로 한다. 화면에 비밀이 있으면 가려서 읽는다.
 - **편집기는 `$ED` 절대경로로 넘긴다.** `hc run` 은 셸을 거치지 않아 `alias vi='nvim'`(kil9conf
   `rc/aliases`)이 먹지 않고 `/usr/bin/vi`(vim)가 뜬다. hc 터미널의 PATH 에는 `~/.local/bin` 도 없어
   이름만 `nvim` 으로 주면 `/usr/bin/nvim`(구버전)이 뜬다(2026-11-02 실측).
