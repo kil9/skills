@@ -18,7 +18,7 @@
 
 작성한 파일 경로를 사용자에게 알리고, 에디터로 직접 수정할 수 있게 안내한다(이슈는 title 도 첫 H1 라인에서 편집 가능). 본문 미리보기를 채팅에 다시 붙여 넣지 않는다 — 파일이 정본이다.
 
-**herdr 안이면(`HERDR_ENV=1`) 경로 안내에 그치지 말고 옆 pane 에 vi 를 바로 열어 준다**(밖이면 생략). 레시피는 [`~/.claude/skills/references/vi-pane.md`](../../references/vi-pane.md) 의 편집용(`; exit` 없이)이고, §9-4 정리 때(업로드·취소 모두) 그 pane 을 닫는다.
+**herdr 안이면(TUI·앱 모두) 경로 안내에 그치지 말고 옆 pane 에 vi 를 바로 열어 준다**(밖이면 생략). 레시피는 [`~/.claude/skills/references/vi-pane.md`](../../references/vi-pane.md) 에서 TUI·앱 중 맞는 절의 편집용이고, §9-4 정리 때(업로드·취소 모두) 그 pane 을 닫는다.
 
 ### 9-2. 사용자 확인 (AskUserQuestion)
 
@@ -59,6 +59,6 @@ gh pr comment   <대상> --body-file "$gitdir/COMMENT_DRAFT.md"    # PR 코멘�
 - **지우기 전에 `diff -u "{초안}.orig" "{초안}"` 을 먼저 뜬다** — 이 diff 가 SKILL.md §10 의 입력이다. 파일을 지우고 나면 사용자가 뭘 고쳤는지 되찾을 수 없으니 순서를 지킨다.
 - 그 다음 임시 파일을 삭제한다 (이슈: `rm -f "$gitdir/ISSUE_DRAFT.md" "$gitdir/ISSUE_DRAFT.md.orig" "$gitdir/ISSUE_BODY.md"`, 코멘트: `rm -f "$gitdir/COMMENT_DRAFT.md" "$gitdir/COMMENT_DRAFT.md.orig"`). 업로드 성공·취소 모두 수행한다.
 - 게시하지 않는 글(`PR_DRAFT.md` 등)은 **초안 본체를 지우지 않는다** — 사용자가 그 파일을 그대로 쓴다. `.orig` 스냅샷만 지운다.
-- vi pane 을 열었으면 `herdr pane close "$VI_PANE"` (이미 닫혔으면 에러 무시).
+- vi pane 을 열었으면 vi-pane.md 의 '닫기'로 닫는다(이미 닫혔으면 에러 무시).
 - 생성된 이슈/코멘트 URL 을 사용자에게 알린다.
 - 마지막으로 SKILL.md §10 을 수행한다(diff 가 비었으면 생략).
