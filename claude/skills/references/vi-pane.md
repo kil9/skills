@@ -25,13 +25,17 @@ herdr pane run "$VI_PANE" "vi -o '/abs/1.md' '/abs/2.md'; exit"  # 보기용: :q
 ```bash
 SPACE=$(hc get "$HC_TERMINAL_ID" | jq -r '.labels["herdr.space"]')
 TAB=$(hc get "$HC_TERMINAL_ID" | jq -r '.labels["herdr.tab"]')
+ED=$(command -v nvim || command -v vi)
 VI_PANE=$(hc run --bg --rm --no-notify --label herdr.space="$SPACE" --label herdr.tab="$TAB" --cwd "$(pwd)" \
-  "vi '/abs/path/doc.md'; exec \"\${SHELL:-sh}\" -i" | jq -r .address)    # 편집용: 결과를 회수한다
+  "'$ED' '/abs/path/doc.md'; exec \"\${SHELL:-sh}\" -i" | jq -r .address)  # 편집용: 결과를 회수한다
 VI_PANE=$(hc run --bg --rm --no-notify --label herdr.space="$SPACE" --label herdr.tab="$TAB" --cwd "$(pwd)" \
-  vi -o /abs/1.md /abs/2.md | jq -r .address)                               # 보기용: :q 로 pane 이 닫힌다
+  "$ED" -o /abs/1.md /abs/2.md | jq -r .address)                            # 보기용: :q 로 pane 이 닫힌다
 ```
 
 - 닫기: `hc kill "$VI_PANE"`. `--rm` 이라 앱에서 pane 도 빠진다. 이미 닫혔으면(`not_found`) 에러를 무시한다.
+- **편집기는 `$ED` 절대경로로 넘긴다.** `hc run` 은 셸을 거치지 않아 `alias vi='nvim'`(kil9conf
+  `rc/aliases`)이 먹지 않고 `/usr/bin/vi`(vim)가 뜬다. hc 터미널의 PATH 에는 `~/.local/bin` 도 없어
+  이름만 `nvim` 으로 주면 `/usr/bin/nvim`(구버전)이 뜬다(2026-11-02 실측).
 - **레이블이 `null` 이면 이 터미널은 앱 화면 밖이다.** 띄워도 어느 탭에도 안 보이니 경로만 알린다.
   레이블 없이 `hc run --bg vi` 만 하면 사용자는 그 vi 를 볼 방법이 없다.
 - **`--rm` 을 뺀 채 띄우지 않는다.** 빼면 vi 가 끝난 뒤에도 끝난 터미널이 pane 을 차지한다.
