@@ -9,6 +9,7 @@ cd "$repo_root"
 # (kil9conf task-441·442 — 예방 기계의 유지보수가 그것이 막은 사고보다 많았다).
 scripts=(
   claude/skills/sync/sync-repo.sh
+  claude/skills/all-sync/all-sync.sh
   claude/skills/cip/cip-push.sh
   claude/skills/references/backlog-context.sh
   claude/skills/references/backlog-start-guard.sh
