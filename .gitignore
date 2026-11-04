@@ -4,3 +4,5 @@
 */skills/paste-image/tmp/
 __pycache__/
 *.pyc
+*/skills/web-show/host.local
+*/skills/web-show/host.cache
