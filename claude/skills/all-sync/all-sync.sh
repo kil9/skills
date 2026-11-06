@@ -7,8 +7,11 @@ set -euo pipefail
 #   > `hc machine ls` 의 등록 머신(Herdr). 각 항목은 'name' 또는 'name=ssh대상'.
 # 원격은 stash·rebase 없이 `git pull --ff-only` 만 한다 — 그 머신에서 도는 세션의 dirty 변경을 건드리지 않고,
 # 갈라졌으면 손대지 않고 보고한다. 체크아웃 경로는 머신마다 달라서(D:\work\x · ~/x · ~/work/x) 리모트 URL 로 찾는다.
+# kil9conf 처럼 루트에 bootstrap/apply-kil9conf.sh 가 있는 repo 는 pull 이 ok·pulled 로 끝난 머신에서 재적용까지
+# 돌린다 — pull 만으로는 dotfile·mod·키가 그 머신에 얹히지 않는다. Windows(Git Bash)는 Apply-Kil9conf.ps1 -NoSync.
+# 재적용이 실패하면 상태를 apply-fail 로 바꾼다. ALL_SYNC_NO_APPLY=1 이면 재적용을 건너뛴다.
 # 출력: 머신마다 한 줄 'name<TAB>상태<TAB>경로<TAB>설명'.
-# 상태: ok | pulled | skip(그 머신이 upstream 에 못 닿음) | behind | diverged | dirty-conflict | notfound | unreachable | error.
+# 상태: ok | pulled | skip(그 머신이 upstream 에 못 닿음) | apply-fail | behind | diverged | dirty-conflict | notfound | unreachable | error.
 # 종료 코드: 모두 ok·pulled·skip 이면 0, 아니면 1.
 
 top=$(git rev-parse --show-toplevel 2>/dev/null) || { echo "git 저장소 안에서 실행하세요" >&2; exit 2; }
@@ -37,9 +40,9 @@ for m in json.load(sys.stdin).get("machines", []):
 fi
 [ ${#hosts[@]} -gt 0 ] || { echo "대상 머신이 없습니다 — 인자·ALL_SYNC_HOSTS·~/.claude/all-sync-hosts.conf 중 하나로 지정하세요" >&2; exit 2; }
 
-# 원격에서 도는 부분. 인자: repo 이름, 로컬 HEAD, 정규화한 리모트 URL 들.
+# 원격에서 도는 부분. 인자: repo 이름, 로컬 HEAD, 재적용 여부(1/0), 정규화한 리모트 URL 들.
 remote_script='
-name=$1 sha=$2; shift 2
+name=$1 sha=$2 apply=$3; shift 3
 norm() { sed -E "s#^[a-z+]+://##; s#^[^@/]+@##; s#:([^0-9/])#/\1#; s#\.git/?\$##; s#/\$##" <<<"$1" | tr "A-Z" "a-z"; }
 found=
 for d in "$HOME/$name" "$HOME/work/$name" "$HOME"/work/*/"$name" "$HOME"/*/"$name"; do
@@ -57,6 +60,15 @@ if out=$(git pull --ff-only -q 2>&1); then
   note=""; [ "$dirty" != 0 ] && note=" (커밋 안 된 변경 ${dirty}개는 그대로 둠)"
   if git merge-base --is-ancestor "$sha" HEAD 2>/dev/null; then st=ok; [ "$before" != "$after" ] && st=pulled
   else st=behind; note="$note — 로컬 HEAD ${sha:0:8} 가 아직 이 머신 upstream 에 없음(그 리모트로 push 됐는지 확인)"; fi
+  if [ "$apply" = 1 ] && [ "$st" != behind ] && [ -f bootstrap/apply-kil9conf.sh ]; then
+    case $(uname -s) in
+      MINGW*|MSYS*|CYGWIN*) aout=$(pwsh -NoProfile -File bootstrap/Apply-Kil9conf.ps1 -NoSync 2>&1); arc=$? ;;
+      *) aout=$(bash -lc "bash bootstrap/apply-kil9conf.sh" 2>&1); arc=$? ;;
+    esac
+    asum=$(grep -a "apply-kil9conf:" <<<"$aout" | tail -1)
+    if [ "$arc" = 0 ]; then note="$note · apply: ${asum:-OK}"
+    else st=apply-fail; note="$note · apply rc=$arc: $(grep -a -E "FAIL|apply-kil9conf:|logs:" <<<"$aout" | tail -4 | tr "\n" " " | cut -c1-300)"; fi
+  fi
   printf "%s\t%s\t%s -> %s%s\n" "$st" "$found" "$before" "$after" "$note"
 else
   st=error
@@ -68,13 +80,14 @@ else
 fi
 '
 
+apply=1; [ "${ALL_SYNC_NO_APPLY:-}" = 1 ] && apply=0
 tmp=$(mktemp -d "${TMPDIR:-/tmp}/all-sync.XXXXXX")
 trap 'rm -rf "$tmp"' EXIT
 i=0
 for h in "${hosts[@]}"; do
   label=${h%%=*}; target=${h#*=}
   (
-    if r=$(ssh -o BatchMode=yes -o ConnectTimeout=10 "$target" bash -s -- "$name" "$sha" "${keys[@]}" <<<"$remote_script" 2>"$tmp/$i.err"); then
+    if r=$(ssh -o BatchMode=yes -o ConnectTimeout=10 "$target" bash -s -- "$name" "$sha" "$apply" "${keys[@]}" <<<"$remote_script" 2>"$tmp/$i.err"); then
       printf "%s\t%s\n" "$label" "${r:-error	-	빈 응답}"
     else
       printf "%s\tunreachable\t-\t%s\n" "$label" "$(tr '\n' ' ' < "$tmp/$i.err" | cut -c1-200)"

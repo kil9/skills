@@ -14,9 +14,15 @@ allowed_tools: [Bash, Read, Skill]
    머신 목록·체크아웃 찾는 법·상태 값은 스크립트 머리 주석이 정본이다. 원격은 `pull --ff-only` 만 한다 —
    그 머신의 세션이 쓰는 dirty 변경을 stash 하지 않으려는 것이니 **실패를 rebase·stash·reset 으로 풀지 않는다.**
    완료 기준: 모든 머신이 한 줄씩 상태를 냈다.
+
+   repo 루트에 `bootstrap/apply-kil9conf.sh` 가 있으면(kil9conf) 스크립트가 pull 이 ok·pulled 로 끝난 머신에서
+   재적용까지 돌린다(머신당 수 분). 이 머신도 `Skill("apply-kil9conf")` 의 1단계(오케스트레이터)를 돌린다 —
+   0단계 /sync 는 1에서 끝났다. 재적용을 빼려면 `ALL_SYNC_NO_APPLY=1`.
 3. **보고**: 머신마다 상태 한 줄. ok·pulled·skip 이 아닌 것은 이유와 사용자가 할 일을 붙인다.
    - `diverged`: 그 머신에 push 안 된 커밋이 있다 — 그 머신에서 `/sync`.
    - `dirty-conflict`: 받을 변경이 그 머신의 커밋 안 된 파일과 겹친다 — 그 머신 세션이 정리한 뒤 다시.
    - `behind`: 그 머신의 upstream 리모트에 로컬 커밋이 아직 없다(다른 리모트로만 push 됨).
    - `notfound`·`unreachable`: 체크아웃이 없거나 ssh 가 안 닿았다. 그대로 알린다.
-   pull 만으로 반영되지 않는 repo(그 머신에서 설치·재적용 단계가 따로 있는 dotfile·mod 등)면 그 사실을 한 줄 덧붙인다.
+   - `apply-fail`: pull 은 됐는데 그 머신의 재적용이 실패했다 — 줄의 FAIL 단계·로그 경로를 붙이고 그 머신에서 `/apply-kil9conf`.
+   - 재적용이 SKIP 한 단계(예: Herdr 앱이 없는 머신의 `herdr-app-keys`) 중 이번 변경과 관련된 것이 있으면 한 줄 덧붙인다.
+   재적용하지 않는 repo 중 pull 만으로 반영되지 않는 repo(그 머신에서 설치·재적용 단계가 따로 있는 dotfile·mod 등)면 그 사실을 한 줄 덧붙인다.
