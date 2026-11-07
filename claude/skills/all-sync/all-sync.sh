@@ -87,6 +87,17 @@ i=0
 for h in "${hosts[@]}"; do
   label=${h%%=*}; target=${h#*=}
   (
+    # fail-fast: ProxyJump 경유 호스트가 ControlMaster 로 붙는 곳(FastID 같은 대화형 인증 게이트웨이)이면 master 가
+    # 살아 있을 때만 접속한다. master 가 없으면 점프 ssh 가 새로 로그인하며 승인을 기다리다(푸시까지 보낸 채) 수십 초
+    # 뒤 거부된다 — BatchMode 는 점프 ssh 에 안 넘어간다. 그 대기 없이 바로 unreachable 로 낸다.
+    jump=$(ssh -G "$target" 2>/dev/null | awk '$1=="proxyjump"{print $2; exit}')
+    jump=${jump%%,*}
+    if [ -n "$jump" ] && [ "$jump" != none ] \
+       && cp=$(ssh -G "$jump" 2>/dev/null | awk '$1=="controlpath"{print $2; exit}') && [ -n "$cp" ] && [ "$cp" != none ] \
+       && ! ssh -O check "$jump" 2>/dev/null; then
+      printf "%s\tunreachable\t-\t경유 호스트 %s 의 master 연결이 없다 — 그쪽에 먼저 로그인한 뒤 다시\n" "$label" "$jump"
+      exit 0
+    fi
     if r=$(ssh -o BatchMode=yes -o ConnectTimeout=10 "$target" bash -s -- "$name" "$sha" "$apply" "${keys[@]}" <<<"$remote_script" 2>"$tmp/$i.err"); then
       printf "%s\t%s\n" "$label" "${r:-error	-	빈 응답}"
     else
