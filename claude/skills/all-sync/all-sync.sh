@@ -17,6 +17,16 @@ set -euo pipefail
 top=$(git rev-parse --show-toplevel 2>/dev/null) || { echo "git 저장소 안에서 실행하세요" >&2; exit 2; }
 PY=$(command -v python3 || command -v python || true)
 
+# Git Bash 의 HOME 이 %USERPROFILE% 가 아닌 Windows 머신(k9pc4080s 는 D:\work)에서는 ssh 가 엉뚱한 ~/.ssh 를 읽어
+# 계정(User kil9)·HostName·known_hosts 를 못 찾는다. Herdr 앱·Windows OpenSSH 가 쓰는 %USERPROFILE%\.ssh 를 쓰게 한다.
+# msys ssh 는 $HOME 을 바꿔도 따르지 않아 -F·UserKnownHostsFile 로 직접 준다(2026-11-07 실측).
+SSH_OPTS=()
+if [ -n "${USERPROFILE:-}" ] && command -v cygpath >/dev/null 2>&1; then
+  up=$(cygpath -u "$USERPROFILE")
+  [ "$up" != "$HOME" ] && [ -f "$up/.ssh/config" ] && SSH_OPTS=(-F "$up/.ssh/config" -o "UserKnownHostsFile=$up/.ssh/known_hosts")
+fi
+ssh() { command ssh ${SSH_OPTS[@]+"${SSH_OPTS[@]}"} "$@"; }
+
 # URL 을 'host/owner/repo' 로 맞춘다: git@h:o/r.git · https://u@h/o/r · ssh://git@h/o/r 모두 같은 값이 된다.
 norm() { sed -E 's#^[a-z+]+://##; s#^[^@/]+@##; s#:([^0-9/])#/\1#; s#\.git/?$##; s#/$##' <<<"$1" | tr 'A-Z' 'a-z'; }
 
