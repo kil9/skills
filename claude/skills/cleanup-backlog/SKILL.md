@@ -1,5 +1,5 @@
 ---
-description: backlog 의 완료(Done) 태스크를 backlog/archive/tasks/ 로 옮기고, 그 결과 남은 일이 없어진 마일스톤을 아카이브한다. "완료 태스크 정리 / done 정리 / 보드 정리" 요청, 또는 태스크 작업 흐름에서 Done 이 임계치 이상 쌓였을 때.
+description: backlog 의 완료(Done) 태스크를 backlog/archive/tasks/ 로 옮기고, 그 결과 남은 일이 없어진 마일스톤을 아카이브한다. "완료 태스크 정리 / done 정리 / 보드 정리" 요청, 또는 태스크를 Done 으로 닫는 스킬(/start-backlog·/ask-backlog)이 끝날 때 항상.
 allowed_tools: [Bash, Read, Grep]
 ---
 
