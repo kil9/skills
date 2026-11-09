@@ -26,21 +26,41 @@ herdr pane run "$VI_PANE" "vi -o '/abs/1.md' '/abs/2.md'; exit"  # 보기용: :q
 SPACE=$(hc get "$HC_TERMINAL_ID" | jq -r '.labels["herdr.space"]')
 TAB=$(hc get "$HC_TERMINAL_ID" | jq -r '.labels["herdr.tab"]')
 ED=$(command -v nvim || command -v vi)
-WAIT='s0=$(stty size); i=0; while [ "$(stty size)" = "$s0" ] && [ $i -lt 30 ]; do sleep 0.1; i=$((i+1)); done; sleep 0.3'
+SOCK="${XDG_RUNTIME_DIR:-${TMPDIR:-/tmp}}/vi-pane-$HC_TERMINAL_ID-$(date +%s).sock"   # 크기 점검용, 기억해 둔다
+case "$ED" in *nvim) LISTEN="--listen '$SOCK'" ;; *) LISTEN="" ;; esac
+WAIT='i=0; while [ "$(stty size)" = "120 200" ] && [ $i -lt 50 ]; do sleep 0.1; i=$((i+1)); done; sleep 0.3'
 VI_PANE=$(hc run --bg --rm --no-notify --label herdr.space="$SPACE" --label herdr.tab="$TAB" --cwd "$(pwd)" \
-  "$WAIT; '$ED' '/abs/path/doc.md'; exec \"\${SHELL:-sh}\" -i" | jq -r .address)  # 편집용: 결과를 회수한다
+  "$WAIT; '$ED' $LISTEN '/abs/path/doc.md'; exec \"\${SHELL:-sh}\" -i" | jq -r .address)  # 편집용: 결과를 회수한다
 VI_PANE=$(hc run --bg --rm --no-notify --label herdr.space="$SPACE" --label herdr.tab="$TAB" --cwd "$(pwd)" \
-  "$WAIT; '$ED' -o /abs/1.md /abs/2.md" | jq -r .address)                  # 보기용: :q 로 pane 이 닫힌다
+  "$WAIT; '$ED' $LISTEN -o /abs/1.md /abs/2.md" | jq -r .address)                  # 보기용: :q 로 pane 이 닫힌다
+```
+
+띄운 직후 nvim 이 아는 크기와 pane 크기를 맞춰 본다(`$ED` 가 nvim 일 때만, 최대 10초):
+
+```bash
+for i in $(seq 20); do
+  HC=$(hc get "$VI_PANE" | jq -r '"\(.cols) \(.rows)"')
+  NV=$([ -S "$SOCK" ] && "$ED" --server "$SOCK" --remote-expr 'printf("%d %d", &columns, &lines)')
+  [ -n "$NV" ] && [ "$HC" = "$NV" ] && [ "$HC" != "200 120" ] && break
+  sleep 0.5
+done
+[ -n "$NV" ] && [ "$HC" != "$NV" ] && \
+  "$ED" --server "$SOCK" --remote-send "<C-\\><C-N>:set columns=${HC% *} lines=${HC#* } | redraw!<CR>"
 ```
 
 - 닫기: `hc kill "$VI_PANE"`. `--rm` 이라 앱에서 pane 도 빠진다. 이미 닫혔으면(`not_found`) 에러를 무시한다.
   `hc send "$VI_PANE" ":q"` 로 닫으려 하지 않는다 — send 는 붙여넣기라 `:q` 가 버퍼에 글자로 들어간다.
-- **편집기는 `$WAIT` 뒤에 띄운다(고정 `sleep` 금지).** 앱이 터미널을 기본 200x120 으로 만든 뒤 실제 pane
-  크기를 늦게 보내는데, 그 신호가 nvim 기동 도중에 닿으면 줄과 상태줄이 겹쳐 반복되는 깨진 화면이 되고
-  `ctrl+l` 로도 안 돌아온다. 크기 신호는 약 1.2초에 오기도 하고 끝내 안 오기도 한다(안 오면 200x120 그대로도
-  정상으로 보인다). `sleep 1` 은 nvim 기동을 바로 그 1.2초에 겹치게 해 오히려 깨졌다(2026-11-04 재발).
-  `$WAIT` 는 크기가 바뀌면 0.3초 뒤, 3초 안에 안 바뀌면 그때 띄운다.
-  확인은 `hc read <pane>` 에 본문 첫 줄이 보이는지로 한다. 화면에 비밀이 있으면 가려서 읽는다.
+- **편집기는 `$WAIT` 뒤에 띄운다(고정 `sleep` 금지).** 앱이 터미널을 기본 200x120(`stty size` 로는
+  `120 200`)으로 만든 뒤 실제 pane 크기를 늦게 보낸다. 크기 신호는 약 1.2초에 오기도 하고 끝내 안 오기도
+  한다(안 오면 200x120 그대로도 정상으로 보인다). `sleep 1` 은 nvim 기동을 바로 그 1.2초에 겹치게 해
+  깨졌고(2026-11-04), "크기가 바뀔 때까지 3초"도 신호가 3초 뒤에 오자 깨졌다(2026-11-09). 그래서 `$WAIT` 는
+  기본값 `120 200` 을 벗어나면 0.3초 뒤, 5초가 지나면 그냥 띄운다.
+- **띄운 뒤 크기 점검을 빼지 않는다.** 기동 뒤에 늦게 온 크기 신호를 nvim 0.12 가 놓치면 200x120 으로 계속
+  그려서 67칸 pane 이 그 줄을 접어 보여 준다 — 상태줄 조각이 세로로 쌓이고 줄 끝 글자가 떨어져 나온다.
+  `ctrl+l` 도, nvim 에 `kill -WINCH` 도 안 통했고 `:set columns= lines=` 는 통했다(2026-11-09 calcium 실측,
+  nvim 0.12.4). 점검이 그 명령을 원격으로 보낸다. 사용자가 이미 고치고 있을 때 끼어들지 않도록 기동 직후
+  10초 안에만 하고, 맞으면 아무것도 보내지 않는다.
+  눈으로 확인할 때는 `hc read <pane>` 에 본문 첫 줄이 보이는지 본다. 화면에 비밀이 있으면 가려서 읽는다.
 - **편집기는 `$ED` 절대경로로 넘긴다.** `hc run` 은 셸을 거치지 않아 `alias vi='nvim'`(kil9conf
   `rc/aliases`)이 먹지 않고 `/usr/bin/vi`(vim)가 뜬다. hc 터미널의 PATH 에는 `~/.local/bin` 도 없어
   이름만 `nvim` 으로 주면 `/usr/bin/nvim`(구버전)이 뜬다(2026-11-02 실측).
