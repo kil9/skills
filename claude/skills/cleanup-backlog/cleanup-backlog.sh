@@ -180,23 +180,32 @@ if [ "${#MOVE[@]}" -eq 0 ] && [ "${#MS_MOVE[@]}" -eq 0 ]; then
 fi
 if [ "$DRY" -eq 1 ]; then echo "(dry-run: 실제 이동/커밋 안 함)"; exit 0; fi
 
-[ "${#MOVE[@]}" -gt 0 ] && mkdir -p "$DONE_DIR"
-for f in ${MOVE[@]+"${MOVE[@]}"}; do git mv "$f" "$DONE_DIR/$(basename "$f")"; done
-if [ "${#MS_MOVE[@]}" -gt 0 ]; then
-  mkdir -p "$MS_ARCHIVE"
-  for f in "${MS_MOVE[@]}"; do git mv "$f" "$MS_ARCHIVE/$(basename "$f")"; done
-fi
-
-# 커밋 범위는 우리가 옮긴 파일의 옛/새 경로만 준다. 디렉터리를 주면 (a) 보드를 완전히
+# backlog/ 가 gitignore 대상이거나 아직 add 안 된 파일은 git 이 모르므로 git mv 가
+# 'not under version control' 로 죽는다 — 앞선 파일만 옮겨진 채 커밋 없이 멈춘다(2026-11-09
+# scopic-api, backlog/ 가 .gitignore 에 있음). 파일마다 추적 여부를 보고 아니면 평범한 mv 로
+# 옮기며, 그런 파일은 커밋 범위에서 뺀다.
+#
+# 커밋 범위는 우리가 git mv 한 파일의 옛/새 경로만 준다. 디렉터리를 주면 (a) 보드를 완전히
 # 비운 뒤 재실행할 때 빈 backlog/tasks 가 'pathspec did not match' 로 죽고, (b) 옆
 # 세션이 backlog 에 만들어 둔 다른 변경까지 쓸어담는다.
 declare -a COMMIT_PATHS=()
-for f in ${MOVE[@]+"${MOVE[@]}"}; do
-  COMMIT_PATHS+=("$f" "$DONE_DIR/$(basename "$f")")
-done
-for f in ${MS_MOVE[@]+"${MS_MOVE[@]}"}; do
-  COMMIT_PATHS+=("$f" "$MS_ARCHIVE/$(basename "$f")")
-done
+untracked_n=0
+move_one() {  # $1=원본 $2=대상 디렉터리
+  local dst="$2/$(basename "$1")"
+  if git ls-files --error-unmatch -- "$1" >/dev/null 2>&1; then
+    git mv "$1" "$dst"; COMMIT_PATHS+=("$1" "$dst")
+  else
+    mv "$1" "$dst"; untracked_n=$((untracked_n+1))
+  fi
+}
+[ "${#MOVE[@]}" -gt 0 ] && mkdir -p "$DONE_DIR"
+for f in ${MOVE[@]+"${MOVE[@]}"}; do move_one "$f" "$DONE_DIR"; done
+if [ "${#MS_MOVE[@]}" -gt 0 ]; then
+  mkdir -p "$MS_ARCHIVE"
+  for f in "${MS_MOVE[@]}"; do move_one "$f" "$MS_ARCHIVE"; done
+fi
+[ "$untracked_n" -eq 0 ] || echo "  i git 이 추적하지 않는 파일 ${untracked_n}건은 mv 로 옮기고 커밋에서 뺐다(gitignore 대상이거나 미커밋)"
+if [ "${#COMMIT_PATHS[@]}" -eq 0 ]; then echo "커밋 없음(옮긴 파일이 모두 git 밖)"; exit 0; fi
 
 subject="backlog: 완료 태스크 ${#MOVE[@]}건 archive 로 정리"
 if [ "${#MS_MOVE[@]}" -gt 0 ]; then
