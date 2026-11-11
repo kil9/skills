@@ -105,8 +105,8 @@ moved process's own inherited context).
 
 **agent names** must match `[a-z][a-z0-9_-]{0,31}` and be unique among live agents; a name follows the
 pane's current occupant and is cleared when that agent exits or is replaced. agent commands take a live
-name or the hosting pane id — never a terminal id or a bare kind label. (the hololive naming rule in the
-global instructions fits: lowercase transliterations like `suisei-opus` are valid names as-is.)
+name or the hosting pane id — never a terminal id or a bare kind label. (lowercase `<role>-<model>`
+names like `reviewer-opus` are valid as-is.)
 
 ## discover yourself
 
