@@ -36,7 +36,7 @@ done
 | 에이전트 운용 | afk (기본은 묻지 않고 진행, `grill`·afk-grill 이면 출문 전에 한 번에 묻기), follow-up-auto (사용자가 다음에 칠 요청을 예측해 되돌릴 수 있는 것은 처리, 나머지는 한 번에 묻기), herdr |
 | 저장소·퍼블리시 유틸 | init-project, paste-image, publish-til, show-qr (QR 을 이미지 대신 블록 문자로 응답에 띄움), side-show (herdr 옆 pane 의 vi), web-show (산출물·개발 서버를 FQDN URL 로 브라우저에 띄움) |
 | 글쓰기 | kil9-writing-style (kil9 말투), korean-polish (한국어 윤문: daleseo/korean-skills·epoko77-ai/im-not-ai·nomadamas/k-skill 합성, MIT) |
-| 디자인 | impeccable (upstream 4.0.4, 명시 호출 전용, 내장 이미지 생성만 사용), design-loop (수상작 기준 채점·개선 반복, 고치는 손은 impeccable), kil9-design-style (kil9 화면 취향의 정본·기록장 — 위 둘이 먼저 읽는다) |
+| 디자인 | impeccable (upstream 4.0.4, 명시 호출 전용, 내장 이미지 생성만 사용), design-loop (수상작 기준 채점·개선 반복, 고치는 손은 impeccable), design-explore (구조가 다른 시안 여럿을 채점해 사용자가 고른 하나를 이식 — 레이아웃을 갈아엎는 쪽, `loop` 면 design-loop 로 이어감), kil9-design-style (kil9 화면 취향의 정본·기록장 — 위 셋이 먼저 읽는다) |
 | 개인 워크플로 | manage-gmail-inbox |
 | TRPG | roll20-sync (저장소 마크다운 → Roll20 핸드아웃·캐릭터 동기화, Chrome 확장으로 게임 화면의 페이지 JS 실행) |
 
