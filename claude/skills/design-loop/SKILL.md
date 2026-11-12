@@ -26,9 +26,11 @@ description: 프론트엔드 화면을 awwwards·Webby·FWA 수상작 수준을 
 - 캡처는 저장소 밖 임시 디렉터리에 라운드 번호를 붙여 둔다.
 - 스크린샷 직전에 마우스를 (0,0)으로 치운다(`page.mouse.move(0, 0)`). playwright 의 마우스는 `goto` 뒤에도 마지막
   클릭 위치에 남아 같은 자리의 버튼이 hover 색으로 찍히고, 채점자는 그것을 '색조가 어긋난 버튼' 결함으로 읽는다.
-- 데스크톱도 `deviceScaleFactor: 2` 로 찍는다. Linux 헤드리스 크로미움은 1배율에서 Pretendard 라틴 글자 사이를
-  벌려 그리고("Graf ana", "OT P"), 채점자는 그것을 매 라운드 '자간 깨짐' 중대 결함으로 읽는다. CSS 를 바꿔도
-  안 없어지는 캡처 환경 문제다(2026-11-12 hq.kil9.dev). 루프 도중에는 바꾸지 말고 라운드 0 부터 맞춘다.
+- 데스크톱도 `deviceScaleFactor: 2` 로 찍는다(모바일과 같은 해상도로 결함을 본다).
+- 채점자가 라틴 글자 사이 벌어짐("Graf ana", "OT P")을 짚으면 캡처 탓으로 넘기지 않는다. Pretendard **정적**
+  웹폰트(`dist/web/static/`)가 Linux 크로미움에서 배율과 상관없이 그렇게 그린다 — 실제 Linux 사용자에게도 보이는
+  결함이고, 같은 패키지의 가변 판(`dist/web/variable/pretendardvariable.min.css`, `"Pretendard Variable"`)으로
+  바꾸면 없어진다(2026-11-12 hq.kil9.dev).
 - 렌더링 수단이 없으면 **멈추고 보고한다.** 코드만 읽고 점수를 매기지 않는다.
 
 ## 2. 채점
