@@ -30,7 +30,7 @@ done
 
 | 분류 | 스킬 |
 |---|---|
-| backlog 워크플로 | add-backlog, ask-backlog, cleanup-backlog, init-backlog, migrate-to-backlog, next-backlog, start-backlog (짧은 별칭: ab·nb·sb — 프롬프트 끝에 적어도 불리도록 모델 호출을 열어 둠) |
+| backlog 워크플로 | add-backlog, ask-backlog, cleanup-backlog, init-backlog, migrate-to-backlog, next-backlog, start-backlog (짧은 별칭: ab·cb·nb·sb — 프롬프트 끝에 적어도 불리도록 모델 호출을 열어 둠) |
 | git 워크플로 | commit, cip, cipd, sync, all-sync (현재 repo 를 /sync 한 뒤 다른 머신들의 같은 체크아웃도 pull --ff-only) |
 | 에이전트 메타 | fable-advisor, grill, review-loop, skill-creator, wrap (세션을 닫기 전 기록, 옛 learn 을 흡수), zip-it |
 | 에이전트 운용 | afk (기본은 묻지 않고 진행, `grill`·afk-grill 이면 출문 전에 한 번에 묻기), follow-up-auto (사용자가 다음에 칠 요청을 예측해 되돌릴 수 있는 것은 처리, 나머지는 한 번에 묻기), herdr |

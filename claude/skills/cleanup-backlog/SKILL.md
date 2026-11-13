@@ -1,5 +1,5 @@
 ---
-description: backlog 의 완료(Done) 태스크를 backlog/archive/tasks/ 로 옮기고, 그 결과 남은 일이 없어진 마일스톤을 아카이브한다. "완료 태스크 정리 / done 정리 / 보드 정리" 요청, 또는 태스크를 Done 으로 닫는 스킬(/start-backlog·/ask-backlog)이 끝날 때 항상.
+description: backlog 의 완료(Done) 태스크를 backlog/archive/tasks/ 로 옮기고, 그 결과 남은 일이 없어진 마일스톤을 아카이브하며, 그 전에 보드가 어긋난 엔트리(제목으로 적힌 마일스톤 참조, 진행 중 태스크가 남은 보관 마일스톤 등)를 검사해 고친다. "완료 태스크 정리 / done 정리 / 보드 정리" 요청, 또는 태스크를 Done 으로 닫는 스킬(/start-backlog·/ask-backlog)이 끝날 때 항상.
 allowed_tools: [Bash, Read, Grep]
 ---
 
@@ -28,11 +28,21 @@ backlog 의 완료(Done) 태스크를 `backlog/archive/tasks/` 로 옮기고, **
 - Blocked·To Do 태스크가 하나라도 남아 있으면 그 마일스톤은 대상이 아니다(남은 태스크가 0이 아니므로 자동으로 걸러진다).
 - 아카이브는 `backlog milestone archive` 와 같은 동작인 단순 파일 이동이다. 내용은 바뀌지 않으므로 되돌리려면 `backlog/milestones/` 로 다시 옮기면 된다.
 
+## 1-2. 정합성 검사 (정리 전에 항상)
+
+`check-backlog.sh --fix` 를 먼저 돌린다. 보관 판정과 보드 표시는 마일스톤 참조가 id 일 때만 맞게 돈다 — task-87 이 milestone 을 제목으로 적어 둔 탓에 진행 중인 m-11 이 보관됐고, 보드 id 칸에 긴 제목이 접혀 그려졌다(workflow, 2026-11).
+
+- **스크립트가 고친다**(`✎`, 별도 커밋): F1 제목으로 적힌 milestone 을 id 로, F2 Done 아닌 태스크가 남은 보관 마일스톤을 `backlog/milestones/` 로 복원.
+- **알리기만 한다**(`?`): R1 어느 마일스톤과도 안 맞는 참조, R2 config 밖 status, R3 파일엔 있는데 `backlog task list` 에 안 나오는 태스크, R4 `backlog doctor` 보고. 각 줄을 읽고 원인이 분명하면 직접 고쳐 커밋하고(R1 은 비슷한 제목의 마일스톤을 찾아 id 로, R2 는 가까운 status 로), 판단이 갈리면 AskUserQuestion 으로 묻는다.
+- 스크립트가 못 잡는 이상도 사용자가 짚으면 고친 뒤 이 스크립트에 검사 항목으로 더한다.
+
 ## 2. 실행
 
 먼저 `--dry-run` 으로 이동 대상을 확인한 뒤(스킵 가능), 실제 실행한다. 스킬 디렉터리의 `cleanup-backlog.sh` 를 쓴다(경로는 이 스킬의 base directory):
 
 ```bash
+# 정합성 검사·수정(고친 것만 별도 커밋)
+"<이 스킬 base dir>/check-backlog.sh" --fix
 # 미리보기
 "<이 스킬 base dir>/cleanup-backlog.sh" --dry-run
 # 실제 정리(스크립트가 이동 + backlog 경로만 커밋)
@@ -50,4 +60,4 @@ backlog 의 완료(Done) 태스크를 `backlog/archive/tasks/` 로 옮기고, **
 
 ## 4. 보고
 
-정책, Done 총계, 이동 건수, 보드 잔류 건수, **아카이브한 마일스톤(있으면 id·제목)**, 커밋 해시(+push 여부)를 한 줄로 요약한다. dry-run 만 했으면 그 사실을 명시한다.
+정합성 결과(고친 것·확인 필요 항목, 없으면 "이상 없음")를 먼저 적고, 이어서 정책, Done 총계, 이동 건수, 보드 잔류 건수, **아카이브한 마일스톤(있으면 id·제목)**, 커밋 해시(+push 여부)를 한 줄로 요약한다. dry-run 만 했으면 그 사실을 명시한다.
