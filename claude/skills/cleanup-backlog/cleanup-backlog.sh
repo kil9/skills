@@ -144,12 +144,19 @@ MS_ARCHIVE="backlog/archive/milestones"
 # 파일명에 공백이 들어가므로 줄 단위로 담고 -Fx 로 통째 비교한다.
 moving_list="$(printf '%s\n' "${MOVE[@]-}")"
 
-count_ms() {  # $1=디렉터리 $2=마일스톤id $3=제외 목록(줄 단위, 빈 값 가능)
+# 태스크의 milestone 값은 id(m-11) 대신 제목으로 적혀 있기도 하다(CLI 가 둘 다 받는다). id 만
+# 보면 제목으로 묶인 진행 중 태스크를 못 세어 살아 있는 마일스톤을 아카이브한다.
+ms_match() {  # $1=태스크 파일 $2=마일스톤id $3=마일스톤 제목
+  local v; v="$(fm milestone "$1")"
+  [ -n "$v" ] && { [ "$v" = "$2" ] || [ "$v" = "$3" ]; }
+}
+
+count_ms() {  # $1=디렉터리 $2=마일스톤id $3=제외 목록(줄 단위, 빈 값 가능) $4=마일스톤 제목
   local n=0 f
   for f in "$1"/task-*.md; do
     [ -e "$f" ] || continue
     if [ -n "$3" ] && printf '%s\n' "$3" | grep -Fxq -- "$f"; then continue; fi
-    if [ "$(fm milestone "$f")" = "$2" ]; then n=$((n+1)); fi
+    if ms_match "$f" "$2" "$4"; then n=$((n+1)); fi
   done
   echo "$n"
 }
@@ -160,18 +167,19 @@ if [ -d "$MS_DIR" ]; then
     [ -e "$msf" ] || continue
     mid="$(fm id "$msf")"
     [ -n "$mid" ] || mid="$(basename "$msf" | sed 's/ .*//')"
-    left="$(count_ms "$TASKS_DIR" "$mid" "$moving_list")"
+    mtitle="$(fm title "$msf")"
+    left="$(count_ms "$TASKS_DIR" "$mid" "$moving_list" "$mtitle")"
     [ "$left" -eq 0 ] || continue
     # archive/tasks·옛 completed/ 에 이미 있는 것 + 이번에 옮겨질 것. 뒤엣것을 빼먹으면 첫
     # 정리에서 막 끝난 마일스톤이 '완료 0건' 으로 보여 영영 아카이브되지 않는다.
-    done_n=$(( $(count_ms "$DONE_DIR" "$mid" "") + $(count_ms "$LEGACY_DONE_DIR" "$mid" "") ))
+    done_n=$(( $(count_ms "$DONE_DIR" "$mid" "" "$mtitle") + $(count_ms "$LEGACY_DONE_DIR" "$mid" "" "$mtitle") ))
     for mf in "${MOVE[@]-}"; do
       [ -n "$mf" ] || continue
-      if [ "$(fm milestone "$mf")" = "$mid" ]; then done_n=$((done_n+1)); fi
+      if ms_match "$mf" "$mid" "$mtitle"; then done_n=$((done_n+1)); fi
     done
     [ "$done_n" -gt 0 ] || continue     # 신규 빈 마일스톤은 건드리지 않는다
     MS_MOVE+=("$msf")
-    echo "  ⇒ $mid $(fm title "$msf") — 남은 태스크 0, 완료 ${done_n}건 → 아카이브"
+    echo "  ⇒ $mid $mtitle — 남은 태스크 0, 완료 ${done_n}건 → 아카이브"
   done
 fi
 
