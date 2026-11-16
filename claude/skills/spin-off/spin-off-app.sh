@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
-# spin-off-app.sh <repo dir> <prompt file>
+# spin-off-app.sh <repo dir> <prompt file> [name]
 # Herdr 앱(herdr-core)에서 <repo dir> 의 space 에 탭을 붙이고 `ca "$(< prompt)"` 를 띄운다.
 # 그 folder 의 space 가 없으면 새로 만들고 name 을 repo 이름으로 채운다. 포커스는 옮기지 않는다.
+# [name] 을 주면 `ca -n <name>` 으로 띄워 탭·사이드바·ListAgents 이름을 처음부터 고정한다.
 # 성공하면 stdout 에 JSON 한 줄: {terminal, space, space_name, tab, new_space, app}
 set -euo pipefail
 
@@ -10,6 +11,9 @@ prompt="${2:?usage: spin-off-app.sh <repo dir> <prompt file>}"
 [ -n "${HC_TERMINAL_SOCKET:-}" ] || { echo "not in the Herdr app (no HC_TERMINAL_SOCKET)" >&2; exit 2; }
 [ -d "$repo" ] || { echo "no such dir: $repo" >&2; exit 2; }
 [ -s "$prompt" ] || { echo "empty or missing prompt file: $prompt" >&2; exit 2; }
+name="${3:-}"
+# K9_RUN 이 셸 문자열로 타이핑되므로 이름은 따옴표가 필요 없는 문자만 받는다.
+[[ -z "$name" || "$name" =~ ^[A-Za-z0-9._-]+$ ]] || { echo "name must match [A-Za-z0-9._-]+: $name" >&2; exit 2; }
 repo_real="$(realpath "$repo")"
 prompt="$(realpath "$prompt")"
 
@@ -36,7 +40,7 @@ envs=()
 [ -n "${CLAUDE_CONFIG_DIR:-}" ] && envs+=("CLAUDE_CONFIG_DIR=$CLAUDE_CONFIG_DIR")
 out="$(env -u HC_TERMINAL_ID -u HC_SCOPE hc run --bg --json --no-parent --cwd "$repo_real" \
   --label "herdr.space=$space" --label "herdr.tab=$tab" \
-  -- env "${envs[@]}" "K9_RUN=ca \"\$(< $prompt)\"" zsh -l)"
+  -- env "${envs[@]}" "K9_RUN=ca ${name:+-n $name }\"\$(< $prompt)\"" zsh -l)"
 term="$(jq -r '.address // .id // .terminal // empty' <<<"$out")"
 [ -n "$term" ] || { echo "hc run gave no terminal: $out" >&2; exit 1; }
 

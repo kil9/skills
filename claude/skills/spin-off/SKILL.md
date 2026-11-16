@@ -22,14 +22,18 @@ argument-hint: "(선택) 넘길 작업 설명 — 생략하면 직전 대화에�
    - 대상 경로, 할 일과 완료 조건, 이 세션에서 이미 확인했거나 배제한 것.
    "위에서 말한", "아까 그" 처럼 이 대화를 가리키는 말이 남아 있으면 미완료다.
 
-4. **띄우기.**
-   - **앱**: `~/.claude/skills/spin-off/spin-off-app.sh <repo> <prompt file>`. 출력 JSON 의 `app` 이
+4. **세션 이름 정하기.** 묻지 않고 넘기는 일을 드러내는 짧은 영문 kebab-case(`[A-Za-z0-9._-]`, 예: `bruno-course`)
+   로 정해 `claude -n` 으로 넘긴다 — 탭·사이드바·ListAgents 에 처음부터 그 이름이 뜬다. 대가로 그 세션은 작업 요약을
+   제목으로 내보내지 않아 탭 이름이 자동으로 바뀌지 않는다(kil9conf task-518). 사용자가 2026-11-16 이 교환을 골랐다.
+
+5. **띄우기.**
+   - **앱**: `~/.claude/skills/spin-off/spin-off-app.sh <repo> <prompt file> <name>`. 출력 JSON 의 `app` 이
      `claude-code` 면 성공(exit 0). `trust-prompt` 면 처음 보는 folder 의 신뢰 확인에서 멈춘 것 — 기본 선택이
      "No, exit" 라 대신 누르지 말고 사용자에게 그 탭에서 고르라고 알린다. `none` 이면 `hc read <terminal> --lines 40`
      으로 화면을 보고 원인을 보고한다.
    - **TUI**: 아래 'TUI 경로'.
 
-5. **보고.** 터미널 주소, space 이름(새로 만들었으면 그렇다고), 탭, 프롬프트 파일 경로를 한 줄씩. 포커스는
+6. **보고.** 세션 이름, 터미널 주소, space 이름(새로 만들었으면 그렇다고), 탭, 프롬프트 파일 경로를 한 줄씩. 포커스는
    옮기지 않았으니 사용자가 그 space·탭으로 직접 가야 한다고 덧붙인다. 띄운 세션을 닫는 것은 사용자 몫이다.
 
 ## 앱 경로의 근거 (스크립트가 하는 일)
@@ -58,7 +62,7 @@ argument-hint: "(선택) 넘길 작업 설명 — 생략하면 직전 대화에�
 out=$(herdr tab create --workspace <wid> --cwd <repo> --no-focus \
   ${CLAUDE_CONFIG_DIR:+--env "CLAUDE_CONFIG_DIR=$CLAUDE_CONFIG_DIR"})
 pane=$(jq -r '.result.root_pane.pane_id' <<<"$out")
-herdr pane run "$pane" 'ca "$(< <prompt file>)"'     # 쌍따옴표째 넘겨 pane 의 zsh 가 펼치게 한다
+herdr pane run "$pane" 'ca -n <name> "$(< <prompt file>)"'     # 쌍따옴표째 넘겨 pane 의 zsh 가 펼치게 한다
 ```
 
 확인은 `herdr agent list` 에 그 pane 이 claude 로 잡히는지. 새 pane 의 셸이 rc 를 읽는 중이면 `pane run` 이 먹힐지
