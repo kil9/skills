@@ -54,3 +54,6 @@ allowed_tools: [Bash, Read, Edit, Write, Glob, Grep, AskUserQuestion, Skill]
 ## 보고
 
 고른 형태와 근거 한 줄, 만든 마일스톤·태스크·draft 의 ID·제목, 커밋 해시(gitignore 로 건너뛰었으면 그 사실).
+
+마일스톤을 만들었으면 **ID(`m-N`)를 굵게, 이름보다 앞에** 적고 착수 명령(`/start-backlog m-N`)을 함께 준다.
+이름만 적지 않는다 — 이름의 번호("1. …")와 ID(`m-0`)가 달라, 사용자가 이름을 보고 ID 를 짐작하면 틀린다(2026-11-16).
