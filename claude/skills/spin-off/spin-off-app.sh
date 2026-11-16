@@ -1,12 +1,12 @@
 #!/usr/bin/env bash
-# ca-tab-app.sh <repo dir> <prompt file>
-# Herdr 앱(herdr-core)에서 <repo dir> 의 space 에 새 탭을 붙이고 `ca "$(< prompt)"` 를 띄운다.
+# spin-off-app.sh <repo dir> <prompt file>
+# Herdr 앱(herdr-core)에서 <repo dir> 의 space 에 탭을 붙이고 `ca "$(< prompt)"` 를 띄운다.
 # 그 folder 의 space 가 없으면 새로 만들고 name 을 repo 이름으로 채운다. 포커스는 옮기지 않는다.
 # 성공하면 stdout 에 JSON 한 줄: {terminal, space, space_name, tab, new_space, app}
 set -euo pipefail
 
-repo="${1:?usage: ca-tab-app.sh <repo dir> <prompt file>}"
-prompt="${2:?usage: ca-tab-app.sh <repo dir> <prompt file>}"
+repo="${1:?usage: spin-off-app.sh <repo dir> <prompt file>}"
+prompt="${2:?usage: spin-off-app.sh <repo dir> <prompt file>}"
 [ -n "${HC_TERMINAL_SOCKET:-}" ] || { echo "not in the Herdr app (no HC_TERMINAL_SOCKET)" >&2; exit 2; }
 [ -d "$repo" ] || { echo "no such dir: $repo" >&2; exit 2; }
 [ -s "$prompt" ] || { echo "empty or missing prompt file: $prompt" >&2; exit 2; }
