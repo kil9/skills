@@ -32,9 +32,9 @@ README '문제가 생겼을 때' 표의 증상부터 찾는다. 확장 없이 �
 
 ## 놓치기 쉬운 것
 
-- **'복제해서 묻기' 세션은 읽기 전용이다.** 원본이 `--dangerously-skip-permissions` 로 떠 있어도 복제에는 옮기지 않고
-  읽기 도구만 허용한다(복사하려던 시도가 권한 검사에 막혔고, Q&A 에 편집은 필요 없다). 복제 세션에 고쳐 달라고 하면
-  못 한다 — 원래 작업 세션에 직접 보내기로 묻는다.
+- **'복제해서 묻기' 세션은 `ca`(`start_claude auto`)로 뜬다.** 쿼터 넉넉한 ccs 프로필을 고르고
+  `--dangerously-skip-permissions` 로 떠서 Q&A 중 바로 고칠 수 있다(2026-11-16, 읽기 전용이던 것을 바꿈). 원래 세션과
+  같은 작업 트리를 쓰므로 거기서 고친 것은 원래 세션의 작업과 섞인다 — 커밋 전에 `git status` 로 본다.
 - Git Bash 에서 `hc run ... -- /usr/bin/zsh` 처럼 원격 절대경로를 넘기면 `C:/Program Files/Git/usr/bin/zsh` 로 바뀐다.
   셸에서 손으로 재현할 때는 `MSYS_NO_PATHCONV=1` 을 붙인다. 원격 spawn 은 PATH 가 없어 셸도 절대경로로 준다.
 - 확장 ID 는 manifest 의 `key` 로 고정돼 있다. `key` 를 지우거나 다른 사본을 로드하면 ID 가 바뀌어 host 가
