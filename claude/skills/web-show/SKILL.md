@@ -19,6 +19,8 @@ argument-hint: "(선택) 띄울 파일 경로들, host=<name>"
    `run.sh add <PORT> FILE...`
    - md 는 서버가 GFM·코드 하이라이트·mermaid 로 렌더링하고, 파일을 고치면 브라우저가 1초 안에 새로고침
      없이 갱신된다. 그 밖의 파일은 원본 그대로 준다.
+   - 이슈·PR 처럼 넣은 image-store 그림(`https://oss.navercorp.com/lens-dev/image-store/raw/...`)은 서버가 gh
+     토큰으로 받아 보여 준다. 미리보기는 다른 사이트라 브라우저의 oss 로그인 쿠키가 안 실린다. 다른 저장소는 열지 않는다.
    - 등록한 파일의 디렉터리가 그 URL 의 루트라 상대 경로 이미지·css·다른 md 도 열린다.
 3. **보고.** `URL:` 줄의 URL 만 한 줄로 알린다(QR·푸시 없음). `HINT:` 가 나왔으면 그 안내도 한 줄 붙인다.
 

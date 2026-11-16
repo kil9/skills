@@ -11,6 +11,8 @@
 """
 import argparse
 import html
+import subprocess
+import urllib.request
 import json
 import mimetypes
 import os
@@ -23,6 +25,15 @@ from urllib.parse import unquote, urlsplit, parse_qs
 MD_EXT = {".md", ".markdown", ".mdx"}
 LOCK = threading.Lock()
 REGISTRY = {}  # slug -> {"root": dir, "entry": filename}
+
+# 이슈·PR 본문의 image-store 그림(oss raw URL)은 미리보기 페이지에서 안 보인다. 페이지가 다른
+# 사이트라 브라우저가 oss 로그인 쿠키를 싣지 않아 로그인 화면으로 넘어가기 때문이다. 그래서 페이지가
+# 그 URL 을 /__image-store/<ref>/<path> 로 바꾸고 서버가 gh 토큰으로 받아 준다. 0.0.0.0 에 열린
+# 서버라 다른 저장소로 넓히면 그 토큰이 읽는 private 저장소를 누구나 받아 갈 수 있다 — image-store
+# 는 사내 전 직원이 읽는 저장소라서 이것만 연다.
+GHE = "oss.navercorp.com"
+IMAGE_STORE = "lens-dev/image-store"
+IMAGE_CACHE = {}  # "<ref>/<path>" -> (bytes, ctype)
 
 PAGE = """<!doctype html>
 <html lang="ko"><head><meta charset="utf-8">
@@ -52,6 +63,10 @@ async function render() {{
   const y = scrollY;
   const doc = document.getElementById('doc');
   doc.innerHTML = marked.parse(text, {{ gfm: true }});
+  doc.querySelectorAll('img').forEach(el => {{
+    const P = 'https://oss.navercorp.com/lens-dev/image-store/raw/', src = el.getAttribute('src') || '';
+    if (src.startsWith(P)) el.src = '/__image-store/' + src.slice(P.length);
+  }});
   doc.querySelectorAll('pre code').forEach(el => {{
     if (el.classList.contains('language-mermaid')) {{
       const d = document.createElement('div');
@@ -134,6 +149,8 @@ class Handler(BaseHTTPRequestHandler):
         parts = [unquote(p) for p in url.path.split("/") if p]
         if not parts:
             return self.index()
+        if parts[0] == "__image-store" and len(parts) >= 3:
+            return self.image_store(parts[1], "/".join(parts[2:]))
         with LOCK:
             e = REGISTRY.get(parts[0])
         if not e:
@@ -161,6 +178,26 @@ class Handler(BaseHTTPRequestHandler):
         ctype = "text/markdown; charset=utf-8" if is_md else (mimetypes.guess_type(target)[0] or "application/octet-stream")
         if ctype.startswith("text/") and "charset" not in ctype:
             ctype += "; charset=utf-8"
+        self.send(200, data, ctype)
+
+    def image_store(self, ref, path):
+        ctype = mimetypes.guess_type(path)[0] or ""
+        if not ctype.startswith("image/") or ".." in path.split("/"):
+            return self.send(403, "image-store 의 그림만 받는다\n")
+        key = f"{ref}/{path}"
+        if key not in IMAGE_CACHE:
+            try:
+                token = subprocess.run(["gh", "auth", "token", "--hostname", GHE], capture_output=True,
+                                       text=True, timeout=5, check=True).stdout.strip()
+                req = urllib.request.Request(
+                    f"https://{GHE}/api/v3/repos/{IMAGE_STORE}/contents/{urllib.request.quote(path)}"
+                    f"?ref={urllib.request.quote(ref)}",
+                    headers={"Authorization": f"token {token}", "Accept": "application/vnd.github.raw"})
+                with urllib.request.urlopen(req, timeout=10) as r:
+                    IMAGE_CACHE[key] = (r.read(), ctype)
+            except Exception as ex:  # noqa: BLE001 — 그림 하나 실패는 깨진 그림으로 보이면 충분하다
+                return self.send(502, f"image-store 에서 못 받았다: {ex}\n")
+        data, ctype = IMAGE_CACHE[key]
         self.send(200, data, ctype)
 
     def index(self):
