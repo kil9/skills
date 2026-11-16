@@ -16,6 +16,9 @@ name="${3:-}"
 [[ -z "$name" || "$name" =~ ^[A-Za-z0-9._-]+$ ]] || { echo "name must match [A-Za-z0-9._-]+: $name" >&2; exit 2; }
 repo_real="$(realpath "$repo")"
 prompt="$(realpath "$prompt")"
+# Windows core(Git Bash 에서 호출)에는 env·zsh 가 없고, 레이아웃 문서의 folder 는 `D:\work\x` 꼴이다.
+win=false; case "$(uname -s)" in MINGW*|MSYS*|CYGWIN*) win=true ;; esac
+norm() { if $win; then realpath -m "$(cygpath -u "$1")"; else realpath -m "$1"; fi; }
 
 doc_get() {
   printf '%s\n' '{"jsonrpc":"2.0","id":1,"method":"hello","params":{"generation":1}}' \
@@ -27,7 +30,7 @@ doc_get() {
 space="" new_space=false
 while IFS=$'\t' read -r sid sfolder; do
   [ -n "$sfolder" ] || continue
-  if [ "$(realpath -m "$sfolder")" = "$repo_real" ]; then space="$sid"; break; fi
+  if [ "$(norm "$sfolder")" = "$repo_real" ]; then space="$sid"; break; fi
 done < <(doc_get | jq -r '.value.spaces[] | [.id, (.folder // "")] | @tsv')
 if [ -z "$space" ]; then
   space="sp$(head -c16 /dev/urandom | xxd -p)"; new_space=true
@@ -36,11 +39,20 @@ tab="tb$(head -c16 /dev/urandom | xxd -p)"
 
 # 2) 띄우기. hc run 은 호출한 쪽 환경을 넘기지 않으므로 ccs 프로필을 env 로 직접 싣는다.
 #    ca 는 login zsh 의 alias 라 K9_RUN 으로 첫 프롬프트에 타이핑시킨다.
-envs=()
-[ -n "${CLAUDE_CONFIG_DIR:-}" ] && envs+=("CLAUDE_CONFIG_DIR=$CLAUDE_CONFIG_DIR")
-out="$(env -u HC_TERMINAL_ID -u HC_SCOPE hc run --bg --json --no-parent --cwd "$repo_real" \
-  --label "herdr.space=$space" --label "herdr.tab=$tab" \
-  -- env "${envs[@]}" "K9_RUN=ca ${name:+-n $name }\"\$(< $prompt)\"" zsh -l)"
+if $win; then
+  # Windows: ca alias 가 없다. 앱이 직접 띄운 세션과 같은 꼴(pwsh -Command, claude -n)로 띄운다(2026-11-16 실측).
+  ps="claude ${name:+-n $name }(Get-Content -Raw '$(cygpath -w "$prompt")')"
+  [ -n "${CLAUDE_CONFIG_DIR:-}" ] && ps="\$env:CLAUDE_CONFIG_DIR='$(cygpath -w "$CLAUDE_CONFIG_DIR")'; $ps"
+  cmd=(pwsh -NoLogo -NoExit -Command "$ps")
+  cwd="$(cygpath -w "$repo_real")"
+else
+  envs=()
+  [ -n "${CLAUDE_CONFIG_DIR:-}" ] && envs+=("CLAUDE_CONFIG_DIR=$CLAUDE_CONFIG_DIR")
+  cmd=(env "${envs[@]}" "K9_RUN=ca ${name:+-n $name }\"\$(< $prompt)\"" zsh -l)
+  cwd="$repo_real"
+fi
+out="$(env -u HC_TERMINAL_ID -u HC_SCOPE hc run --bg --json --no-parent --cwd "$cwd" \
+  --label "herdr.space=$space" --label "herdr.tab=$tab" -- "${cmd[@]}")"
 term="$(jq -r '.address // .id // .terminal // empty' <<<"$out")"
 [ -n "$term" ] || { echo "hc run gave no terminal: $out" >&2; exit 1; }
 

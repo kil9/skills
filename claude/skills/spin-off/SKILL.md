@@ -49,6 +49,9 @@ argument-hint: "(선택) 넘길 작업 설명 — 생략하면 직전 대화에�
 - `hc run` 은 호출자 환경이 아니라 core 의 환경을 준다: `ca` 는 login zsh 의 alias(`cld auto`)라
   `env K9_RUN='ca "$(< file)"' zsh -l` 로 띄우고, `CLAUDE_CONFIG_DIR`(ccs 프로필)를 env 로 직접 싣는다. `HC_TERMINAL_ID`·
   `HC_SCOPE` 를 빼고 `--no-parent` — 안 그러면 이 세션이 끝날 때 같이 죽는다.
+- **Windows core**(Git Bash 에서 호출)에는 `env`·`zsh` 가 없어 위 형태가 `spawn_failed: env: not found on PATH` 로
+  죽는다. 앱이 직접 띄운 세션과 같은 꼴 `pwsh -NoLogo -NoExit -Command "$env:CLAUDE_CONFIG_DIR='…'; claude -n <name>
+  (Get-Content -Raw '<prompt>')"` 로 띄우고, 레이아웃 문서의 folder(`D:\work\x`)는 `cygpath -u` 로 바꿔 비교한다(2026-11-16).
 - 탭 이름은 앱이 claude 세션 제목으로 덮어쓴다. 띄운 지 몇 초 안에 `hc get` 의 `.status.app = claude-code` 가 뜬다.
 
 ## TUI 경로 (실측 안 됨)
