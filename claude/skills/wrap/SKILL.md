@@ -119,7 +119,14 @@ kil9/skills 의 스킬 작업은 kil9conf backlog 에 등록해 왔다).
 4. **닫아도 되는가** — "닫아도 된다" 또는 "X 를 먼저" 한 줄.
 
 **"닫아도 된다"로 판정했으면** 보고 직전에 자동 닫기를 건다:
-`~/work/kil9conf/script/claude-idle-close.sh arm 2`. 사용자가 2분 동안 아무 입력도 없으면 이 세션의
+
+```bash
+S=$(grep -o '[^" ]*claude-idle-close\.sh' ~/.claude/settings.json | head -1)
+[ -x "$S" ] && "$S" arm 2
+```
+
+사용자가 2분 동안 아무 입력도 없으면 이 세션의
 pane(Herdr 앱 터미널·herdr TUI pane, 그 밖이면 claude 프로세스)을 닫고, 그 사이 무엇이든 입력하면
 UserPromptSubmit 훅이 취소한다. 보고에 "2분 입력 없으면 닫힘" 한 줄을 붙인다. "X 를 먼저"면 걸지 않는다.
-스크립트가 없는 머신(kil9conf 미배선)이면 건너뛴다.
+kil9conf 위치는 머신마다 달라(`~/kil9conf`·`~/work/kil9conf` 등) 경로를 적어 두지 않는다 — 그 취소 훅에
+등록된 절대경로가 정본이다. 훅이 없으면(kil9conf 미배선) 취소도 안 되므로 걸지 않고 건너뛴다.
