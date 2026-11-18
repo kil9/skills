@@ -8,10 +8,12 @@
   python3 server.py --port 18080 --state-dir DIR FILE [FILE ...]
 
 등록 추가는 같은 머신에서만: POST /__register  (body = 절대경로 한 줄)
+등록 목록도 같은 머신에서만: GET /__list → [{"slug", "path", "t"(등록 epoch 초)}] (Herdr 앱 F5 가 쓴다)
 """
 import argparse
 import html
 import subprocess
+import time
 import urllib.request
 import json
 import mimetypes
@@ -24,7 +26,7 @@ from urllib.parse import unquote, urlsplit, parse_qs
 
 MD_EXT = {".md", ".markdown", ".mdx"}
 LOCK = threading.Lock()
-REGISTRY = {}  # slug -> {"root": dir, "entry": filename}
+REGISTRY = {}  # slug -> {"root": dir, "entry": filename, "t": 등록 시각}
 
 # 이슈·PR 본문의 image-store 그림(oss raw URL)은 미리보기 페이지에서 안 보인다. 페이지가 다른
 # 사이트라 브라우저가 oss 로그인 쿠키를 싣지 않아 로그인 화면으로 넘어가기 때문이다. 그래서 페이지가
@@ -106,13 +108,14 @@ def register(path):
     with LOCK:
         for slug, e in REGISTRY.items():
             if e["root"] == root and e["entry"] == entry:
+                e["t"] = time.time()  # 다시 등록하면 가장 최근 것으로 친다
                 return slug
         base = slug = slugify(entry)
         i = 2
         while slug in REGISTRY:
             slug = f"{base}-{i}"
             i += 1
-        REGISTRY[slug] = {"root": root, "entry": entry}
+        REGISTRY[slug] = {"root": root, "entry": entry, "t": time.time()}
         return slug
 
 
@@ -149,6 +152,12 @@ class Handler(BaseHTTPRequestHandler):
         parts = [unquote(p) for p in url.path.split("/") if p]
         if not parts:
             return self.index()
+        if parts == ["__list"]:
+            if self.client_address[0] not in ("127.0.0.1", "::1"):
+                return self.send(403, "forbidden\n")
+            with LOCK:
+                rows = [{"slug": s, "path": os.path.join(e["root"], e["entry"]), "t": e["t"]} for s, e in REGISTRY.items()]
+            return self.send(200, json.dumps(rows, ensure_ascii=False), "application/json; charset=utf-8")
         if parts[0] == "__image-store" and len(parts) >= 3:
             return self.image_store(parts[1], "/".join(parts[2:]))
         with LOCK:
