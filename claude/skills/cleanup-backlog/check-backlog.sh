@@ -13,6 +13,8 @@
 #   R2 status 가 config.yml 의 statuses 밖
 #   R3 파일의 id 가 `backlog task list` 에 안 나옴(CLI 의 git 인식이 조용히 감추는 경우)
 #   R4 `backlog doctor` 가 중복 ID·순환 의존을 보고함
+#   R5 마일스톤 id 가 보드·보관을 통틀어 둘 이상(doctor 는 못 본다 — 보관된 쪽과 겹치면
+#      보드에선 보관된 뒤 제목만 바뀐 것처럼 보인다)
 #
 # 사용: check-backlog.sh [--fix]
 # 출력 끝줄: "정합성: 고침 N · 확인 필요 M". 고친 파일은 그 경로만 커밋한다(push 안 함).
@@ -51,9 +53,15 @@ done
 ms_by_id()    { printf '%s' "$ms_rows" | awk -F'\t' -v k="$1" '$1==k'; }
 ms_by_title() { printf '%s' "$ms_rows" | awk -F'\t' -v k="$1" '$2==k'; }
 
+fixed=0; review=0
+dup_ids="$(printf '%s' "$ms_rows" | cut -f1 | sort | uniq -d)"
+for id in $dup_ids; do
+  echo "  ? R5 마일스톤 id $id 가 겹침 — 한쪽을 새 번호로 옮기고 그 태스크의 milestone 도 바꾼다:"
+  ms_by_id "$id" | awk -F'\t' '{print "      [" $3 "] " $2}'; review=$((review+1))
+done
+
 statuses="$(sed -n 's/^statuses:[[:space:]]*//p' backlog/config.yml 2>/dev/null | tr -d '[]"' | tr ',' '\n' | sed 's/^ *//; s/ *$//')"
 
-fixed=0; review=0
 declare -a COMMIT_PATHS=()
 declare -a RESTORED=()
 
@@ -66,6 +74,7 @@ for f in "$TASKS_DIR"/task-*.md; do
   fi
   [ -n "$ms" ] || continue
 
+  case " $(echo $dup_ids) " in *" $ms "*) continue ;; esac
   row="$(ms_by_id "$ms")"
   if [ -z "$row" ]; then
     hits="$(ms_by_title "$ms")"

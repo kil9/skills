@@ -33,7 +33,7 @@ backlog 의 완료(Done) 태스크를 `backlog/archive/tasks/` 로 옮기고, **
 `check-backlog.sh --fix` 를 먼저 돌린다. 보관 판정과 보드 표시는 마일스톤 참조가 id 일 때만 맞게 돈다 — task-87 이 milestone 을 제목으로 적어 둔 탓에 진행 중인 m-11 이 보관됐고, 보드 id 칸에 긴 제목이 접혀 그려졌다(workflow, 2026-11).
 
 - **스크립트가 고친다**(`✎`, 별도 커밋): F1 제목으로 적힌 milestone 을 id 로, F2 Done 아닌 태스크가 남은 보관 마일스톤을 `backlog/milestones/` 로 복원.
-- **알리기만 한다**(`?`): R1 어느 마일스톤과도 안 맞는 참조, R2 config 밖 status, R3 파일엔 있는데 `backlog task list` 에 안 나오는 태스크, R4 `backlog doctor` 보고. 각 줄을 읽고 원인이 분명하면 직접 고쳐 커밋하고(R1 은 비슷한 제목의 마일스톤을 찾아 id 로, R2 는 가까운 status 로), 판단이 갈리면 AskUserQuestion 으로 묻는다.
+- **알리기만 한다**(`?`): R1 어느 마일스톤과도 안 맞는 참조, R2 config 밖 status, R3 파일엔 있는데 `backlog task list` 에 안 나오는 태스크, R4 `backlog doctor` 보고, R5 보드·보관을 통틀어 겹친 마일스톤 id(겹친 id 는 F1·F2 판정에서 뺀다). 각 줄을 읽고 원인이 분명하면 직접 고쳐 커밋하고(R1 은 비슷한 제목의 마일스톤을 찾아 id 로, R2 는 가까운 status 로), 판단이 갈리면 AskUserQuestion 으로 묻는다.
 - 스크립트가 못 잡는 이상도 사용자가 짚으면 고친 뒤 이 스크립트에 검사 항목으로 더한다.
 
 ## 2. 실행
