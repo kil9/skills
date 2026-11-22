@@ -38,10 +38,18 @@ VI_PANE=$(hc run --bg --rm --no-notify --label herdr.space="$SPACE" --label herd
 띄운 직후 nvim 이 아는 크기와 pane 크기를 맞춰 본다(`$ED` 가 nvim 일 때만, 최대 10초):
 
 ```bash
+MISS=0
 for i in $(seq 20); do
   HC=$(hc get "$VI_PANE" | jq -r '"\(.cols) \(.rows)"')
   NV=$([ -S "$SOCK" ] && "$ED" --server "$SOCK" --remote-expr 'printf("%d %d", &columns, &lines)')
   [ -n "$NV" ] && [ "$HC" = "$NV" ] && [ "$HC" != "200 120" ] && break
+  # pane 크기는 왔는데 nvim 이 다르게 아는 상태가 1초(2회) 이어지면 바로 고친다
+  if [ -n "$NV" ] && [ "$HC" != "200 120" ] && [ "$HC" != "$NV" ]; then
+    MISS=$((MISS+1))
+    [ $MISS -ge 2 ] && break
+  else
+    MISS=0
+  fi
   sleep 0.5
 done
 [ -n "$NV" ] && [ "$HC" != "$NV" ] && \
@@ -59,7 +67,9 @@ done
   그려서 67칸 pane 이 그 줄을 접어 보여 준다 — 상태줄 조각이 세로로 쌓이고 줄 끝 글자가 떨어져 나온다.
   `ctrl+l` 도, nvim 에 `kill -WINCH` 도 안 통했고 `:set columns= lines=` 는 통했다(2026-11-09 calcium 실측,
   nvim 0.12.4). 점검이 그 명령을 원격으로 보낸다. 사용자가 이미 고치고 있을 때 끼어들지 않도록 기동 직후
-  10초 안에만 하고, 맞으면 아무것도 보내지 않는다.
+  10초 안에만 하고, 맞으면 아무것도 보내지 않는다. **어긋남을 보면 10초를 채우지 말고 1초 안에 고친다.** 옛
+  루프는 둘이 같아지기를 10초 내내 기다린 뒤에야 고쳐서, 그동안 사용자가 깨진 화면을 보고 손을 대다가
+  (VISUAL 등) 수정 명령에 끊겼다(2026-11-22 nuc14).
   눈으로 확인할 때는 `hc read <pane>` 에 본문 첫 줄이 보이는지 본다. 화면에 비밀이 있으면 가려서 읽는다.
 - **편집기는 `$ED` 절대경로로 넘긴다.** `hc run` 은 셸을 거치지 않아 `alias vi='nvim'`(kil9conf
   `rc/aliases`)이 먹지 않고 `/usr/bin/vi`(vim)가 뜬다. hc 터미널의 PATH 에는 `~/.local/bin` 도 없어
