@@ -34,7 +34,7 @@ done
 | git 워크플로 | commit, cip, cipd, sync, all-sync (현재 repo 를 /sync 한 뒤 다른 머신들의 같은 체크아웃도 pull --ff-only) |
 | 에이전트 메타 | fable-advisor, grill, review-loop, skill-creator, wrap (세션을 닫기 전 기록, 옛 learn 을 흡수), zip-it |
 | 에이전트 운용 | afk (기본은 묻지 않고 진행, `grill`·afk-grill 이면 출문 전에 한 번에 묻기), follow-up-auto (사용자가 다음에 칠 요청을 예측해 되돌릴 수 있는 것은 처리, 나머지는 한 번에 묻기), herdr, ask-herdr (Chrome 사이드패널에서 지금 보는 페이지를 그 페이지를 만든 Herdr 세션에 묻는 확장의 설치·고장 대응 — 코드는 kil9/ask-herdr), spin-off (별개 작업을 Herdr 의 새 claude 세션으로 떼어 냄 — 대상 저장소 space 에 탭, 없으면 새 space) |
-| 저장소·퍼블리시 유틸 | init-project, paste-image, publish-til, show-qr (QR 을 이미지 대신 블록 문자로 응답에 띄움), side-show (herdr 옆 pane 의 vi), web-show (산출물·개발 서버를 FQDN URL 로 브라우저에 띄움) |
+| 저장소·퍼블리시 유틸 | copy-to-clipboard (OSC 52 로 로컬 클립보드에 넣음 — 시크릿은 응답에 안 찍음), init-project, paste-image, publish-til, show-qr (QR 을 이미지 대신 블록 문자로 응답에 띄움), side-show (herdr 옆 pane 의 vi), web-show (산출물·개발 서버를 FQDN URL 로 브라우저에 띄움) |
 | 글쓰기 | kil9-writing-style (kil9 말투), korean-polish (한국어 윤문: daleseo/korean-skills·epoko77-ai/im-not-ai·nomadamas/k-skill 합성, MIT) |
 | 디자인 | impeccable (upstream 4.0.4, 명시 호출 전용, 내장 이미지 생성만 사용), design-loop (수상작 기준 채점·개선 반복, 고치는 손은 impeccable), design-explore (구조가 다른 시안 여럿을 채점해 사용자가 고른 하나를 이식 — 레이아웃을 갈아엎는 쪽, `loop` 면 design-loop 로 이어감), kil9-design-style (kil9 화면 취향의 정본·기록장 — 위 셋이 먼저 읽는다) |
 | 자료 제작 | make-slides (강의·발표를 HTML 슬라이드 덱으로 — 표·정적 그림이 주인공, 문장 4줄, 빌드·검사·캡처 스크립트 포함) |
