@@ -121,7 +121,7 @@ kil9/skills 의 스킬 작업은 kil9conf backlog 에 등록해 왔다).
 **"닫아도 된다"로 판정했으면** 보고 직전에 자동 닫기를 건다:
 
 ```bash
-S=$(grep -o '[^" ]*claude-idle-close\.sh' ~/.claude/settings.json | head -1)
+S=$(grep -o '[^" ]*claude-idle-close\.sh' "${CLAUDE_CONFIG_DIR:-$HOME/.claude}/settings.json" | head -1)
 [ -x "$S" ] && "$S" arm 2
 ```
 
