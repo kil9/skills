@@ -39,6 +39,12 @@ allowed_tools: [Bash, Read, Edit, Write, Glob, Grep, AskUserQuestion, Skill]
 - **기존 draft 승격** → `backlog draft promote <draft-id>` 후 `backlog task edit <id> --ac ...` 로 AC 를
   최소 1개 채운다(draft 엔 AC 가 없다).
 
+## 문구 점검
+
+`create` 를 부르기 전에 제목·설명·AC 를 `korean-polish` 의 §6 가벼운 모드로 한 번 훑는다(스킬을 따로 부르지
+않고 그 목록만 본다). 제목은 파일 이름이 되고, 만든 뒤 `task edit -t` 로 고쳐도 파일 이름은 옛 제목으로 남는다. 사용자 구상 원문(draft 의
+`-d`)은 손대지 않는다.
+
 ## 커밋
 
 등록이 끝나면 **이번에 만들거나 고친 backlog 파일만** 커밋한다.
