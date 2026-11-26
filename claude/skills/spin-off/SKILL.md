@@ -58,18 +58,21 @@ Skill 호출 없이 스킬 본문을 따랐다). 단 **Git Bash 에서 인자로
    - 대상 경로, 할 일과 완료 조건, 이 세션에서 이미 확인했거나 배제한 것.
    "위에서 말한", "아까 그" 처럼 이 대화를 가리키는 말이 남아 있으면 미완료다.
 
-4. **세션 이름 정하기.** 묻지 않고 넘기는 일을 드러내는 짧은 영문 kebab-case(`[A-Za-z0-9._-]`, 예: `bruno-course`)
-   로 정해 `claude -n` 으로 넘긴다 — 탭·사이드바·ListAgents 에 처음부터 그 이름이 뜬다. 대가로 그 세션은 작업 요약을
-   제목으로 내보내지 않아 탭 이름이 자동으로 바뀌지 않는다(kil9conf task-518). 사용자가 2026-11-16 이 교환을 골랐다.
+4. **이름 둘 정하기.** 묻지 않고 정한다.
+   - **탭 제목**: 사용자가 사이드바에서 보는 이름. 넘기는 일을 한국어로 요약한 한 구(15자 안팎, 예: `s2z 대시보드 한국어 다듬기`,
+     `m25 1차 16개 시험`). kebab-case 영문 slug 를 그대로 보여 주지 않는다(사용자 지적 2026-11-26).
+   - **세션 이름**: `claude -n` 으로 넘기는 영문 kebab-case(`[A-Za-z0-9._-]`, 예: `dash-korean-polish`). ListAgents·SendMessage
+     주소로 쓰인다. `-n` 을 주면 그 세션은 작업 요약을 제목으로 내보내지 않아(kil9conf task-518) 앱이 탭에 이 slug 를 띄우므로,
+     스크립트가 claude 가 뜬 뒤 탭 이름을 탭 제목으로 덮어쓴다.
 
 5. **띄우기.**
-   - **앱**: `~/.claude/skills/spin-off/spin-off-app.sh <repo> <prompt file> <name>`. 출력 JSON 의 `app` 이
-     `claude-code` 면 성공(exit 0). `trust-prompt` 면 처음 보는 folder 의 신뢰 확인에서 멈춘 것 — 기본 선택이
+   - **앱**: `~/.claude/skills/spin-off/spin-off-app.sh <repo> <prompt file> <name> '<탭 제목>'`. 출력 JSON 의 `app` 이
+     `claude-code` 이고 `tab_name` 이 탭 제목이면 성공(exit 0). `trust-prompt` 면 처음 보는 folder 의 신뢰 확인에서 멈춘 것 — 기본 선택이
      "No, exit" 라 대신 누르지 말고 사용자에게 그 탭에서 고르라고 알린다. `none` 이면 `hc read <terminal> --lines 40`
      으로 화면을 보고 원인을 보고한다.
    - **TUI**: 아래 'TUI 경로'.
 
-6. **보고.** 세션 이름, 터미널 주소, space 이름(새로 만들었으면 그렇다고), 탭, 프롬프트 파일 경로를 한 줄씩. 포커스는
+6. **보고.** 탭 제목, 세션 이름, 터미널 주소, space 이름(새로 만들었으면 그렇다고), 탭, 프롬프트 파일 경로를 한 줄씩. 포커스는
    옮기지 않았으니 사용자가 그 space·탭으로 직접 가야 한다고 덧붙인다. 띄운 세션을 닫는 것은 사용자 몫이다.
 
 ## 앱 경로의 근거 (스크립트가 하는 일)
@@ -89,6 +92,8 @@ Skill 호출 없이 스킬 본문을 따랐다). 단 **Git Bash 에서 인자로
   죽는다. 앱이 직접 띄운 세션과 같은 꼴 `pwsh -NoLogo -NoExit -Command "$env:CLAUDE_CONFIG_DIR='…'; claude -n <name>
   (Get-Content -Raw '<prompt>')"` 로 띄우고, 레이아웃 문서의 folder(`D:\work\x`)는 `cygpath -u` 로 바꿔 비교한다(2026-11-16).
 - 탭 이름은 앱이 claude 세션 제목으로 덮어쓴다. 띄운 지 몇 초 안에 `hc get` 의 `.status.app = claude-code` 가 뜬다.
+  그 뒤 `doc.set` 으로 `spaces[].tabs[].name` 을 바꾸면 세션이 일하는 중에도 유지된다(2026-11-26 실측). 스크립트는
+  덮인 경우를 대비해 2초 간격으로 세 번 확인한다.
 
 ## TUI 경로 (실측 안 됨)
 
@@ -102,6 +107,7 @@ out=$(herdr tab create --workspace <wid> --cwd <repo> --no-focus \
   ${CLAUDE_CONFIG_DIR:+--env "CLAUDE_CONFIG_DIR=$CLAUDE_CONFIG_DIR"})
 pane=$(jq -r '.result.root_pane.pane_id' <<<"$out")
 herdr pane run "$pane" 'ca -n <name> "$(< <prompt file>)"'     # 쌍따옴표째 넘겨 pane 의 zsh 가 펼치게 한다
+herdr tab rename <tab id> '<탭 제목>'                            # 명령 형태 미확인 — herdr tab --help 로 확인
 ```
 
 확인은 `herdr agent list` 에 그 pane 이 claude 로 잡히는지. 새 pane 의 셸이 rc 를 읽는 중이면 `pane run` 이 먹힐지

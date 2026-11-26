@@ -1,9 +1,10 @@
 #!/usr/bin/env bash
-# spin-off-app.sh <repo dir> <prompt file> [name]
+# spin-off-app.sh <repo dir> <prompt file> [name] [title]
 # Herdr 앱(herdr-core)에서 <repo dir> 의 space 에 탭을 붙이고 `ca "$(< prompt)"` 를 띄운다.
 # 그 folder 의 space 가 없으면 새로 만들고 name 을 repo 이름으로 채운다. 포커스는 옮기지 않는다.
-# [name] 을 주면 `ca -n <name>` 으로 띄워 탭·사이드바·ListAgents 이름을 처음부터 고정한다.
-# 성공하면 stdout 에 JSON 한 줄: {terminal, space, space_name, tab, new_space, app}
+# [name] 을 주면 `ca -n <name>` 으로 띄워 ListAgents·SendMessage 주소를 처음부터 고정한다.
+# [title] 을 주면 claude 가 뜬 뒤 탭 이름을 그 한국어 요약으로 바꾼다(안 주면 탭에 name 이 뜬다).
+# 성공하면 stdout 에 JSON 한 줄: {terminal, space, space_name, tab, tab_name, new_space, app}
 set -euo pipefail
 
 repo="${1:?usage: spin-off-app.sh <repo dir> <prompt file>}"
@@ -12,6 +13,7 @@ prompt="${2:?usage: spin-off-app.sh <repo dir> <prompt file>}"
 [ -d "$repo" ] || { echo "no such dir: $repo" >&2; exit 2; }
 [ -s "$prompt" ] || { echo "empty or missing prompt file: $prompt" >&2; exit 2; }
 name="${3:-}"
+title="${4:-}"
 # K9_RUN 이 셸 문자열로 타이핑되므로 이름은 따옴표가 필요 없는 문자만 받는다.
 [[ -z "$name" || "$name" =~ ^[A-Za-z0-9._-]+$ ]] || { echo "name must match [A-Za-z0-9._-]+: $name" >&2; exit 2; }
 repo_real="$(realpath "$repo")"
@@ -19,6 +21,23 @@ prompt="$(realpath "$prompt")"
 # Windows core(Git Bash 에서 호출)에는 env·zsh 가 없고, 레이아웃 문서의 folder 는 `D:\work\x` 꼴이다.
 win=false; case "$(uname -s)" in MINGW*|MSYS*|CYGWIN*) win=true ;; esac
 norm() { if $win; then realpath -m "$(cygpath -u "$1")"; else realpath -m "$1"; fi; }
+
+rpc() {
+  printf '%s\n' '{"jsonrpc":"2.0","id":1,"method":"hello","params":{"generation":1}}' "$1" | hc connect | tail -1
+}
+
+# 레이아웃 문서의 space·탭 하나를 고친다. $1 = jq 필터(.value 기준), 이후는 jq 인자. 버전 충돌이면 다시 읽어 재시도.
+doc_edit() {
+  local f="$1"; shift
+  for _ in $(seq 1 10); do
+    local req res
+    req="$(doc_get | jq -c "$@" "{jsonrpc:\"2.0\",id:3,method:\"doc.set\",params:{name:\"herdr-app\",version:.version,value:(.value | $f)}}")"
+    res="$(rpc "$req")"
+    jq -e '.error' <<<"$res" >/dev/null || return 0
+    sleep 0.3
+  done
+  return 1
+}
 
 doc_get() {
   printf '%s\n' '{"jsonrpc":"2.0","id":1,"method":"hello","params":{"generation":1}}' \
@@ -60,13 +79,8 @@ term="$(jq -r '.address // .id // .terminal // empty' <<<"$out")"
 space_name="$(basename "$repo_real")"
 if $new_space; then
   for _ in $(seq 1 20); do
-    r="$(doc_get)"
-    if jq -e --arg s "$space" '.value.spaces[] | select(.id==$s)' <<<"$r" >/dev/null; then
-      req="$(jq -c --arg s "$space" --arg n "$space_name" \
-        '{jsonrpc:"2.0",id:3,method:"doc.set",params:{name:"herdr-app",version:.version,
-          value:(.value | .spaces |= map(if .id==$s then .name=$n else . end))}}' <<<"$r")"
-      res="$(printf '%s\n' '{"jsonrpc":"2.0","id":1,"method":"hello","params":{"generation":1}}' "$req" | hc connect | tail -1)"
-      jq -e '.error' <<<"$res" >/dev/null || break   # 충돌이면 앱이 먼저 쓴 것 — 다시 읽어 재시도
+    if doc_get | jq -e --arg s "$space" '.value.spaces[] | select(.id==$s)' >/dev/null; then
+      doc_edit '.spaces |= map(if .id==$s then .name=$n else . end)' --arg s "$space" --arg n "$space_name" && break
     fi
     sleep 0.5
   done
@@ -83,7 +97,17 @@ for _ in $(seq 1 60); do
   sleep 1
 done
 
+# 5) 탭 이름을 한국어 요약으로. 앱이 claude 세션 제목(-n 이름)으로 탭을 채우므로 그 뒤에 덮고, 잠시 뒤 한 번 더 본다.
+tab_title() { doc_get | jq -r --arg t "$tab" '.value.spaces[].tabs[]? | select(.id==$t) | .name'; }
+if [ -n "$title" ] && [ "$app" = claude-code ]; then
+  for _ in 1 2 3; do
+    [ "$(tab_title)" = "$title" ] || doc_edit '.spaces |= map(.tabs |= map(if .id==$t then .name=$n else . end))' \
+      --arg t "$tab" --arg n "$title" || true
+    sleep 2
+  done
+fi
+
 jq -nc --arg t "$term" --arg s "$space" --arg sn "$space_name" --arg tb "$tab" \
-  --argjson ns "$new_space" --arg a "${app:-none}" \
-  '{terminal:$t, space:$s, space_name:$sn, tab:$tb, new_space:$ns, app:$a}'
+  --argjson ns "$new_space" --arg a "${app:-none}" --arg tt "$(tab_title)" \
+  '{terminal:$t, space:$s, space_name:$sn, tab:$tb, tab_name:$tt, new_space:$ns, app:$a}'
 [ "$app" = claude-code ]
