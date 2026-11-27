@@ -15,7 +15,7 @@ description: Chrome 사이드패널에서 지금 보는 페이지를 그 페이�
 ## 설치
 
 1. 클론이 없으면 `gh repo clone kil9/ask-herdr ~/work/kil9/ask-herdr`. 있으면 pull.
-2. README '설치(Windows)' 를 따른다 — 스크립트 한 번(`install\install-windows.ps1`)과 Chrome 의 '압축해제된 확장
+2. README '설치(Windows)' 를 따른다 — 스크립트 한 번(Windows `install\install-windows.ps1`, Mac `sh install/install-mac.sh`)과 Chrome 의 '압축해제된 확장
    프로그램 로드'. 확장 로드는 Chrome UI 조작이라 사용자 몫이다: 폴더 경로를 알려 주고 끝낸다.
 
 완료: `reg query "HKCU\Software\Google\Chrome\NativeMessagingHosts\dev.kil9.ask_herdr"` 가 manifest 경로를 보이고,
