@@ -19,9 +19,16 @@ allowed_tools: [Bash]
 
 ## 2. 보내기
 
+시크릿이 아니면 내용을 먼저 scratchpad 파일에 쓰고 그 파일에서 보낸다. 셸 변수는 Bash 호출이 끝나면
+사라지므로 "다시 넣어줘" 에 같은 내용을 다시 만들지 않고 파일에서 바로 보낼 수 있다. `CLIP_DEBUG=1` 을
+늘 붙여 어느 tty 에 몇 바이트를 썼는지 출력으로 확인한다.
+
 ```bash
-printf '%s' "$P" | clip
+F=<scratchpad>/<용도>.txt   # heredoc 으로 내용 작성
+printf '%s' "$(cat "$F")" | CLIP_DEBUG=1 clip
 ```
+
+시크릿은 파일에 남기지 않고 1단계대로 변수에서 바로 보낸다(`printf '%s' "$P" | CLIP_DEBUG=1 clip`).
 
 `clip`(kil9conf `rc/bin/clip`)이 PATH 에 있으면 그것을 쓴다. Bash 도구는 controlling tty 가 없지만
 `clip` 이 조상 프로세스의 tty 를 찾아 쓴다. 디버그는 `CLIP_DEBUG=1`.
@@ -37,7 +44,7 @@ tmux 안이면 `\033Ptmux;\033…\033\\` 로 감싸야 한다(`clip` 은 알아�
 
 ## 3. 알리기
 
-응답에는 넣은 내용을 보여 주되 시크릿은 앞 몇 글자만 남기고 가린다(`Bearer bca_21…`). 성공 여부는
+응답에는 넣은 내용과 저장한 파일 경로를 보여 주되 시크릿은 앞 몇 글자만 남기고 가린다(`Bearer bca_21…`). 성공 여부는
 이쪽에서 알 수 없다 — escape 를 받아 클립보드에 넣는 것은 터미널이고 실패해도 신호가 없다. "붙여넣어
 확인해 달라" 를 한 줄 붙인다. 비어 있다고 하면 의심 순서는 (1) 크기(base64 약 75KB 초과 시 잘림)
 (2) 터미널의 OSC 52 미지원 — `clip --test` 로 가른다.
