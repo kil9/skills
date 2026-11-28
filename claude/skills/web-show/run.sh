@@ -6,7 +6,7 @@
 #   add PORT [host=<name>] FILE...  떠 있는 서버에 파일을 더 등록한다 → URL:<url>
 #   stop PORT                     서버를 끄고 포트를 비운다
 #   host [host=<name>]            URL 에 쓸 호스트 → HOST:<host> (+ 못 구했으면 HINT:)
-#   port                          18080 부터 빈 포트 하나 → PORT:<port>
+#   port                          18150 부터 빈 포트 하나 → PORT:<port>
 #
 # 호스트 결정(앞이 이긴다): host= 인자 → $WEB_SHOW_HOST → host.local 의 HOST →
 #   host.cache → $(hostname).$WEB_SHOW_HOST_DOMAIN(DNS 로 풀릴 때) → tailscale Self.DNSName.
@@ -78,7 +78,7 @@ set_hint() {  # resolve_host 는 서브셸에서 돌므로 결과가 IP 인지�
 free_port() {
   python3 - <<'PY'
 import socket
-for p in range(18080, 18180):
+for p in range(18150, 18180):  # 18080-18149 는 상시 서비스(hq 등) 포트대라 피한다
     s = socket.socket()
     s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)  # 서버와 같은 조건: TIME_WAIT 은 빈 포트다
     try:
@@ -88,7 +88,7 @@ for p in range(18080, 18180):
     finally:
         s.close()
 else:
-    raise SystemExit("빈 포트 없음(18080-18179)")
+    raise SystemExit("빈 포트 없음(18150-18179)")
 PY
 }
 
